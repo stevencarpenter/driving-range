@@ -1,0 +1,4 @@
+#!/bin/bash
+mkdir -p "$HOME"
+printf 'Driving Range. Run golf-brief for the exercise. Exit to check your work.\n'
+exec /bin/bash --noprofile --norc -i

@@ -1,0 +1,2813 @@
+{
+  "challenges": [
+    {
+      "id": "vim.change-value",
+      "revision": 1,
+      "track": "vim",
+      "title": "Change one configuration value",
+      "objective": "In config.txt change port=3000 to port=8080. Keep the comment and host unchanged.",
+      "brief": "In config.txt change port=3000 to port=8080. Keep the comment and host unchanged.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help iw opens the bundled Neovim help. :wq saves and returns to Driving Range.",
+      "difficulty": 1,
+      "minutes": 3,
+      "tools": [
+        "nvim"
+      ],
+      "concepts": [
+        "iw",
+        "search"
+      ],
+      "hints": [
+        "Search for port with /port and Enter.",
+        "Move to the number and use ciw8080 followed by Escape."
+      ],
+      "explanation": "ciw replaces the word under the cursor. A targeted edit avoids changing unrelated numbers.",
+      "reference_solution": "nvim --headless -u NONE -n config.txt '+%s/port=3000/port=8080/' '+wq'\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "config.txt",
+      "editor": "nvim",
+      "validator": {
+        "kind": "tree",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "config.txt": "host=localhost\nport=3000\n# development\n"
+          },
+          "expected_files": {
+            "config.txt": "host=localhost\nport=8080\n# development\n"
+          }
+        }
+      ]
+    },
+    {
+      "id": "vim.whole-word",
+      "revision": 1,
+      "track": "vim",
+      "title": "Rename a whole word",
+      "objective": "Replace every whole word cache with store. Preserve cache_key and cached.",
+      "brief": "Replace every whole word cache with store. Preserve cache_key and cached.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help /\\< opens the bundled Neovim help. :wq saves and returns to Driving Range.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "nvim"
+      ],
+      "concepts": [
+        "/\\<",
+        "substitute"
+      ],
+      "hints": [
+        "Search word boundaries rather than the character sequence alone.",
+        "Use :%s/\\<cache\\>/store/g to constrain the rename."
+      ],
+      "explanation": "Vim uses \\< and \\> for word boundaries. The g flag replaces every match on a line; % includes every line.",
+      "reference_solution": "nvim --headless -u NONE -n config.txt '+%s/\\<cache\\>/store/g' '+wq'\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "config.txt",
+      "editor": "nvim",
+      "validator": {
+        "kind": "tree",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "config.txt": "cache = cache\ncache_key = cached\n# cache fallback\n"
+          },
+          "expected_files": {
+            "config.txt": "store = store\ncache_key = cached\n# store fallback\n"
+          }
+        }
+      ]
+    },
+    {
+      "id": "vim.quoted-text",
+      "revision": 1,
+      "track": "vim",
+      "title": "Replace quoted content",
+      "objective": "Change the quoted message to Ready for deploy. Preserve surrounding syntax.",
+      "brief": "Change the quoted message to Ready for deploy. Preserve surrounding syntax.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help i\" opens the bundled Neovim help. :wq saves and returns to Driving Range.",
+      "difficulty": 1,
+      "minutes": 3,
+      "tools": [
+        "nvim"
+      ],
+      "concepts": [
+        "i\"",
+        "text-objects"
+      ],
+      "hints": [
+        "Place the cursor inside the first quoted string.",
+        "ci\" changes only the content between quotes."
+      ],
+      "explanation": "The i\" text object excludes the delimiters, so ci\" preserves the quote characters.",
+      "reference_solution": "nvim --headless -u NONE -n config.txt '+1s/waiting for operator/Ready for deploy/' '+wq'\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "config.txt",
+      "editor": "nvim",
+      "validator": {
+        "kind": "tree",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "config.txt": "message = \"waiting for operator\"\nlevel = \"info\"\n"
+          },
+          "expected_files": {
+            "config.txt": "message = \"Ready for deploy\"\nlevel = \"info\"\n"
+          }
+        }
+      ]
+    },
+    {
+      "id": "vim.delete-debug",
+      "revision": 1,
+      "track": "vim",
+      "title": "Remove diagnostic lines",
+      "objective": "Delete lines beginning exactly DEBUG. Preserve INFO and the indented DEBUG line.",
+      "brief": "Delete lines beginning exactly DEBUG. Preserve INFO and the indented DEBUG line.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help global opens the bundled Neovim help. :wq saves and returns to Driving Range.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "nvim"
+      ],
+      "concepts": [
+        "global",
+        "/^"
+      ],
+      "hints": [
+        "Use a start-of-line anchor to distinguish the example.",
+        "The :global command can apply :delete to matching lines: :g/^DEBUG/d."
+      ],
+      "explanation": ":global selects lines by a pattern and runs an Ex command on each. Anchoring makes the deletion precise.",
+      "reference_solution": "nvim --headless -u NONE -n config.txt '+g/^DEBUG/d' '+wq'\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "config.txt",
+      "editor": "nvim",
+      "validator": {
+        "kind": "tree",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "config.txt": "INFO start\nDEBUG request=1\n  DEBUG keep example\nDEBUG request=2\nINFO done\n"
+          },
+          "expected_files": {
+            "config.txt": "INFO start\n  DEBUG keep example\nINFO done\n"
+          }
+        }
+      ]
+    },
+    {
+      "id": "vim.join-lines",
+      "revision": 1,
+      "track": "vim",
+      "title": "Join a wrapped sentence",
+      "objective": "Join the first three lines into one sentence separated by single spaces. Preserve the blank line and owner line.",
+      "brief": "Join the first three lines into one sentence separated by single spaces. Preserve the blank line and owner line.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help J opens the bundled Neovim help. :wq saves and returns to Driving Range.",
+      "difficulty": 1,
+      "minutes": 3,
+      "tools": [
+        "nvim"
+      ],
+      "concepts": [
+        "J",
+        "count"
+      ],
+      "hints": [
+        "Start on the first line and consider the J command.",
+        "3J joins three lines; stop before the blank line."
+      ],
+      "explanation": "J joins lines with space adjustment. A count constrains the operation to the wrapped paragraph.",
+      "reference_solution": "nvim --headless -u NONE -n config.txt '+1,3join' '+wq'\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "config.txt",
+      "editor": "nvim",
+      "validator": {
+        "kind": "tree",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "config.txt": "Deploy the\nsmallest safe\nchange.\n\nowner: ops\n"
+          },
+          "expected_files": {
+            "config.txt": "Deploy the smallest safe change.\n\nowner: ops\n"
+          }
+        }
+      ]
+    },
+    {
+      "id": "vim.sort-block",
+      "revision": 1,
+      "track": "vim",
+      "title": "Sort only the allowlist",
+      "objective": "Sort the four hostname lines alphabetically. Keep the header and footer in place.",
+      "brief": "Sort the four hostname lines alphabetically. Keep the header and footer in place.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help sort opens the bundled Neovim help. :wq saves and returns to Driving Range.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "nvim"
+      ],
+      "concepts": [
+        "sort",
+        "range"
+      ],
+      "hints": [
+        "Select the four hostname lines with linewise Visual mode.",
+        "Run :sort on the selection or :2,5sort."
+      ],
+      "explanation": "Ex ranges constrain a command to selected lines. Sorting the whole file would move the comment boundaries.",
+      "reference_solution": "nvim --headless -u NONE -n config.txt '+2,5sort' '+wq'\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "config.txt",
+      "editor": "nvim",
+      "validator": {
+        "kind": "tree",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "config.txt": "# allowed hosts\nzeta.local\nalpha.local\ndelta.local\nbeta.local\n# end\n"
+          },
+          "expected_files": {
+            "config.txt": "# allowed hosts\nalpha.local\nbeta.local\ndelta.local\nzeta.local\n# end\n"
+          }
+        }
+      ]
+    },
+    {
+      "id": "vim.numbered-list",
+      "revision": 1,
+      "track": "vim",
+      "title": "Remove list prefixes",
+      "objective": "Remove the numeric prefix and following dot-space from each task. Preserve task order and spelling.",
+      "brief": "Remove the numeric prefix and following dot-space from each task. Preserve task order and spelling.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help substitute opens the bundled Neovim help. :wq saves and returns to Driving Range.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "nvim"
+      ],
+      "concepts": [
+        "substitute",
+        "pattern"
+      ],
+      "hints": [
+        "Anchor the pattern to the beginning of a line.",
+        "Use :%s/^\\d\\+\\. // to match a run of digits followed by a literal dot and space."
+      ],
+      "explanation": "An anchored substitution expresses the transformation for every line. Escaping the dot avoids accepting any character.",
+      "reference_solution": "nvim --headless -u NONE -n config.txt '+%s/^\\d\\+\\. //' '+wq'\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "config.txt",
+      "editor": "nvim",
+      "validator": {
+        "kind": "tree",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "config.txt": "1. prepare image\n2. run checks\n3. deploy canary\n"
+          },
+          "expected_files": {
+            "config.txt": "prepare image\nrun checks\ndeploy canary\n"
+          }
+        }
+      ]
+    },
+    {
+      "id": "vim.move-block",
+      "revision": 1,
+      "track": "vim",
+      "title": "Put authentication before routing",
+      "objective": "Move the complete auth block before the route block. Preserve the blank line between blocks and a final newline.",
+      "brief": "Move the complete auth block before the route block. Preserve the blank line between blocks and a final newline.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help move opens the bundled Neovim help. :wq saves and returns to Driving Range.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "nvim"
+      ],
+      "concepts": [
+        "move",
+        "linewise"
+      ],
+      "hints": [
+        "Use linewise deletion to capture a block in a register.",
+        "Move lines 4-5 to the start with :4,5m0, then move the blank line after them."
+      ],
+      "explanation": "Linewise registers or :move preserve an entire block. The separator is part of the required final tree.",
+      "reference_solution": "nvim --headless -u NONE -n config.txt '+4,5move 0' '+5move 2' '+wq'\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "config.txt",
+      "editor": "nvim",
+      "validator": {
+        "kind": "tree",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "config.txt": "[route]\npath=/api\n\n[auth]\nrequired=true\n"
+          },
+          "expected_files": {
+            "config.txt": "[auth]\nrequired=true\n\n[route]\npath=/api\n"
+          }
+        }
+      ]
+    },
+    {
+      "id": "vim.trim-space",
+      "revision": 1,
+      "track": "vim",
+      "title": "Trim trailing whitespace",
+      "objective": "Remove trailing spaces and tabs from every line. Preserve indentation and the empty line.",
+      "brief": "Remove trailing spaces and tabs from every line. Preserve indentation and the empty line.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help substitute opens the bundled Neovim help. :wq saves and returns to Driving Range.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "nvim"
+      ],
+      "concepts": [
+        "substitute",
+        "$"
+      ],
+      "hints": [
+        "Use the end-of-line anchor so leading indentation is not selected.",
+        "Use :%s/\\s\\+$//e. The e flag tolerates a file with no matches."
+      ],
+      "explanation": "Whitespace at the end of a line can be removed without normalizing meaningful leading indentation.",
+      "reference_solution": "nvim --headless -u NONE -n config.txt '+%s/\\s\\+$//e' '+wq'\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "config.txt",
+      "editor": "nvim",
+      "validator": {
+        "kind": "tree",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "config.txt": "server {  \n  enabled=true\t\n}\t \n\n"
+          },
+          "expected_files": {
+            "config.txt": "server {\n  enabled=true\n}\n\n"
+          }
+        }
+      ]
+    },
+    {
+      "id": "vim.multi-file",
+      "revision": 1,
+      "track": "vim",
+      "title": "Update both service ports",
+      "objective": "Set port=8080 in config.txt and worker.conf. Preserve each file's other values.",
+      "brief": "Set port=8080 in config.txt and worker.conf. Preserve each file's other values.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help argdo opens the bundled Neovim help. :wq saves and returns to Driving Range.",
+      "difficulty": 3,
+      "minutes": 7,
+      "tools": [
+        "nvim"
+      ],
+      "concepts": [
+        "argdo",
+        "update"
+      ],
+      "hints": [
+        "The argument list lets one Ex command operate on multiple files.",
+        "Open both files with :args config.txt worker.conf and run :argdo %s/port=3000/port=8080/e | update."
+      ],
+      "explanation": ":argdo repeats a command over the argument list. :update writes only modified buffers; the match remains specific to the port setting.",
+      "reference_solution": "nvim --headless -u NONE -n config.txt worker.conf '+argdo %s/port=3000/port=8080/e | update' '+qa'\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "config.txt",
+      "editor": "nvim",
+      "validator": {
+        "kind": "tree",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "config.txt": "role=api\nport=3000\n",
+            "worker.conf": "role=worker\nport=3000\n"
+          },
+          "expected_files": {
+            "config.txt": "role=api\nport=8080\n",
+            "worker.conf": "role=worker\nport=8080\n"
+          }
+        }
+      ]
+    },
+    {
+      "id": "search.error-records",
+      "revision": 1,
+      "track": "search",
+      "title": "Find error records",
+      "objective": "Print records in app.log that begin with ERROR, in input order.",
+      "brief": "Print records in app.log that begin with ERROR, in input order.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: grep --help; ^ anchors the beginning of a line.",
+      "difficulty": 1,
+      "minutes": 3,
+      "tools": [
+        "grep"
+      ],
+      "concepts": [
+        "anchors",
+        "log-filtering"
+      ],
+      "hints": [
+        "The record level appears at the start of a line.",
+        "Use the ^ anchor: grep '^ERROR' app.log."
+      ],
+      "explanation": "Anchoring avoids matching ERROR mentioned inside an unrelated log message.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\ngrep '^ERROR' app.log\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "app.log": "INFO boot\nERROR disk full\nWARN ERROR counter\nERROR request timeout\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "ERROR disk full\nERROR request timeout\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "app.log": "ERROR retry\nINFO healthy\nERROR quota\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "ERROR retry\nERROR quota\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "search.whole-word",
+      "revision": 1,
+      "track": "search",
+      "title": "Find the standalone token",
+      "objective": "Print lines in notes.txt containing the whole word fail, case sensitively.",
+      "brief": "Print lines in notes.txt containing the whole word fail, case sensitively.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: rg --help: -w, --word-regexp.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "rg"
+      ],
+      "concepts": [
+        "word-boundaries"
+      ],
+      "hints": [
+        "A substring search also matches failed.",
+        "rg -w restricts matches to word boundaries."
+      ],
+      "explanation": "Word matching treats underscores as word characters. fail_safe is intentionally excluded.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nrg -w 'fail' notes.txt\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "notes.txt": "fail now\nfailed yesterday\nprefail\nplease fail soon\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "fail now\nplease fail soon\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "notes.txt": "failure\nfail: retry\nfail_safe\ncan fail\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "fail: retry\ncan fail\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "search.literal-pattern",
+      "revision": 1,
+      "track": "search",
+      "title": "Search literal punctuation",
+      "objective": "Print lines of rules.txt containing the literal string [warn].",
+      "brief": "Print lines of rules.txt containing the literal string [warn].\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: rg --help: -F, --fixed-strings.",
+      "difficulty": 1,
+      "minutes": 3,
+      "tools": [
+        "rg"
+      ],
+      "concepts": [
+        "fixed-strings"
+      ],
+      "hints": [
+        "Square brackets have a regex meaning.",
+        "Use -F to interpret the entire pattern literally."
+      ],
+      "explanation": "Fixed-string mode avoids accidental character classes and makes a punctuation search easier to read.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nrg -F '[warn]' rules.txt\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "rules.txt": "[warn] slow\nwarm\n[info] ok\n[warn] retry\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "[warn] slow\n[warn] retry\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "rules.txt": "warn\n[w] only\nprefix [warn] detail\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "prefix [warn] detail\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "search.exclude-records",
+      "revision": 1,
+      "track": "search",
+      "title": "Filter noisy health checks",
+      "objective": "Print access.log lines that do not contain /health. Preserve their order.",
+      "brief": "Print access.log lines that do not contain /health. Preserve their order.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: grep --help: -v selects nonmatching lines; -F uses fixed strings.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "grep"
+      ],
+      "concepts": [
+        "inverse-matches"
+      ],
+      "hints": [
+        "Inverse matching retains nonmatching records.",
+        "Combine -v with -F."
+      ],
+      "explanation": "The contract excludes any occurrence, including /health/deep; matching is case sensitive.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\ngrep -vF '/health' access.log\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "access.log": "GET /health 200\nGET /api 200\nPOST /jobs 202\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "GET /api 200\nPOST /jobs 202\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "access.log": "GET /health/deep 200\nGET /status 200\nGET /health 503\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "GET /status 200\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "search.capture-ids",
+      "revision": 1,
+      "track": "search",
+      "title": "Extract request identifiers",
+      "objective": "Print only the digits following request= in requests.log, one per line in input order.",
+      "brief": "Print only the digits following request= in requests.log, one per line in input order.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: rg --help: -o prints only matches; cut --help: -d sets a delimiter, -f selects fields.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "rg"
+      ],
+      "concepts": [
+        "extraction",
+        "repetition"
+      ],
+      "hints": [
+        "Extract only the matching token before removing its label.",
+        "rg -o 'request=[0-9]+' requests.log | cut -d= -f2."
+      ],
+      "explanation": "A narrow match separates extraction from surrounding log fields; the pattern accepts multiple digits.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nrg --only-matching 'request=[0-9]+' requests.log | cut -d= -f2\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "requests.log": "request=42 status=ok\nrequest=7 status=retry\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "42\n7\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "requests.log": "note request=305 status=ok\nrequest=18 status=fail\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "305\n18\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "search.case-fold",
+      "revision": 1,
+      "track": "search",
+      "title": "Find case-insensitive warnings",
+      "objective": "Print every line in app.log containing warning, regardless of case.",
+      "brief": "Print every line in app.log containing warning, regardless of case.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: grep --help: -i ignores case distinctions.",
+      "difficulty": 1,
+      "minutes": 3,
+      "tools": [
+        "grep"
+      ],
+      "concepts": [
+        "case-folding"
+      ],
+      "hints": [
+        "Case-insensitive matching preserves the original line.",
+        "grep -i warning app.log."
+      ],
+      "explanation": "Case folding changes comparison, not emitted text. The output retains the source capitalization.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\ngrep -i 'warning' app.log\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "app.log": "WARNING slow\ninfo ready\nWarning queue\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "WARNING slow\nWarning queue\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "app.log": "warning disk\nWaRnInG cpu\nwarn only\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "warning disk\nWaRnInG cpu\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "search.config-files",
+      "revision": 1,
+      "track": "search",
+      "title": "Exclude generated configuration",
+      "objective": "Print sorted paths of .conf files below config/ containing enabled=true. Exclude config/generated/.",
+      "brief": "Print sorted paths of .conf files below config/ containing enabled=true. Exclude config/generated/.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: rg --help: -l emits paths, -g applies glob filters.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "rg"
+      ],
+      "concepts": [
+        "globs",
+        "path-exclusion"
+      ],
+      "hints": [
+        "Use filename output and include/exclude globs.",
+        "Run rg -l -F enabled=true config -g '*.conf' -g '!**/generated/**' | sort."
+      ],
+      "explanation": "Path selection is separate from content matching. Explicit sorting removes filesystem enumeration order from the result.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nrg -l -F 'enabled=true' config -g '*.conf' -g '!**/generated/**' | sort\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "config/api.conf": "enabled=true\n",
+            "config/worker.conf": "enabled=false\n",
+            "config/generated/cache.conf": "enabled=true\n",
+            "config/readme.txt": "enabled=true\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "config/api.conf\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "config/b.conf": "enabled=true\n",
+            "config/a.conf": "enabled=true\n",
+            "config/generated/z.conf": "enabled=true\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "config/a.conf\nconfig/b.conf\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "search.line-numbers",
+      "revision": 1,
+      "track": "search",
+      "title": "Locate TODO lines",
+      "objective": "Print TODO lines in tasks.txt prefixed by their one-based line number and a colon.",
+      "brief": "Print TODO lines in tasks.txt prefixed by their one-based line number and a colon.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: grep --help: -n prefixes output with line numbers.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "grep"
+      ],
+      "concepts": [
+        "line-numbers"
+      ],
+      "hints": [
+        "The tool can annotate source positions directly.",
+        "grep -nF TODO tasks.txt."
+      ],
+      "explanation": "Line numbers refer to the original input, including lines that are not printed.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\ngrep -nF 'TODO' tasks.txt\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "tasks.txt": "done\nTODO release\nworking\nTODO docs\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "2:TODO release\n4:TODO docs\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "tasks.txt": "TODO tests\ncomplete\nTODO review\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "1:TODO tests\n3:TODO review\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "search.alternation",
+      "revision": 1,
+      "track": "search",
+      "title": "Match two severity levels",
+      "objective": "Print records in app.log beginning WARN or ERROR followed by a space. Exclude WARNING.",
+      "brief": "Print records in app.log beginning WARN or ERROR followed by a space. Exclude WARNING.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: rg uses its default Rust regex dialect; parentheses group and | alternates.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "rg"
+      ],
+      "concepts": [
+        "alternation",
+        "grouping"
+      ],
+      "hints": [
+        "Group alternatives under a single anchor.",
+        "Use ^(WARN|ERROR) followed by a literal space."
+      ],
+      "explanation": "Grouping makes the anchor apply to both alternatives. The trailing space distinguishes complete level names.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nrg '^(WARN|ERROR) ' app.log\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "app.log": "WARN slow\nWARNING example\nERROR full\nINFO ok\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "WARN slow\nERROR full\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "app.log": "ERROR retry\nWARN queue\nXERROR fake\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "ERROR retry\nWARN queue\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "search.count-matches",
+      "revision": 1,
+      "track": "search",
+      "title": "Count matching records",
+      "objective": "Print the number of lines in events.txt containing the literal token event=click, followed by a newline.",
+      "brief": "Print the number of lines in events.txt containing the literal token event=click, followed by a newline.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: grep --help: -c counts selected lines; exit status 1 means no selected lines.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "grep"
+      ],
+      "concepts": [
+        "counts",
+        "exit-status"
+      ],
+      "hints": [
+        "Count matching lines rather than occurrences.",
+        "grep -c prints 0 with exit status 1 when nothing matches; normalize that expected no-match status."
+      ],
+      "explanation": "grep distinguishes no matches from execution errors. A reusable script must accept zero while preserving real failures.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\ngrep -cF 'event=click' events.txt || test \"$?\" -eq 1\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "events.txt": "event=click id=1\nevent=view\nevent=click id=2\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "2\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "events.txt": "event=view\nevent=open\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "0\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "shell.quote-path",
+      "revision": 1,
+      "track": "shell",
+      "title": "Read a filename with spaces",
+      "objective": "Print the content of reports/daily summary.txt exactly.",
+      "brief": "Print the content of reports/daily summary.txt exactly.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man bash describes single and double quoting; cat --help describes file arguments.",
+      "difficulty": 1,
+      "minutes": 3,
+      "tools": [
+        "bash"
+      ],
+      "concepts": [
+        "quoting"
+      ],
+      "hints": [
+        "A space in a filename must not split the argument.",
+        "Quote the complete path passed to cat."
+      ],
+      "explanation": "Shell quoting preserves the filename as one argument. The quotes themselves are removed before cat runs.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\ncat 'reports/daily summary.txt'\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "reports/daily summary.txt": "jobs=17\nstatus=ready\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "jobs=17\nstatus=ready\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "reports/daily summary.txt": "jobs=4\nstatus=waiting\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "jobs=4\nstatus=waiting\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "shell.leading-dash",
+      "revision": 1,
+      "track": "shell",
+      "title": "Read a leading-dash filename",
+      "objective": "Print the content of the file named -report.txt.",
+      "brief": "Print the content of the file named -report.txt.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: cat --help; -- ends options for GNU coreutils.",
+      "difficulty": 1,
+      "minutes": 3,
+      "tools": [
+        "bash"
+      ],
+      "concepts": [
+        "option-delimiter"
+      ],
+      "hints": [
+        "A leading dash can be parsed as an option.",
+        "Use cat -- -report.txt or cat ./-report.txt."
+      ],
+      "explanation": "The -- delimiter ends option parsing. A ./ prefix also makes the path unambiguous.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\ncat -- -report.txt\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "-report.txt": "pending=3\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "pending=3\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "-report.txt": "pending=12\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "pending=12\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "shell.pipeline-unique",
+      "revision": 1,
+      "track": "shell",
+      "title": "Summarize unique hosts",
+      "objective": "Print unique hostnames from hosts.txt in C-locale sorted order.",
+      "brief": "Print unique hostnames from hosts.txt in C-locale sorted order.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: sort --help: -u outputs only the first of equal lines.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "bash"
+      ],
+      "concepts": [
+        "pipelines",
+        "sorting"
+      ],
+      "hints": [
+        "Adjacent-only deduplication is insufficient on unsorted input.",
+        "sort -u combines ordering and uniqueness."
+      ],
+      "explanation": "uniq only merges adjacent equal lines. sort -u satisfies both requirements in one operation.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nLC_ALL=C sort -u hosts.txt\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "hosts.txt": "zeta\nalpha\nzeta\nbeta\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "alpha\nbeta\nzeta\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "hosts.txt": "delta\nalpha\ndelta\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "alpha\ndelta\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "shell.read-lines",
+      "revision": 1,
+      "track": "shell",
+      "title": "Preserve backslashes while reading",
+      "objective": "Read names.txt and print each complete line enclosed in angle brackets. Preserve spaces and backslashes.",
+      "brief": "Read names.txt and print each complete line enclosed in angle brackets. Preserve spaces and backslashes.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: help read; help printf; [[ -n value ]] tests nonempty text.",
+      "difficulty": 3,
+      "minutes": 7,
+      "tools": [
+        "bash"
+      ],
+      "concepts": [
+        "read",
+        "quoting"
+      ],
+      "hints": [
+        "read normally interprets backslashes and trims IFS characters.",
+        "Use IFS= read -r; handle a nonempty final line when read returns failure."
+      ],
+      "explanation": "IFS= preserves edge whitespace, -r preserves backslashes, and the final-line guard retains input without a newline.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nwhile IFS= read -r line || [[ -n $line ]]; do printf '<%s>\\n' \"$line\"; done < names.txt\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "names.txt": "Ada Lovelace\nC:\\tmp\\logs\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "<Ada Lovelace>\n<C:\\tmp\\logs>\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "names.txt": "  leading\nno-final-newline",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "<  leading>\n<no-final-newline>\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "shell.parameter-default",
+      "revision": 1,
+      "track": "shell",
+      "title": "Apply a missing-value default",
+      "objective": "Read the single line from region.txt. Print that value if nonempty, otherwise print local. Always end with a newline.",
+      "brief": "Read the single line from region.txt. Print that value if nonempty, otherwise print local. Always end with a newline.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: Bash parameter expansion: ${parameter:-word}.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "bash"
+      ],
+      "concepts": [
+        "parameter-expansion"
+      ],
+      "hints": [
+        "Parameter expansion has a default for empty or unset values.",
+        "Use ${region:-local} after reading the file."
+      ],
+      "explanation": "The colon makes the default apply to both empty and unset values. Without it, an empty value stays empty.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nIFS= read -r region < region.txt || :\nprintf '%s\\n' \"${region:-local}\"\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "region.txt": "eu-west\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "eu-west\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "region.txt": "\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "local\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "shell.exit-branch",
+      "revision": 1,
+      "track": "shell",
+      "title": "Branch on command success",
+      "objective": "If flag.txt contains the exact line ready, print deploy. Otherwise print wait. Ignore substring matches.",
+      "brief": "If flag.txt contains the exact line ready, print deploy. Otherwise print wait. Ignore substring matches.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: help if; grep --help: -q quiet, -x whole line, -F fixed string.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "bash",
+        "grep"
+      ],
+      "concepts": [
+        "exit-status",
+        "conditionals"
+      ],
+      "hints": [
+        "Use the command exit status as the if condition.",
+        "grep -qxF ready flag.txt selects an exact complete line without printing it."
+      ],
+      "explanation": "An if condition consumes the status directly. Quiet matching avoids mixing the test output with the desired answer.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nif grep -qxF ready flag.txt; then printf 'deploy\\n'; else printf 'wait\\n'; fi\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "flag.txt": "ready\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "deploy\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "flag.txt": "not ready\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "wait\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "shell.field-split",
+      "revision": 1,
+      "track": "shell",
+      "title": "Split a controlled delimiter",
+      "objective": "Read records.txt, whose lines are name:role with no embedded colons. Print role=name for each record.",
+      "brief": "Read records.txt, whose lines are name:role with no embedded colons. Print role=name for each record.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: help read; IFS determines the field delimiter.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "bash"
+      ],
+      "concepts": [
+        "read",
+        "field-splitting"
+      ],
+      "hints": [
+        "Set IFS only on the read command.",
+        "Use IFS=: read -r name role, then quote both printf arguments."
+      ],
+      "explanation": "A command-local IFS selects the delimiter without changing unrelated shell expansion behavior. Spaces inside a field remain intact.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nwhile IFS=: read -r name role; do printf '%s=%s\\n' \"$role\" \"$name\"; done < records.txt\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "records.txt": "Ada:admin\nLin:reader\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "admin=Ada\nreader=Lin\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "records.txt": "Grace Hopper:editor\nKai:owner\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "editor=Grace Hopper\nowner=Kai\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "shell.arithmetic",
+      "revision": 1,
+      "track": "shell",
+      "title": "Add an integer stream",
+      "objective": "Sum the nonnegative decimal integers in counts.txt and print one total. Inputs may contain leading zeroes.",
+      "brief": "Sum the nonnegative decimal integers in counts.txt and print one total. Inputs may contain leading zeroes.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: help let; Bash arithmetic supports base#number.",
+      "difficulty": 3,
+      "minutes": 7,
+      "tools": [
+        "bash"
+      ],
+      "concepts": [
+        "arithmetic",
+        "numeric-bases"
+      ],
+      "hints": [
+        "Bash arithmetic treats a leading zero as octal unless a base is specified.",
+        "Use 10#$n when accumulating each input number."
+      ],
+      "explanation": "The base prefix declares decimal interpretation. This exercise constrains input to nonnegative integers; arbitrary text would need validation.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\ntotal=0\nwhile IFS= read -r n; do (( total += 10#$n )); done < counts.txt\nprintf '%d\\n' \"$total\"\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "counts.txt": "3\n8\n12\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "23\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "counts.txt": "08\n02\n5\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "15\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "shell.printf-data",
+      "revision": 1,
+      "track": "shell",
+      "title": "Print data without format interpretation",
+      "objective": "Print the literal prefix value= followed by the entire single-line content of value.txt and a newline. Preserve percent signs and backslashes.",
+      "brief": "Print the literal prefix value= followed by the entire single-line content of value.txt and a newline. Preserve percent signs and backslashes.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: help printf: %s formats a string argument.",
+      "difficulty": 1,
+      "minutes": 3,
+      "tools": [
+        "bash"
+      ],
+      "concepts": [
+        "printf",
+        "data-boundaries"
+      ],
+      "hints": [
+        "Treat file contents as an argument, not as the printf format.",
+        "Use printf 'value=%s\\n' \"$value\"."
+      ],
+      "explanation": "A constant format string prevents data from becoming format directives or backslash escapes. echo has less portable escape behavior.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nIFS= read -r value < value.txt || :\nprintf 'value=%s\\n' \"$value\"\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "value.txt": "95% complete\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "value=95% complete\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "value.txt": "C:\\new\\temp\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "value=C:\\new\\temp\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "shell.glob-spaces",
+      "revision": 1,
+      "track": "shell",
+      "title": "Enumerate immediate text files",
+      "objective": "Print the basename of each immediate .txt file in inbox/, sorted. Preserve spaces; do not include nested files.",
+      "brief": "Print the basename of each immediate .txt file in inbox/, sorted. Preserve spaces; do not include nested files.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man bash: pathname expansion; ${parameter##pattern} removes the longest matching prefix.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "bash"
+      ],
+      "concepts": [
+        "globbing",
+        "parameter-expansion"
+      ],
+      "hints": [
+        "A glob expands to separate path arguments without splitting spaces inside each path.",
+        "Quote \"$file\" and use ${file##*/} to remove directory prefixes."
+      ],
+      "explanation": "Filename expansion already preserves each matching path as one word. Command substitution around ls would lose that boundary. These fixtures contain no newline in a filename.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nfor file in inbox/*.txt; do [[ -f $file ]] && printf '%s\\n' \"${file##*/}\"; done | LC_ALL=C sort\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "inbox/a report.txt": "a\n",
+            "inbox/z.txt": "z\n",
+            "inbox/no.md": "m\n",
+            "inbox/nested/skip.txt": "s\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "a report.txt\nz.txt\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "inbox/b file.txt": "b\n",
+            "inbox/a.txt": "a\n",
+            "inbox/other.log": "x\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "a.txt\nb file.txt\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "sed.target-substitution",
+      "revision": 1,
+      "track": "sed",
+      "title": "Update only the port setting",
+      "objective": "Print config.ini with port=3000 changed to port=8080 only on lines beginning port=. Preserve other numbers.",
+      "brief": "Print config.ini with port=3000 changed to port=8080 only on lines beginning port=. Preserve other numbers.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: sed --help; s/pattern/replacement/ substitutes once per line by default.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "sed"
+      ],
+      "concepts": [
+        "substitution",
+        "anchors"
+      ],
+      "hints": [
+        "Constrain both the beginning and end of the setting.",
+        "Use s/^port=3000$/port=8080/."
+      ],
+      "explanation": "sed transforms a stream without modifying the source. Both anchors keep similar settings unchanged.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nsed 's/^port=3000$/port=8080/' config.ini\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "config.ini": "port=3000\nbackup=3000\n# port=3000\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "port=8080\nbackup=3000\n# port=3000\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "config.ini": "port=3000\nport=30001\ntimeout=3000\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "port=8080\nport=30001\ntimeout=3000\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "sed.selected-range",
+      "revision": 1,
+      "track": "sed",
+      "title": "Extract a marked block",
+      "objective": "Print only the lines between BEGIN and END in payload.txt. Exclude marker lines. Each file has one block.",
+      "brief": "Print only the lines between BEGIN and END in payload.txt. Exclude marker lines. Each file has one block.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: sed --help: -n suppresses automatic printing.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "sed"
+      ],
+      "concepts": [
+        "ranges",
+        "stream-editing"
+      ],
+      "hints": [
+        "Use a pattern-addressed range with default printing disabled.",
+        "Within /^BEGIN$/,/^END$/, delete the boundaries and print the remaining lines."
+      ],
+      "explanation": "Address ranges choose a block; -n makes every emitted line explicit. This contract excludes nested or repeated markers.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nsed -n '/^BEGIN$/,/^END$/{ /^BEGIN$/d; /^END$/d; p; }' payload.txt\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "payload.txt": "header\nBEGIN\nalpha\nbeta\nEND\nfooter\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "alpha\nbeta\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "payload.txt": "BEGIN\nx\ny\nz\nEND\nignored\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "x\ny\nz\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "awk.sum-by-key",
+      "revision": 1,
+      "track": "awk",
+      "title": "Aggregate bytes by service",
+      "objective": "Read usage.txt as whitespace-separated service and integer bytes. Print service total for each service, sorted by service.",
+      "brief": "Read usage.txt as whitespace-separated service and integer bytes. Print service total for each service, sorted by service.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man awk: $1 is the first field; END runs after all records.",
+      "difficulty": 3,
+      "minutes": 7,
+      "tools": [
+        "awk"
+      ],
+      "concepts": [
+        "aggregation",
+        "associative-arrays"
+      ],
+      "hints": [
+        "An associative array can accumulate by the first field.",
+        "sum[$1]+=$2; print the array in END and sort its output."
+      ],
+      "explanation": "awk arrays group arbitrary string keys. Array iteration order is unspecified, so the final sort is part of the output contract.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nawk '{sum[$1]+=$2} END {for (key in sum) print key, sum[key]}' usage.txt | LC_ALL=C sort\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "usage.txt": "api 12\nworker 5\napi 8\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "api 20\nworker 5\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "usage.txt": "worker 7\napi 3\nworker 4\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "api 3\nworker 11\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "awk.header-filter",
+      "revision": 1,
+      "track": "awk",
+      "title": "Select slow requests",
+      "objective": "requests.csv has header path,ms and no quoted fields. Print the path for data rows with ms greater than 100, in order.",
+      "brief": "requests.csv has header path,ms and no quoted fields. Print the path for data rows with ms greater than 100, in order.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man awk: -F sets FS, NR counts input records.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "awk"
+      ],
+      "concepts": [
+        "fields",
+        "numeric-filter"
+      ],
+      "hints": [
+        "Set a comma delimiter and skip the header.",
+        "Use NR>1 && $2>100 with print $1."
+      ],
+      "explanation": "This controlled format can be split on commas. General CSV with quoted commas requires a CSV parser.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nawk -F, 'NR>1 && $2>100 {print $1}' requests.csv\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "requests.csv": "path,ms\n/api,80\n/report,125\n/jobs,200\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "/report\n/jobs\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "requests.csv": "path,ms\n/fast,100\n/slow,101\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "/slow\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "fd.extension",
+      "revision": 1,
+      "track": "fd",
+      "title": "Find Markdown source files",
+      "objective": "Print sorted relative paths of .md files under docs/, excluding hidden files. Include nested files.",
+      "brief": "Print sorted relative paths of .md files under docs/, excluding hidden files. Include nested files.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: fd --help: --type f, --extension, --hidden.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "fd"
+      ],
+      "concepts": [
+        "file-discovery",
+        "extensions"
+      ],
+      "hints": [
+        "fd has separate file-type and extension filters.",
+        "Use fd --type f --extension md . docs and sort."
+      ],
+      "explanation": "fd omits hidden paths by default. Its extension flag avoids manually escaping a suffix regex.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nfd --type f --extension md . docs | LC_ALL=C sort\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "docs/start.md": "start\n",
+            "docs/deep/api.md": "api\n",
+            "docs/.private.md": "hidden\n",
+            "docs/notes.txt": "notes\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "docs/deep/api.md\ndocs/start.md\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "docs/z.md": "z\n",
+            "docs/nested/a.md": "a\n",
+            "docs/.hidden/b.md": "b\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "docs/nested/a.md\ndocs/z.md\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "fd.hidden",
+      "revision": 1,
+      "track": "fd",
+      "title": "Include hidden configuration",
+      "objective": "Print sorted paths under settings/ whose filename ends in .conf, including hidden directories and files.",
+      "brief": "Print sorted paths under settings/ whose filename ends in .conf, including hidden directories and files.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: fd --help: -H, --hidden includes hidden files and directories.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "fd"
+      ],
+      "concepts": [
+        "hidden-files"
+      ],
+      "hints": [
+        "The default hidden-file exclusion must be changed explicitly.",
+        "Add --hidden to the extension/type query."
+      ],
+      "explanation": "Hidden files are a deliberate fd default. Explicitly enabling them communicates when configuration discovery needs broader scope.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nfd --hidden --type f --extension conf . settings | LC_ALL=C sort\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "settings/app.conf": "a\n",
+            "settings/.local.conf": "b\n",
+            "settings/.cache/tool.conf": "c\n",
+            "settings/readme.md": "d\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "settings/.cache/tool.conf\nsettings/.local.conf\nsettings/app.conf\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "settings/.deep/a.conf": "a\n",
+            "settings/z.conf": "z\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "settings/.deep/a.conf\nsettings/z.conf\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "find.depth",
+      "revision": 1,
+      "track": "find",
+      "title": "Limit discovery depth",
+      "objective": "Print sorted paths of .log regular files directly inside logs/. Do not include nested logs.",
+      "brief": "Print sorted paths of .log regular files directly inside logs/. Do not include nested logs.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: find --help; GNU -maxdepth counts the starting directory as depth zero.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "find"
+      ],
+      "concepts": [
+        "depth",
+        "file-types"
+      ],
+      "hints": [
+        "find descends recursively unless its depth is constrained.",
+        "Use -maxdepth 1 and quote the name pattern."
+      ],
+      "explanation": "Quoting delegates wildcard matching to find rather than the outer shell. -maxdepth is the GNU find contract used by the standard image.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nfind logs -maxdepth 1 -type f -name '*.log' -print | LC_ALL=C sort\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "logs/a.log": "a\n",
+            "logs/b.log": "b\n",
+            "logs/deep/c.log": "c\n",
+            "logs/readme.txt": "d\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "logs/a.log\nlogs/b.log\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "logs/z.log": "z\n",
+            "logs/nested/a.log": "a\n",
+            "logs/b.txt": "b\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "logs/z.log\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "find.prune",
+      "revision": 1,
+      "track": "find",
+      "title": "Prune generated trees",
+      "objective": "Print sorted .txt file paths below project/ except any directory named generated.",
+      "brief": "Print sorted .txt file paths below project/ except any directory named generated.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man find: -prune, -o; explicit -print avoids implicit output surprises.",
+      "difficulty": 3,
+      "minutes": 7,
+      "tools": [
+        "find"
+      ],
+      "concepts": [
+        "pruning",
+        "boolean-expressions"
+      ],
+      "hints": [
+        "Pruning stops traversal at an excluded directory.",
+        "Use directory predicate -prune -o file predicate -print."
+      ],
+      "explanation": "find expressions short-circuit. A pruned directory satisfies the left branch, so the file-printing branch is not evaluated for it.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nfind project -type d -name generated -prune -o -type f -name '*.txt' -print | LC_ALL=C sort\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "project/a.txt": "a\n",
+            "project/generated/skip.txt": "s\n",
+            "project/src/b.txt": "b\n",
+            "project/src/generated/skip.txt": "s\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "project/a.txt\nproject/src/b.txt\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "project/generated/a.txt": "a\n",
+            "project/lib/keep.txt": "k\n",
+            "project/root.txt": "r\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "project/lib/keep.txt\nproject/root.txt\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "python.json-lines",
+      "revision": 1,
+      "track": "python",
+      "title": "Filter JSON records",
+      "objective": "Read events.jsonl. Print the name of every object with active equal to true. Preserve input order. Each line is valid JSON.",
+      "brief": "Read events.jsonl. Print the name of every object with active equal to true. Preserve input order. Each line is valid JSON.\n\nEdit solution.py. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: python3 -m pydoc json; bool is a subclass of int, so equality alone accepts 1.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "python3"
+      ],
+      "concepts": [
+        "json",
+        "stream-processing"
+      ],
+      "hints": [
+        "Parse each record with the standard json module.",
+        "Test is True to require the JSON boolean rather than truthy values."
+      ],
+      "explanation": "JSON booleans, numeric values, and absent keys are distinct data. The explicit identity check enforces the declared filter.",
+      "reference_solution": "cat > solution.py <<'GOLF_SOLUTION'\nimport json\nwith open('events.jsonl', encoding='utf-8') as source:\n    for line in source:\n        event = json.loads(line)\n        if event.get('active') is True:\n            print(event['name'])\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.py",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "events.jsonl": "{\"name\":\"Ada\",\"active\":true}\n{\"name\":\"Lin\",\"active\":false}\n",
+            "solution.py": "# Write your solution here.\n"
+          },
+          "expected_stdout": "Ada\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "events.jsonl": "{\"name\":\"Zoë\",\"active\":true}\n{\"name\":\"Kai\",\"active\":1}\n{\"name\":\"Dev\"}\n",
+            "solution.py": "# Write your solution here.\n"
+          },
+          "expected_stdout": "Zoë\n"
+        }
+      ],
+      "submission_file": "solution.py",
+      "submission_argv": [
+        "python3",
+        "solution.py"
+      ]
+    },
+    {
+      "id": "python.csv-summary",
+      "revision": 1,
+      "track": "python",
+      "title": "Read quoted CSV correctly",
+      "objective": "Read people.csv with columns name,team. Print team: name for every data row. Names can contain quoted commas.",
+      "brief": "Read people.csv with columns name,team. Print team: name for every data row. Names can contain quoted commas.\n\nEdit solution.py. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: python3 -m pydoc csv; csv.DictReader maps column names to values.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "python3"
+      ],
+      "concepts": [
+        "csv",
+        "structured-data"
+      ],
+      "hints": [
+        "A comma split cannot distinguish separators inside quotes.",
+        "csv.DictReader handles the header and quoted fields."
+      ],
+      "explanation": "The standard CSV parser understands quoted delimiters. Opening with newline=\"\" lets the parser handle record endings.",
+      "reference_solution": "cat > solution.py <<'GOLF_SOLUTION'\nimport csv\nwith open('people.csv', newline='', encoding='utf-8') as source:\n    for row in csv.DictReader(source):\n        print(f\"{row['team']}: {row['name']}\")\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.py",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "people.csv": "name,team\n\"Hopper, Grace\",platform\nAda,tools\n",
+            "solution.py": "# Write your solution here.\n"
+          },
+          "expected_stdout": "platform: Hopper, Grace\ntools: Ada\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "people.csv": "name,team\n\"Doe, Jo\",ops\nZoë,qa\n",
+            "solution.py": "# Write your solution here.\n"
+          },
+          "expected_stdout": "ops: Doe, Jo\nqa: Zoë\n"
+        }
+      ],
+      "submission_file": "solution.py",
+      "submission_argv": [
+        "python3",
+        "solution.py"
+      ]
+    },
+    {
+      "id": "zsh.array-boundaries",
+      "revision": 1,
+      "track": "zsh",
+      "title": "Preserve zsh array elements",
+      "objective": "Use zsh to read the three lines in paths.txt and print each enclosed in square brackets. Preserve embedded spaces.",
+      "brief": "Use zsh to read the three lines in paths.txt and print each enclosed in square brackets. Preserve embedded spaces.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: zsh builtins: print -r disables escape processing; -- ends options.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "zsh"
+      ],
+      "concepts": [
+        "raw-output",
+        "quoting"
+      ],
+      "hints": [
+        "zsh print -r prevents interpretation of backslash escapes.",
+        "Use a raw read loop and print -r -- \"[$item]\"."
+      ],
+      "explanation": "Explicit raw input and output preserve literal path text. This checks the data result, not any interactive key sequence.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nzsh -f -c 'while IFS= read -r item; do print -r -- \"[$item]\"; done < paths.txt'\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "paths.txt": "src/main.go\nnotes/daily log.md\nMakefile\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "[src/main.go]\n[notes/daily log.md]\n[Makefile]\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "paths.txt": "a b\nc\\d\ne\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "[a b]\n[c\\d]\n[e]\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "zsh.glob-qualifier",
+      "revision": 1,
+      "track": "zsh",
+      "title": "Select regular files with a glob qualifier",
+      "objective": "Use zsh to print the sorted immediate regular-file basenames in inbox/. Include only .txt files; ignore a directory whose name ends in .txt.",
+      "brief": "Use zsh to print the sorted immediate regular-file basenames in inbox/. Include only .txt files; ignore a directory whose name ends in .txt.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man zshexpn: glob qualifiers . and N; modifier :t returns the filename tail.",
+      "difficulty": 3,
+      "minutes": 7,
+      "tools": [
+        "zsh"
+      ],
+      "concepts": [
+        "glob-qualifiers",
+        "path-modifiers"
+      ],
+      "hints": [
+        "A zsh glob qualifier can restrict matches to regular files.",
+        "Use *.txt(.N): dot selects regular files, N allows an empty match."
+      ],
+      "explanation": "The regular-file qualifier prevents directories with matching suffixes from being selected. :t extracts the path tail without spawning basename.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nzsh -f -c 'for item in inbox/*.txt(.N); do print -r -- ${item:t}; done' | LC_ALL=C sort\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "inbox/a.txt": "a\n",
+            "inbox/b report.txt": "b\n",
+            "inbox/fake.txt/child": "x\n",
+            "inbox/no.md": "m\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "a.txt\nb report.txt\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "inbox/z.txt": "z\n",
+            "inbox/a.txt/child": "x\n",
+            "inbox/c.txt": "c\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "c.txt\nz.txt\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "fzf.filter",
+      "revision": 1,
+      "track": "fzf",
+      "title": "Select a command from a candidate list",
+      "objective": "Use fzf filter mode to select lines from commands.txt matching the exact substring deploy, then sort. Matching is case sensitive.",
+      "brief": "Use fzf filter mode to select lines from commands.txt matching the exact substring deploy, then sort. Matching is case sensitive.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: fzf --help: --filter, --exact, --no-ignore-case.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "fzf"
+      ],
+      "concepts": [
+        "selection",
+        "filter-mode"
+      ],
+      "hints": [
+        "Filter mode makes fzf usable without an interactive picker.",
+        "Use --filter=deploy --exact --no-ignore-case and sort the candidates."
+      ],
+      "explanation": "fzf can serve as a scripted selection stage. This validates matching semantics; interactive navigation speed is not measured.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nset -o pipefail\nfzf --filter=deploy --exact --no-ignore-case < commands.txt | LC_ALL=C sort\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "commands.txt": "git status\nmake deploy-prod\nmake deploy-stage\nmake test\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "make deploy-prod\nmake deploy-stage\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "commands.txt": "run deploy\nrun Deploy\nrun cleanup\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "run deploy\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "fzf.field-selection",
+      "revision": 1,
+      "track": "fzf",
+      "title": "Search only a candidate field",
+      "objective": "commands.tsv contains ID then a tab then description. Use fzf to select rows whose description contains the exact substring release. Print only IDs, sorted.",
+      "brief": "commands.tsv contains ID then a tab then description. Use fzf to select rows whose description contains the exact substring release. Print only IDs, sorted.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: fzf --help: --delimiter splits fields; --nth limits searchable fields.",
+      "difficulty": 3,
+      "minutes": 7,
+      "tools": [
+        "fzf"
+      ],
+      "concepts": [
+        "field-selection",
+        "pipelines"
+      ],
+      "hints": [
+        "Limit matching to the description field without changing the selected full row.",
+        "Use --delimiter with a tab and --nth=2.., then cut -f1."
+      ],
+      "explanation": "Matching fields and displayed/output data are separate concerns. --nth prevents an identifier from accidentally satisfying the query.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nset -o pipefail\nfzf --filter=release --exact --no-ignore-case --delimiter='\t' --nth=2.. < commands.tsv | cut -f1 | LC_ALL=C sort\nGOLF_SOLUTION\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "solution.sh",
+      "editor": "bash",
+      "validator": {
+        "kind": "stdout",
+        "version": "1",
+        "output_policy": "exact"
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "commands.tsv": "release-hidden\tinspect state\ncmd-1\tprepare release\ncmd-2\tcheck tests\ncmd-3\tfinal release\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "cmd-1\ncmd-3\n"
+        },
+        {
+          "name": "variant-1",
+          "files": {
+            "commands.tsv": "release-id\tignore me\nx-2\trelease image\nx-1\trelease notes\n",
+            "solution.sh": "#!/usr/bin/env bash\n# Write your reusable solution here.\n"
+          },
+          "expected_stdout": "x-1\nx-2\n"
+        }
+      ],
+      "submission_file": "solution.sh",
+      "submission_argv": [
+        "bash",
+        "solution.sh"
+      ]
+    },
+    {
+      "id": "git.selective-stage",
+      "revision": 1,
+      "track": "git",
+      "title": "Stage only the intended file",
+      "objective": "Stage the existing api.txt change. Leave notes.txt modified but unstaged. Do not commit.",
+      "brief": "Stage the existing api.txt change. Leave notes.txt modified but unstaged. Do not commit.\n\nWork only in this synthetic repository. Checks inspect repository semantics, not commit hashes.\n\nKey reference: git help; this repository has no remotes, credentials, or signing keys.\n\nThe starter repository is initialized before the shell opens. Preserve its synthetic history and unrelated files.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "git"
+      ],
+      "concepts": [
+        "index",
+        "selective-staging"
+      ],
+      "hints": [
+        "The index is the snapshot for the next commit.",
+        "git add -- api.txt stages one named path; do not use git add . here."
+      ],
+      "explanation": "Selective staging separates an intended change from unrelated work. The check inspects both index and working tree.",
+      "reference_solution": "git add -- api.txt\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "api.txt",
+      "editor": "bash",
+      "validator": {
+        "kind": "commands",
+        "version": "1",
+        "output_policy": "exact",
+        "checks": [
+          {
+            "name": "index and working tree",
+            "argv": [
+              "bash",
+              "--noprofile",
+              "--norc",
+              "-c",
+              "test \"$(git diff --cached --name-only)\" = api.txt && test \"$(git diff --name-only)\" = notes.txt && test \"$(git show :api.txt)\" = port=8080 && test \"$(git rev-list --count HEAD)\" = 1 && printf 'ok\\n'"
+            ],
+            "expected_stdout": "ok\n",
+            "exit_code": 0
+          }
+        ]
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "api.txt": "port=3000\n",
+            "notes.txt": "draft\n"
+          },
+          "setup": "git init -q -b main\ngit config user.name 'Golf Player'\ngit config user.email player@example.invalid\ngit add .\ngit commit -qm 'Initial files'\nprintf 'port=8080\\n' > api.txt\nprintf 'draft updated\\n' > notes.txt\n"
+        }
+      ]
+    },
+    {
+      "id": "git.amend-message",
+      "revision": 1,
+      "track": "git",
+      "title": "Repair the last commit message",
+      "objective": "Change the current commit message from WIP to Document launch checklist. Preserve the committed file tree and one-commit history.",
+      "brief": "Change the current commit message from WIP to Document launch checklist. Preserve the committed file tree and one-commit history.\n\nWork only in this synthetic repository. Checks inspect repository semantics, not commit hashes.\n\nKey reference: git help; this repository has no remotes, credentials, or signing keys.\n\nThe starter repository is initialized before the shell opens. Preserve its synthetic history and unrelated files.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "git"
+      ],
+      "concepts": [
+        "amend",
+        "commit-messages"
+      ],
+      "hints": [
+        "An amendment replaces the current commit while retaining its parent relationship.",
+        "git commit --amend -m 'Document launch checklist'."
+      ],
+      "explanation": "Amending rewrites a commit identity. This is a disposable unpublished repository, so no shared history is affected.",
+      "reference_solution": "git commit --amend -qm 'Document launch checklist'\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "checklist.txt",
+      "editor": "bash",
+      "validator": {
+        "kind": "commands",
+        "version": "1",
+        "output_policy": "exact",
+        "checks": [
+          {
+            "name": "message tree and ancestry",
+            "argv": [
+              "bash",
+              "--noprofile",
+              "--norc",
+              "-c",
+              "test \"$(git log -1 --format=%B)\" = 'Document launch checklist' && test \"$(git rev-list --count HEAD)\" = 1 && test \"$(git show HEAD:checklist.txt)\" = $'build\\ntest\\nship' && test -z \"$(git status --porcelain)\" && printf 'ok\\n'"
+            ],
+            "expected_stdout": "ok\n",
+            "exit_code": 0
+          }
+        ]
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "checklist.txt": "build\ntest\nship\n"
+          },
+          "setup": "git init -q -b main\ngit config user.name 'Golf Player'\ngit config user.email player@example.invalid\ngit add .\ngit commit -qm 'Initial files'\ngit commit --amend -qm WIP\n"
+        }
+      ]
+    },
+    {
+      "id": "jj.describe-change",
+      "revision": 1,
+      "track": "jj",
+      "title": "Describe the current jj change",
+      "objective": "Set the current change description to Add launch notes. Preserve notes.txt containing the supplied text.",
+      "brief": "Set the current change description to Add launch notes. Preserve notes.txt containing the supplied text.\n\nWork only in this synthetic repository. Checks inspect repository semantics, not commit hashes.\n\nKey reference: jj help; this repository has no remotes, credentials, or signing keys.\n\nThe starter repository is initialized before the shell opens. Preserve its synthetic history and unrelated files.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "jj"
+      ],
+      "concepts": [
+        "descriptions",
+        "working-copy"
+      ],
+      "hints": [
+        "The working copy is a change in jj and can have a description before any separate commit action.",
+        "Use jj describe -m 'Add launch notes'."
+      ],
+      "explanation": "jj tracks working-copy content in the current change. Describing that change does not require Git staging.",
+      "reference_solution": "jj describe -m 'Add launch notes'\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "notes.txt",
+      "editor": "bash",
+      "validator": {
+        "kind": "commands",
+        "version": "1",
+        "output_policy": "exact",
+        "checks": [
+          {
+            "name": "description and content",
+            "argv": [
+              "bash",
+              "--noprofile",
+              "--norc",
+              "-c",
+              "test \"$(jj log --no-graph -r @ -T 'description')\" = 'Add launch notes' && test \"$(cat notes.txt)\" = 'ship a small change' && printf 'ok\\n'"
+            ],
+            "expected_stdout": "ok\n",
+            "exit_code": 0
+          }
+        ]
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "notes.txt": "ship a small change\n"
+          },
+          "setup": "jj git init .\njj config set --repo user.name 'Golf Player'\njj config set --repo user.email player@example.invalid\n"
+        }
+      ]
+    },
+    {
+      "id": "jj.bookmark-parent",
+      "revision": 1,
+      "track": "jj",
+      "title": "Name a completed change",
+      "objective": "Create a bookmark named launch on the current change, whose description is Prepare launch. Then create a new empty working-copy change on top. Preserve notes.txt.",
+      "brief": "Create a bookmark named launch on the current change, whose description is Prepare launch. Then create a new empty working-copy change on top. Preserve notes.txt.\n\nWork only in this synthetic repository. Checks inspect repository semantics, not commit hashes.\n\nKey reference: jj help; this repository has no remotes, credentials, or signing keys.\n\nThe starter repository is initialized before the shell opens. Preserve its synthetic history and unrelated files.",
+      "difficulty": 3,
+      "minutes": 7,
+      "tools": [
+        "jj"
+      ],
+      "concepts": [
+        "bookmarks",
+        "ancestry"
+      ],
+      "hints": [
+        "A bookmark names a change; jj new creates a child and moves the working copy.",
+        "Use jj bookmark create launch -r @ followed by jj new."
+      ],
+      "explanation": "The bookmark stays on the finished change while the working copy advances to a new child. The check tests ancestry and emptiness instead of hash values.",
+      "reference_solution": "jj bookmark create launch -r @\njj new\n",
+      "license": "CC-BY-SA-4.0 (instructional prose); MIT (fixtures and solution code)",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "notes.txt",
+      "editor": "bash",
+      "validator": {
+        "kind": "commands",
+        "version": "1",
+        "output_policy": "exact",
+        "checks": [
+          {
+            "name": "bookmark topology",
+            "argv": [
+              "bash",
+              "--noprofile",
+              "--norc",
+              "-c",
+              "test \"$(jj log --no-graph -r 'launch' -T 'description')\" = 'Prepare launch' && test \"$(jj log --no-graph -r 'launch & @-' -T 'commit_id')\" != '' && test \"$(jj log --no-graph -r @ -T 'empty')\" = true && test \"$(cat notes.txt)\" = 'launch checklist' && printf 'ok\\n'"
+            ],
+            "expected_stdout": "ok\n",
+            "exit_code": 0
+          }
+        ]
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "notes.txt": "launch checklist\n"
+          },
+          "setup": "jj git init .\njj config set --repo user.name 'Golf Player'\njj config set --repo user.email player@example.invalid\njj describe -m 'Prepare launch'\n"
+        }
+      ]
+    }
+  ],
+  "schedule": [
+    {
+      "date": "2026-09-14",
+      "track": "vim",
+      "exercise_id": "vim.change-value",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-15",
+      "track": "vim",
+      "exercise_id": "vim.whole-word",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-16",
+      "track": "vim",
+      "exercise_id": "vim.quoted-text",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-17",
+      "track": "vim",
+      "exercise_id": "vim.delete-debug",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-18",
+      "track": "vim",
+      "exercise_id": "vim.join-lines",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-19",
+      "track": "vim",
+      "exercise_id": "vim.sort-block",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-20",
+      "track": "vim",
+      "exercise_id": "vim.numbered-list",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-21",
+      "track": "vim",
+      "exercise_id": "vim.move-block",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-22",
+      "track": "vim",
+      "exercise_id": "vim.trim-space",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-23",
+      "track": "vim",
+      "exercise_id": "vim.multi-file",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-14",
+      "track": "search",
+      "exercise_id": "search.error-records",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-15",
+      "track": "search",
+      "exercise_id": "search.whole-word",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-16",
+      "track": "search",
+      "exercise_id": "search.literal-pattern",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-17",
+      "track": "search",
+      "exercise_id": "search.exclude-records",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-18",
+      "track": "search",
+      "exercise_id": "search.capture-ids",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-19",
+      "track": "search",
+      "exercise_id": "search.case-fold",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-20",
+      "track": "search",
+      "exercise_id": "search.config-files",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-21",
+      "track": "search",
+      "exercise_id": "search.line-numbers",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-22",
+      "track": "search",
+      "exercise_id": "search.alternation",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-23",
+      "track": "search",
+      "exercise_id": "search.count-matches",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-14",
+      "track": "shell",
+      "exercise_id": "shell.quote-path",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-15",
+      "track": "shell",
+      "exercise_id": "shell.leading-dash",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-16",
+      "track": "shell",
+      "exercise_id": "shell.pipeline-unique",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-17",
+      "track": "shell",
+      "exercise_id": "shell.read-lines",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-18",
+      "track": "shell",
+      "exercise_id": "shell.parameter-default",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-19",
+      "track": "shell",
+      "exercise_id": "shell.exit-branch",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-20",
+      "track": "shell",
+      "exercise_id": "shell.field-split",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-21",
+      "track": "shell",
+      "exercise_id": "shell.arithmetic",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-22",
+      "track": "shell",
+      "exercise_id": "shell.printf-data",
+      "revision": 1,
+      "seed": "preview-v1"
+    },
+    {
+      "date": "2026-09-23",
+      "track": "shell",
+      "exercise_id": "shell.glob-spaces",
+      "revision": 1,
+      "seed": "preview-v1"
+    }
+  ]
+}
