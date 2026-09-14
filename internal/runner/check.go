@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/stevencarpenter/driving-range/internal/model"
@@ -167,28 +166,8 @@ func (r *Runner) fixtureCommand(ctx context.Context, parent model.Attempt, fixtu
 
 func outputsEqual(actual, expected, policy string) (bool, error) {
 	switch policy {
-	case "", "exact", "exact-bytes":
+	case "exact":
 		return actual == expected, nil
-	case "unordered-lines":
-		a := strings.Split(strings.TrimSuffix(actual, "\n"), "\n")
-		b := strings.Split(strings.TrimSuffix(expected, "\n"), "\n")
-		sort.Strings(a)
-		sort.Strings(b)
-		return strings.Join(a, "\n") == strings.Join(b, "\n"), nil
-	case "line-set":
-		set := func(s string) string {
-			m := map[string]bool{}
-			for _, line := range strings.Split(strings.TrimSuffix(s, "\n"), "\n") {
-				m[line] = true
-			}
-			v := make([]string, 0, len(m))
-			for line := range m {
-				v = append(v, line)
-			}
-			sort.Strings(v)
-			return strings.Join(v, "\n")
-		}
-		return set(actual) == set(expected), nil
 	default:
 		return false, fmt.Errorf("unsupported output policy %q", policy)
 	}

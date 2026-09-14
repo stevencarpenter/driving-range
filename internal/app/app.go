@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -203,16 +204,8 @@ func validateConfig(cat *catalog.Catalog, cfg Config) error {
 	default:
 		return fmt.Errorf("unknown theme %q; choose auto, dark, light, or plain", cfg.Theme)
 	}
-	if cfg.Track != "" {
-		found := false
-		for _, track := range cat.Tracks() {
-			if cfg.Track == track {
-				found = true
-			}
-		}
-		if !found {
-			return fmt.Errorf("unknown track %q", cfg.Track)
-		}
+	if cfg.Track != "" && !slices.Contains(cat.Tracks(), cfg.Track) {
+		return fmt.Errorf("unknown track %q", cfg.Track)
 	}
 	if strings.TrimSpace(cfg.Image) == "" || strings.ContainsAny(cfg.Image, "\r\n\x00") {
 		return errors.New("runtime image must be a nonempty image name or digest")
@@ -513,11 +506,7 @@ func (s *Service) Export(format, path string) error {
 			os.Remove(path)
 		}
 	}()
-	if format == "json" {
-		err = s.Store.ExportJSON(f)
-	} else {
-		err = s.Store.ExportCSV(f)
-	}
+	err = s.ExportTo(format, f)
 	if err != nil {
 		return err
 	}

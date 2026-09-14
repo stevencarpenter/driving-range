@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"slices"
 	"strings"
 	"syscall"
 	"time"
@@ -110,11 +111,7 @@ func run(args []string, out io.Writer) error {
 		if len(args) > 2 {
 			return errors.New("usage: golf today [TRACK] [YYYY-MM-DD]")
 		}
-		valid := false
-		for _, v := range cat.Tracks() {
-			valid = valid || track == v
-		}
-		if !valid {
+		if !slices.Contains(cat.Tracks(), track) {
 			return fmt.Errorf("unknown track %q; available: %s", track, strings.Join(cat.Tracks(), ", "))
 		}
 		assignment, ok := cat.Today(now, track)

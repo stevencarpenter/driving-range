@@ -58,7 +58,7 @@ func TestOutputSemantics(t *testing.T) {
 	for _, tc := range []struct {
 		a, b, policy string
 		want         bool
-	}{{"a\n", "a", "exact", false}, {"a\na\n", "a\n", "unordered-lines", false}, {"b\na\n", "a\nb\n", "unordered-lines", true}, {"é\n", "é\n", "exact", true}} {
+	}{{"a\n", "a", "exact", false}, {"a\na\n", "a\n", "exact", false}, {"b\na\n", "a\nb\n", "exact", false}, {"é\n", "é\n", "exact", true}} {
 		got, err := outputsEqual(tc.a, tc.b, tc.policy)
 		if err != nil || got != tc.want {
 			t.Fatalf("%+v: %v %v", tc, got, err)
@@ -67,8 +67,10 @@ func TestOutputSemantics(t *testing.T) {
 	if strings.ContainsRune(SafeText("\x1b]52;c;secret\a\r\u009b"), '\x1b') {
 		t.Fatal("terminal escape survived")
 	}
-	if _, err := outputsEqual("", "", "unknown"); err == nil {
-		t.Fatal("unknown policy accepted")
+	for _, policy := range []string{"", "exact-bytes", "unordered-lines", "line-set", "unknown"} {
+		if _, err := outputsEqual("", "", policy); err == nil {
+			t.Fatalf("unsupported policy %q accepted", policy)
+		}
 	}
 }
 

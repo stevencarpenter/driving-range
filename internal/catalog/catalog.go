@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"path"
 	"regexp"
 	"slices"
@@ -214,13 +215,7 @@ func (c *Catalog) Validate() error {
 				if len(f.ExpectedFiles) == 0 {
 					return fail("tree fixture missing expected files")
 				}
-				same := len(f.Files) == len(f.ExpectedFiles)
-				for name, value := range f.ExpectedFiles {
-					if got, ok := f.Files[name]; !ok || got != value {
-						same = false
-					}
-				}
-				if same {
+				if maps.Equal(f.Files, f.ExpectedFiles) {
 					return fail("unchanged tree already solves fixture")
 				}
 			}

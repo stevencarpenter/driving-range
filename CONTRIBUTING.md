@@ -2,6 +2,14 @@
 
 Build and test with Go 1.26.8 or newer. CI and release builds pin Go 1.26.8. Docker is required only for interactive practice and execution checks.
 
+## Implementation defaults
+
+1. Trace the affected flow and callers before editing. Keep changes focused on the requested behavior.
+2. Reuse existing code, then prefer the Go standard library and native platform features. Use `maps.Equal` and `slices.Contains` instead of manual equality or membership loops. New dependencies need a concrete requirement that existing facilities cannot meet.
+3. Implement supported behavior only. Keep catalog validation and runner behavior consistent; remove unreachable modes and speculative configuration. Add abstractions when current callers require them.
+4. Preserve validation, Docker isolation, ownership checks, durable writes, crash recovery, terminal restoration, and accessibility. Reducing line count does not justify weakening these contracts.
+5. Before merging to `main`, run `make check` and retain a focused regression check for changed nontrivial behavior. Run Docker integration and affected solution audits for runner or validator changes, `make smoke` for terminal handoff changes, and race tests for concurrency changes. Report commands and observed results; distinguish skipped checks from passes.
+
 ## Checks
 
 ```sh
