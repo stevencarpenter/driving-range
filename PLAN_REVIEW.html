@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en" data-theme="luxury">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Driving Range · Product proposal</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+<style>
+*{box-sizing:border-box}html{background:#101214;color:#eeeae0}body{margin:0;font:17px/1.65 system-ui,sans-serif;background:#101214;color:#eeeae0}main{max-width:1100px;margin:auto;padding:52px 28px 80px}h1{font-size:clamp(40px,7vw,78px);line-height:1.05;margin:20px 0}h2{font-size:28px;line-height:1.3;margin:0 0 18px}h3{font-size:20px;margin:0 0 8px}p{margin:12px 0}a{color:#d9c28b;text-decoration:underline;text-underline-offset:4px}header{border-bottom:1px solid #3b3c38;padding-bottom:36px;margin-bottom:36px}.eyebrow{font:12px/1.5 monospace;letter-spacing:.12em;color:#c9bd9e}.lead{max-width:760px;font-size:24px;line-height:1.45}.muted{color:#b8b7ad}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.panel{min-width:0;border:1px solid #41433e;padding:24px;border-radius:6px;background:#191c1d}section{margin:44px 0}.pill{display:inline-block;font:12px/1.5 monospace;border:1px solid #727660;padding:3px 9px;border-radius:3px;margin-bottom:14px;color:#dce5b9}.number{font:38px/1.2 monospace;color:#dce5b9}.table-wrap{overflow-x:auto;border:1px solid #41433e;border-radius:6px}table{border-collapse:collapse;width:100%;font-size:15px}th,td{padding:16px;text-align:left;vertical-align:top;border-bottom:1px solid #41433e}th{color:#d9c28b;font-weight:600}tbody tr:last-child td{border:0}pre{background:#080a0b;border:1px solid #41433e;padding:24px;overflow:auto;font:14px/1.7 ui-monospace,monospace;color:#dce5b9;border-radius:6px}code{font-family:ui-monospace,monospace}details{border-top:1px solid #41433e;padding:19px 0}summary{cursor:pointer;font-weight:600;font-size:19px}summary:focus-visible,a:focus-visible{outline:3px solid #dce5b9;outline-offset:5px}details p{max-width:850px}li{margin:9px 0}p,h1,h2,h3,li,td,th{overflow-wrap:anywhere}.callout{border-left:3px solid #d9c28b;padding:8px 24px;background:#1d201d}nav{display:flex;gap:20px;flex-wrap:wrap;margin-top:24px;font-size:14px}footer{border-top:1px solid #41433e;padding-top:24px;color:#b8b7ad}@media(max-width:720px){main{padding:28px 18px}.grid3{grid-template-columns:minmax(0,1fr)}.lead{font-size:21px}th,td{padding:11px}pre{font-size:11px;padding:14px}}@media print{html,body{background:white;color:black}main{padding:0}.panel,pre,.callout{background:white;color:black}a,.muted,.eyebrow,.number,th{color:#333}details{break-inside:avoid}.panel{break-inside:avoid}nav{display:none}}
+</style>
+</head>
+<body><main>
+<header>
+<div class="eyebrow">PRODUCT PROPOSAL · 14 SEPTEMBER 2026 · PLANNING COMPLETE</div>
+<h1>Driving Range</h1>
+<p class="lead">Daily terminal practice for fluency that survives the next real task.</p>
+<p class="muted">New repository: <code>driving-range</code>. Proposed executable: <code>golf</code>. The existing <code>vim-golf</code> stays unchanged.</p>
+<nav aria-label="Plan navigation"><a href="#decision">Recommendation</a><a href="#experience">TUI experience</a><a href="#scope">Track scope</a><a href="#business">Business model</a><a href="#gates">Delivery gates</a><a href="PRODUCT_PLAN.md">Complete Markdown plan</a></nav>
+</header>
+<section id="decision">
+<h2>Launch an OSS practice product. Test subscriptions after repeat use.</h2>
+<div class="grid3">
+<article class="panel"><div class="pill">EXPERIENCE</div><h3>One useful daily</h3><p>Three to seven minutes in the real editor or shell. A clear goal, a checkable result, and an explanation.</p></article>
+<article class="panel"><div class="pill">MVP CONTRACT</div><h3>Every attempt survives</h3><p>Local outcomes, elapsed time, hints, checks, retries, and environment context. No account required.</p></article>
+<article class="panel"><div class="pill">PRODUCT ETHOS</div><h3>Correctness before compression</h3><p>Teach useful operations and tradeoffs. Offer shortest-input optimization as an explicit replay mode.</p></article>
+</div>
+<p class="callout"><strong>Market fit is a hypothesis.</strong> <a href="https://sadservers.com/pricing">SadServers already sells CLI/TUI access</a>, and <a href="https://exercism.org/">Exercism offers free CLI-first practice</a>. The differentiation must be the daily habit, practical shell skills, editorial quality, and personal progress.</p>
+</section>
+<section id="experience">
+<h2>The shell is the product surface</h2>
+<p>Start one exercise. Work in the actual tool. Check the result. Save it. Leave after one useful repetition.</p>
+<pre aria-label="Illustrative Driving Range home screen">driving range                          Tue 15 Sep   LOCAL
+Today   Practice   Progress   Settings
+
+TODAY / SEARCH                           About 5 minutes
+Find the active configurations
+Select production configs; exclude generated files.
+
+Profile: standard / rg                   Ready
+Last search result: solved, 4m 12s, 1 hint
+
+&gt; Start today's exercise
+  Resume: Vim / replace repeated values
+
+Enter open   j/k or arrows move   ? help   q quit</pre>
+<p class="muted">Illustrative mockup. No application has been implemented. The TUI yields terminal ownership to Neovim or Bash, preserving native keybindings.</p>
+<div class="grid3">
+<article class="panel"><h3>Low friction</h3><p>One selected daily, explicit resume, optional references, and no backlog punishment.</p></article>
+<article class="panel"><h3>Shell ergonomics</h3><p>Quoting, completion, history recall, command editing, selection, and recovery. Configuration and dialect are explicit.</p></article>
+<article class="panel"><h3>Accessible defaults</h3><p>80×24 layout, arrows and Vim navigation, plain output, no-color support, no required mouse, tmux, or special fonts.</p></article>
+</div>
+</section>
+<section id="scope">
+<h2>Three launch tracks, then deliberate expansion</h2>
+<div class="table-wrap"><table><thead><tr><th>Stage</th><th>Tools and behaviors</th><th>Acceptance contract</th></tr></thead><tbody>
+<tr><td>MVP</td><td>Neovim, rg/grep/regex, Bash agility</td><td>30 reviewed exercises; exact-tree or stdout validation; durable attempts.</td></tr>
+<tr><td>Search and processing</td><td>fd, find, sed, awk</td><td>Explicit dialects, path-set semantics, and reusable commands checked on multiple fixtures.</td></tr>
+<tr><td>Repository practice</td><td>Git, then jj</td><td>Synthetic repositories; semantic validation of trees, index, ancestry, refs, and tool-specific state.</td></tr>
+<tr><td>Interaction depth</td><td>Readline, ZLE, fzf, tmux, jobs/signals</td><td>Declared shell/keymap; technique verification only where it can actually be observed.</td></tr>
+<tr><td>Language practice</td><td>Python first; further runtimes follow demand</td><td>Practical terminal tasks, pinned runtimes, and test-based validators.</td></tr>
+</tbody></table></div>
+<p class="callout"><strong>Thirty exercises means ten daily assignments per launch track.</strong> Start with a ten-day preview. Three fresh daily tracks would require an estimated 21 to 42 editorial hours per week, assuming one to two hours per exercise. Measure that cost before promising the cadence.</p>
+</section>
+<section>
+<h2>Design decisions that determine feasibility</h2>
+<details open><summary>Performance records are not proof of learning</summary><p>Save all attempts and checks in SQLite. A retry creates a new attempt; resume adds a session. Compare results only across equivalent revisions, fixtures, assistance, profiles, and metric versions. Raw input bytes are not physical keystrokes. An unseen delayed task can investigate transfer; a faster replay can simply mean fixture memorization.</p></details>
+<details><summary>A workspace directory is not a sandbox</summary><p>Standard exercises use a pinned Linux container with no host home, credentials, socket, or network, plus non-root execution and resource limits. Personal configuration practice is a separately labeled later profile. Never silently fall back to host execution. These controls require testing on both supported hosts. <a href="https://docs.docker.com/engine/containers/run/">Docker runtime controls</a>.</p></details>
+<details><summary>Use native terminal handoff before building terminal emulation</summary><p>Propose Go and Bubble Tea with direct child processes, two initial validators, SQLite, and versioned filesystem packs. Prove child lifecycle and terminal restoration first. <a href="https://github.com/charmbracelet/bubbletea/blob/main/exec.go">Bubble Tea supplies a child-process handoff API</a>. No server, plugin ABI, ORM, or custom terminal emulator is needed for the local MVP.</p></details>
+<details><summary>Preserve vim-golf as an independent project</summary><p>The inspected runner provides persistent Neovim workspaces, exact-output checks, and raw-byte scoring, but no general attempt ledger. Adapt the useful exercise format into the new project. Confirm licensing and remove undocumented personal-configuration assumptions before public reuse. No repository initialization, remote changes, or product implementation is part of this planning delivery.</p></details>
+</section>
+<section id="business">
+<h2>Keep the local product complete</h2>
+<div class="grid3">
+<article class="panel"><div class="pill">RECOMMENDED LAUNCH</div><h3>OSS + sponsorship</h3><p>Free TUI, public dailies and archive, hints, full local history, and export. MIT application code and explicitly licensed public content.</p><p class="muted">Useful even if a subscription business never develops.</p></article>
+<article class="panel"><div class="pill">PRICE EXPERIMENT</div><h3>Individual membership</h3><p>Test $6/month or $60/year for managed sync/backup and dependable guided editorial delivery.</p><p class="muted">Demand is unverified. Sync alone may be insufficient.</p></article>
+<article class="panel"><div class="pill">LATER PILOT</div><h3>Team programs</h3><p>Test $150/month for up to ten participants: private exercises, onboarding sequences, and consent-based summaries.</p><p class="muted">Higher sales, privacy, and support obligations.</p></article>
+</div>
+<p>250 members at $6/month generate $1,500 gross monthly revenue, before all costs. At an assumed 5% conversion, 1,000 monthly active users generate $300. These are arithmetic scenarios, not forecasts.</p>
+<p>Nearby evidence: <a href="https://sadservers.com/pricing">SadServers lists $9/month Pro and $11/month Pro+</a>; <a href="https://codecrafters.io/pricing">CodeCrafters offers individual and team memberships</a>. Neither establishes willingness to pay for Driving Range.</p>
+</section>
+<section id="gates">
+<h2>Build against observable gates</h2>
+<div class="table-wrap"><table><thead><tr><th>Stage</th><th>Estimate</th><th>Exit evidence</th></tr></thead><tbody>
+<tr><td>Execution spike</td><td>1 week</td><td>Neovim and isolated Bash launch, check, restore terminal state, and save an attempt on macOS and Linux.</td></tr>
+<tr><td>Vertical slice</td><td>2 weeks</td><td>Complete daily loop, ten exercises, two validators, history, export, restart/resume.</td></tr>
+<tr><td>MVP</td><td>2 to 3 weeks</td><td>Three tracks, 30 exercises, offline operation, installable releases, safety and lifecycle checks.</td></tr>
+<tr><td>Observed pilot</td><td>4 calendar weeks</td><td>30 to 50 participants; counted activation, repeat use, content defects, and unseen-task results.</td></tr>
+<tr><td>Expansion decision</td><td>1 week</td><td>Select the next track from evidence; require actual purchases before subscription infrastructure.</td></tr>
+</tbody></table></div>
+<p class="muted">One experienced full-time engineer plus a part-time content reviewer. Approximately five to six engineering weeks to private alpha; ten to eleven calendar weeks to the first four-week product assessment.</p>
+<div class="grid3" style="margin-top:24px">
+<article class="panel"><div class="number">70%</div><h3>Activation target</h3><p>Installed pilot participants completing an exercise within 24 hours.</p></article>
+<article class="panel"><div class="number">40%</div><h3>Repeat-use target</h3><p>Activated participants practicing on three distinct days in week two.</p></article>
+<article class="panel"><div class="number">30%</div><h3>Week-four target</h3><p>Activated participants completing an exercise during days 22 through 28.</p></article>
+</div>
+<p class="muted">Proposed decision thresholds, not industry benchmarks. Publish counts and denominators; a small pilot cannot establish product-market fit.</p>
+</section>
+<footer><p><strong>Review the complete proposal:</strong> <a href="PRODUCT_PLAN.md">PRODUCT_PLAN.md</a> includes all feature contracts, calendar rules, editorial operations, limits, licensing recommendations, and acceptance checks.</p><p>Design source: Lavish's fallback design guidance, because the inspected shell project has no existing visual design system. This HTML is a planning artifact; the proposed product remains a TUI.</p></footer>
+</main></body></html>
