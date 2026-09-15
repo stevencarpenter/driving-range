@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/stevencarpenter/driving-range/internal/app"
@@ -61,6 +62,47 @@ func press(m Model, key string) (Model, tea.Cmd) {
 	}
 	updated, cmd := m.Update(msg)
 	return updated.(Model), cmd
+}
+
+func TestSpinnerRunsOnlyDuringOperations(t *testing.T) {
+	m := testModel(t)
+	m.screen = progress
+	m.records = []model.Progress{{Attempt: model.Attempt{ID: "attempt", ExerciseID: "shell.task-00", Revision: 1}}}
+	m, cmd := press(m, "enter")
+	if !m.busy || cmd == nil {
+		t.Fatal("opening details did not start an operation")
+	}
+	batch, ok := cmd().(tea.BatchMsg)
+	if !ok {
+		t.Fatal("operation did not schedule the spinner")
+	}
+	var tick spinner.TickMsg
+	var result detailMsg
+	foundTick, foundResult := false, false
+	for _, command := range batch {
+		switch msg := command().(type) {
+		case spinner.TickMsg:
+			tick, foundTick = msg, true
+		case detailMsg:
+			result, foundResult = msg, true
+		}
+	}
+	if !foundTick || !foundResult {
+		t.Fatal("batch must preserve both the operation and spinner commands")
+	}
+	updated, nextTick := m.Update(tick)
+	if nextTick == nil {
+		t.Fatal("busy spinner stopped ticking")
+	}
+	updated, _ = updated.Update(result)
+	m = updated.(Model)
+	if m.busy {
+		t.Fatal("operation completion did not clear busy state")
+	}
+	_, nextTick = m.Update(tick)
+	if nextTick != nil {
+		t.Fatal("idle spinner kept scheduling ticks")
+	}
 }
 
 func TestPracticeSearchAndSelection(t *testing.T) {
@@ -339,7 +381,17 @@ func TestExternalAssistanceCannotBeUnmarked(t *testing.T) {
 	if cmd == nil {
 		t.Fatal("marking assistance did not persist")
 	}
-	updated, refresh := m.Update(cmd())
+	message := cmd()
+	if batch, ok := message.(tea.BatchMsg); ok {
+		for _, command := range batch {
+			if result := command(); result != nil {
+				if _, ok := result.(operationMsg); ok {
+					message = result
+				}
+			}
+		}
+	}
+	updated, refresh := m.Update(message)
 	m = updated.(Model)
 	if m.errorText != "" {
 		t.Fatal(m.errorText)

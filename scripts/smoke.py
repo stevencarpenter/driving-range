@@ -173,7 +173,16 @@ def main():
                 terminal.close()
             results = json.loads(plain(state, "export"))
             assert any(a["exercise_id"] == "vim.change-value" and a["status"] == "solved" for a in results["attempts"])
-            print("PASS: shell failure/resume/retry, SIGTERM persistence, TUI resize and native Neovim custom keybinding, terminal restoration")
+            zsh_config = state / "zsh"
+            zsh_config.mkdir()
+            (zsh_config / ".zshrc").write_text(
+                "alias golf-zsh-config='print -r -- GOLF_ZSH_CONFIG_LOADED'\n"
+            )
+            PRACTICE_ENV["ZDOTDIR"] = str(zsh_config)
+            for exercise in ("zsh.array-boundaries", "zsh.glob-qualifier"):
+                output = session(state, ["play", exercise], b"golf-zsh-config\nexit\n", 1)
+                assert b"GOLF_ZSH_CONFIG_LOADED" in output, output[-5000:]
+            print("PASS: shell failure/resume/retry, SIGTERM persistence, TUI resize and native Neovim custom keybinding, zsh challenges with .zshrc alias, terminal restoration")
         finally:
             # IDs come exclusively from this test's temporary database.
             if (state / "driving-range.db").exists():

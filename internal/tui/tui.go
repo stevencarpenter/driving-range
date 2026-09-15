@@ -11,6 +11,7 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/stevencarpenter/driving-range/internal/app"
@@ -32,6 +33,7 @@ const (
 type Model struct {
 	service          *app.Service
 	renderer         *lipgloss.Renderer
+	spinner          spinner.Model
 	lifecycle        *lifecycle
 	screen           screen
 	returnTo         screen
@@ -82,7 +84,7 @@ type detailMsg struct {
 }
 
 func New(s *app.Service) Model {
-	return Model{service: s, renderer: lipgloss.NewRenderer(os.Stdout), lifecycle: newLifecycle(), width: 80, height: 24, chooseTrack: s.Config.Track == "", now: time.Now}
+	return Model{service: s, spinner: spinner.New(spinner.WithSpinner(spinner.MiniDot)), renderer: lipgloss.NewRenderer(os.Stdout), lifecycle: newLifecycle(), width: 80, height: 24, chooseTrack: s.Config.Track == "", now: time.Now}
 }
 
 func Run(s *app.Service) (err error) {
@@ -163,8 +165,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.errorText = "Read attempt details: " + msg.err.Error()
 		}
 		return m, nil
+	case spinner.TickMsg:
+		if !m.busy {
+			return m, nil
+		}
+		var cmd tea.Cmd
+		m.spinner, cmd = m.spinner.Update(msg)
+		return m, cmd
 	case tea.KeyMsg:
-		return m.key(msg)
+		next, cmd := m.key(msg)
+		updated := next.(Model)
+		if !m.busy && updated.busy {
+			cmd = tea.Batch(cmd, updated.spinner.Tick)
+		}
+		return updated, cmd
 	}
 	return m, nil
 }
@@ -716,7 +730,12 @@ func clean(s string) string {
 	}, s)
 }
 
-func (m Model) contentHeight() int { return max(1, m.height-7) }
+func (m Model) contentHeight() int {
+	if m.framed() {
+		return max(1, m.height-8)
+	}
+	return max(1, m.height-6)
+}
 
 func duration(p model.Progress) string {
 	if p.UnknownDuration {

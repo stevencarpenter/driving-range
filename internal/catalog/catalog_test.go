@@ -19,6 +19,9 @@ func TestBundledCatalogAndFrozenSchedule(t *testing.T) {
 	counts := map[string]int{}
 	for _, ch := range c.All() {
 		counts[ch.Track]++
+		if ch.Track == "zsh" && ch.Editor != "zsh" {
+			t.Errorf("%s launches %s instead of zsh", ch.ID, ch.Editor)
+		}
 		if !strings.Contains(ch.Brief, "Key reference:") {
 			t.Errorf("%s lacks inline reference", ch.ID)
 		}

@@ -2169,7 +2169,7 @@
       "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
       "profile": "standard",
       "entrypoint": "solution.sh",
-      "editor": "bash",
+      "editor": "zsh",
       "validator": {
         "kind": "stdout",
         "version": "1",
@@ -2225,7 +2225,7 @@
       "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
       "profile": "standard",
       "entrypoint": "solution.sh",
-      "editor": "bash",
+      "editor": "zsh",
       "validator": {
         "kind": "stdout",
         "version": "1",

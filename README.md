@@ -112,19 +112,20 @@ Themes are `auto`, `dark`, `light`, and `plain`. `NO_COLOR` disables accent colo
 
 `GOLF_IMAGE` selects a trusted local runtime image for development. It changes new attempts and runtime setup, not the image ID already recorded on an attempt. Docker is required for fixture setup and checking. Native practice uses the tools already installed on your host; missing tools produce an installation error.
 
-## Manual installation
+## Installation and upgrades
 
-From a source checkout:
+From a source checkout, run the same command for a fresh installation or an upgrade:
 
 ```sh
-just build
-mkdir -p "$HOME/.local/bin"
-install -m 755 golf "$HOME/.local/bin/golf"
-export PATH="$HOME/.local/bin:$PATH"
-golf --version
+just install
+golf
 ```
 
-Release packaging targets macOS arm64 and Linux amd64/arm64. `just VERSION=v0.1.0 release` builds archives and `SHA256SUMS` locally; it does not publish. No published release or signed artifact is assumed by these instructions. For a downloaded release, verify the selected archive against its checksum before extracting, then install its `golf` binary with the same `install` command. Use `shasum -a 256` on macOS or `sha256sum` on Linux. See [CONTRIBUTING.md](CONTRIBUTING.md#release-packaging) for optional provenance verification.
+`just install` builds the current checkout, creates `~/.local/bin` if needed, and atomically replaces `golf` there. It replaces any installed version without an uninstall step and preserves settings, attempts, and workspaces. Build or copy failures leave the installed binary intact. Set `GOLF_INSTALL_DIR` to select another installation directory. `just VERSION=v0.1.0 install` sets the binary's version label; it does not download or select that source version.
+
+The installer reports when the destination is missing from PATH or another `golf` takes precedence. For the default destination, add `export PATH="$HOME/.local/bin:$PATH"` to your shell configuration if needed. Runtime preparation remains `golf setup` as described in Quick start.
+
+Release packaging targets macOS arm64 and Linux amd64/arm64. `just VERSION=v0.1.0 release` builds archives and `SHA256SUMS` locally; it does not publish. No published release or signed artifact is assumed by these instructions. For a downloaded release, verify the selected archive against its checksum before extracting, then run `mkdir -p "$HOME/.local/bin"` and `install -m 755 golf "$HOME/.local/bin/golf"`. Use `shasum -a 256` on macOS or `sha256sum` on Linux. See [CONTRIBUTING.md](CONTRIBUTING.md#release-packaging) for optional provenance verification.
 
 ## Contributing
 

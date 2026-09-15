@@ -16,7 +16,7 @@ Build and test with Go 1.26.8 or newer and `just`. CI and release builds pin Go 
 just check
 ```
 
-This runs unit tests, `go vet ./...`, and `golf audit` for catalog metadata. The terminal smoke check requires native Neovim and Bash as well as Docker. Runtime tests skip unless `GOLF_INTEGRATION=1`. A passing ordinary test run does not verify Docker isolation or reference solutions.
+This runs unit tests, `go vet ./...`, `golf audit` for catalog metadata, and installation regression checks. The terminal smoke check requires native Neovim, Bash, and zsh as well as Docker. Runtime tests skip unless `GOLF_INTEGRATION=1`. A passing ordinary test run does not verify Docker isolation or reference solutions.
 
 Run the execution checks against a trusted local Docker engine:
 

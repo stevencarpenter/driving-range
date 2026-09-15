@@ -50,77 +50,6 @@ func (m *Model) scroll(delta int) {
 	m.offset = max(0, min(m.offset+delta, max(0, len(m.contentLines())-m.contentHeight())))
 }
 
-func (m Model) View() string {
-	width := m.contentWidth()
-	styles := m.styles()
-	header := paint(styles.title, "DRIVING RANGE")
-	if width >= 50 {
-		tagline := "Daily terminal practice"
-		header += strings.Repeat(" ", max(1, width-13-len(tagline))) + paint(styles.muted, tagline)
-	}
-	var tabs []string
-	for i, label := range []string{"Today", "Practice", "Progress", "Settings"} {
-		style := styles.nav
-		text := fmt.Sprintf(" %d %s ", i+1, label)
-		if width < 46 {
-			text = fmt.Sprintf(" %d ", i+1)
-		}
-		if m.topLevel() == screen(i) {
-			style = styles.selected
-			text = "[" + strings.TrimSpace(text) + "]"
-		}
-		tabs = append(tabs, paint(style, text))
-	}
-	lines := m.contentLines()
-	height := m.contentHeight()
-	offset := min(max(0, m.offset), max(0, len(lines)-height))
-	if (m.listNavigating() || m.chooseTrack) && !m.help && m.confirm == "" {
-		for i, line := range lines {
-			if strings.HasPrefix(ansi.Strip(line), "> ") {
-				if i < offset {
-					offset = i
-				}
-				if i >= offset+height {
-					offset = i - height + 1
-				}
-				break
-			}
-		}
-	}
-	visible := append([]string(nil), lines[offset:min(len(lines), offset+height)]...)
-	for len(visible) < height {
-		visible = append(visible, "")
-	}
-	status := m.status
-	if status == "" {
-		status = "Local history. No account required."
-		if len(lines) > height {
-			status = fmt.Sprintf("Lines %d-%d of %d", offset+1, min(offset+height, len(lines)), len(lines))
-			if m.listNavigating() {
-				status += "   j/k select"
-			} else {
-				status += "   j/k scroll"
-			}
-		}
-	}
-	rule := paint(styles.muted, strings.Repeat("-", width))
-	result := []string{header, strings.Join(tabs, " "), rule}
-	result = append(result, visible...)
-	result = append(result, rule, paint(styles.muted, status), m.footerKeys(m.keyHelp()))
-	margin := strings.Repeat(" ", m.margin())
-	for i, line := range result {
-		result[i] = margin + ansi.Truncate(line, width, "")
-	}
-	// Keep the footer anchored without writing beyond the terminal's last row.
-	if len(result) < m.height {
-		result = append([]string{""}, result...)
-	}
-	if len(result) > m.height {
-		result = result[:max(1, m.height)]
-	}
-	return strings.Join(result, "\n")
-}
-
 func (m Model) body() string {
 	switch m.screen {
 	case today:
@@ -179,10 +108,11 @@ func (m Model) todayView() string {
 		next := time.Date(now.UTC().Year(), now.UTC().Month(), now.UTC().Day()+1, 0, 0, 0, 0, time.UTC).In(now.Location())
 		calendar = "Next daily reset: " + next.Format("Mon 15:04 MST") + " (your local time)."
 	}
-	lines := []string{paint(styles.title, c.Title), paint(styles.muted, label), "", paint(styles.text, c.Objective), "",
-		paint(styles.key, fmt.Sprintf("About %d minutes   |   difficulty %d/5", c.Minutes, c.Difficulty)),
-		paint(styles.muted, "Tools: "+strings.Join(c.Tools, ", ")+" | profile: "+c.Profile), "",
-		m.primary("> Open exercise [Enter]") + "   " + paint(styles.text, "[t] Choose track"), "", m.section("YOUR PRACTICE")}
+	lines := []string{paint(styles.title, c.Title), m.goal(c.Objective),
+		m.primary("> Open exercise [Enter]") + "   " + paint(styles.text, "[t] Choose track"), "",
+		paint(styles.muted, label),
+		paint(styles.muted, fmt.Sprintf("About %d minutes   |   difficulty %d/5", c.Minutes, c.Difficulty)),
+		paint(styles.muted, "Tools: "+strings.Join(c.Tools, ", ")+" | profile: "+c.Profile), "", m.section("YOUR PRACTICE")}
 	latest := "No attempt yet. Start when you're ready."
 	for _, r := range m.records {
 		if r.Attempt.ExerciseID == c.ID && r.Attempt.Revision == c.Revision && (a == nil || r.Attempt.MatchesAssignment(*a)) {
@@ -234,15 +164,17 @@ func (m Model) exerciseView() string {
 	if a != nil && a.AssignmentDate != "" {
 		label = "DAILY / " + a.AssignmentDate + " UTC (assignment fixed for this attempt)"
 	}
-	lines := []string{paint(styles.title, c.Title), paint(styles.muted, label+" / "+c.Track),
-		paint(styles.muted, fmt.Sprintf("%s revision %d | %s | %d minutes", c.ID, c.Revision, c.Profile, c.Minutes)), ""}
+	lines := []string{paint(styles.title, c.Title), m.goal(c.Objective), paint(styles.muted, label+" / "+c.Track), ""}
 	if a != nil && (a.Status == "solved" || a.Status == "abandoned") {
 		lines = append(lines, m.primary("[r] New attempt")+"   "+paint(styles.text, "[p] Saved result   [v] Explanation"))
 	} else {
 		lines = append(lines, m.primary("[Enter] Start / resume")+"   "+paint(styles.text, "[c] Check   [h] Hint"),
 			paint(styles.muted, "[v] Reveal solution   [x] Mark external assistance   [a] Abandon"))
 	}
-	lines = append(lines, "", m.section("GOAL"), paint(styles.text, c.Objective), "", m.section("BRIEF"), paint(styles.text, c.Brief))
+	// The goal is already displayed above; omit an identical opening paragraph.
+	brief := strings.TrimPrefix(c.Brief, c.Objective+"\n\n")
+	lines = append(lines, "", m.section("BRIEF"), paint(styles.text, brief), "", m.section("EXERCISE DETAILS"),
+		paint(styles.muted, fmt.Sprintf("%s revision %d | %s | %d minutes", c.ID, c.Revision, c.Profile, c.Minutes)))
 	if a != nil {
 		lines = append(lines, "", m.section("ATTEMPT"), paint(styles.text, "Status: "+a.Status),
 			paint(styles.muted, fmt.Sprintf("Hints: %d | solution revealed: %t | external assistance: %t", a.HintLevel, a.SolutionRevealed, a.ExternalAssistance)))

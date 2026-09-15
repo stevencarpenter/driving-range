@@ -70,7 +70,7 @@ func TestColorSelectionAndPlainSelectionAgree(t *testing.T) {
 			if !strings.Contains(ansi.Strip(view), "> Task 29") {
 				t.Fatalf("%s selection hidden at %v:\n%s", theme, size, view)
 			}
-			if ansi.Strip(view) != plain {
+			if strings.NewReplacer("╭", "+", "╮", "+", "╰", "+", "╯", "+", "│", "|", "─", "-").Replace(ansi.Strip(view)) != plain {
 				t.Fatalf("%s layout differs from plain at %v", theme, size)
 			}
 		}
@@ -125,5 +125,123 @@ func TestExercisePrioritizesActionAndInstructions(t *testing.T) {
 	}
 	if strings.Index(m.exerciseView(), "BRIEF") > strings.Index(m.exerciseView(), "ATTEMPT") {
 		t.Fatal("attempt bookkeeping precedes instructions")
+	}
+}
+
+func TestGoalLeadsActionsAndUsesAvailableWidth(t *testing.T) {
+	m := testModel(t)
+	c := &m.service.Catalog.Challenges[0]
+	c.Objective = "Change port=3000 to port=8080."
+	c.Brief = c.Objective + "\n\nKeep the comment and host unchanged."
+	m.openChallenge(*c, nil, today)
+	for _, width := range []int{80, 120, 160, 240} {
+		m.width, m.height = width, 40
+		for _, screen := range []screen{today, exercise} {
+			m.screen = screen
+			view := m.View()
+			if strings.Index(view, c.Objective) < 0 || strings.Index(view, c.Objective) > strings.Index(view, "[Enter]") {
+				t.Fatalf("goal must precede the primary action on screen %d", screen)
+			}
+			if len(strings.Split(view, "\n")) != m.height {
+				t.Fatal("view does not use terminal height")
+			}
+			for _, line := range strings.Split(m.goal(c.Objective), "\n") {
+				if ansi.StringWidth(line) != m.contentWidth() {
+					t.Fatalf("goal panel does not fill %d columns: %q", width, line)
+				}
+			}
+		}
+	}
+	body := m.exerciseView()
+	if strings.Count(body, c.Objective) != 1 || !strings.Contains(body, "Keep the comment and host unchanged.") {
+		t.Fatal("brief must retain instructions without repeating the goal")
+	}
+	// A nonmatching brief must remain intact.
+	m.challenge.Brief = "Different instructions.\n\n" + c.Objective
+	if !strings.Contains(m.exerciseView(), "Different instructions.") {
+		t.Fatal("different opening paragraph was removed")
+	}
+}
+
+func TestGoalWrapsLongUnicodeContent(t *testing.T) {
+	m := testModel(t)
+	objective := strings.Repeat("日本語", 40) + " finishgoal"
+	for _, width := range []int{12, 40, 80, 160} {
+		m.width = width
+		goal := ansi.Wrap(m.goal(objective), m.contentWidth(), "")
+		if strings.Count(goal, "日") != 40 || strings.Count(goal, "語") != 40 {
+			t.Fatalf("goal text lost at width %d", width)
+		}
+		for _, line := range strings.Split(goal, "\n") {
+			if ansi.StringWidth(line) > m.contentWidth() {
+				t.Fatalf("goal overflows at width %d: %q", width, line)
+			}
+		}
+	}
+}
+
+func TestWideLayoutTracksSelectionAndCollapses(t *testing.T) {
+	m := testModel(t)
+	m.screen = practice
+	m.width, m.height = 160, 40
+	m.service.Catalog.Challenges[0].Objective = "First objective"
+	m.service.Catalog.Challenges[1].Objective = "Second objective"
+	if !strings.Contains(m.View(), "First objective") {
+		t.Fatal("wide layout has no selected exercise preview")
+	}
+	m, _ = press(m, "j")
+	view := m.View()
+	if !strings.Contains(view, "Second objective") || strings.Contains(view, "First objective") {
+		t.Fatal("preview did not follow keyboard selection")
+	}
+	for _, line := range strings.Split(view, "\n") {
+		if ansi.StringWidth(line) != m.width {
+			t.Fatal("wide layout does not fill the terminal")
+		}
+	}
+	m.width = 80
+	if strings.Contains(m.View(), "SELECTED EXERCISE") {
+		t.Fatal("preview did not collapse in a narrow terminal")
+	}
+	m, _ = press(m, "enter")
+	if !strings.Contains(m.View(), "Second objective") {
+		t.Fatal("selected goal is not accessible after collapsing the preview")
+	}
+}
+
+func TestTrackProgressCountsExercisesAndHonorsNoColor(t *testing.T) {
+	m := testModel(t)
+	m.records = []model.Progress{
+		{Attempt: model.Attempt{ExerciseID: "shell.task-00", Revision: 1, Status: "solved"}},
+		{Attempt: model.Attempt{ExerciseID: "shell.task-00", Revision: 1, Status: "solved"}},
+		{Attempt: model.Attempt{ExerciseID: "shell.task-01", Revision: 2, Status: "solved"}},
+		{Attempt: model.Attempt{ExerciseID: "shell.task-02", Revision: 1, Status: "active"}},
+	}
+	if !strings.Contains(m.trackProgress("shell", 30), "1 of 30 exercises solved") {
+		t.Fatal("track progress counted retries, other revisions, or unsolved attempts")
+	}
+	m.screen, m.width, m.height = practice, 160, 40
+	m.service.Config.Theme = "dark"
+	m.renderer.SetColorProfile(termenv.TrueColor)
+	t.Setenv("NO_COLOR", "")
+	view := m.View()
+	if strings.Contains(view, "\x1b") || strings.ContainsAny(view, "╭╮╰╯━─") {
+		t.Fatal("NO_COLOR preview must use unstyled ASCII frames and progress")
+	}
+}
+
+func TestNestedStyleRestoresContainingSurface(t *testing.T) {
+	m := testModel(t)
+	m.service.Config.Theme = "dark"
+	m.renderer.SetColorProfile(termenv.TrueColor)
+	t.Setenv("NO_COLOR", "")
+	if err := os.Unsetenv("NO_COLOR"); err != nil {
+		t.Fatal(err)
+	}
+	s := m.styles()
+	prefix := strings.TrimSuffix(s.surface.Render(""), "\x1b[0m")
+	view := onSurface(s.surface, paint(s.action, "Action")+" gap")
+	if prefix == "" || !strings.Contains(view, "\x1b[0m"+prefix+" gap") {
+		t.Fatal("nested style reset exposes terminal background between elements")
 	}
 }
