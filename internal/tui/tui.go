@@ -12,6 +12,7 @@ import (
 	"unicode"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/stevencarpenter/driving-range/internal/app"
 	"github.com/stevencarpenter/driving-range/internal/model"
 )
@@ -30,6 +31,7 @@ const (
 // Model keeps navigation separate from the persisted attempt lifecycle.
 type Model struct {
 	service          *app.Service
+	renderer         *lipgloss.Renderer
 	lifecycle        *lifecycle
 	screen           screen
 	returnTo         screen
@@ -80,7 +82,7 @@ type detailMsg struct {
 }
 
 func New(s *app.Service) Model {
-	return Model{service: s, lifecycle: newLifecycle(), width: 80, height: 24, chooseTrack: s.Config.Track == "", now: time.Now}
+	return Model{service: s, renderer: lipgloss.NewRenderer(os.Stdout), lifecycle: newLifecycle(), width: 80, height: 24, chooseTrack: s.Config.Track == "", now: time.Now}
 }
 
 func Run(s *app.Service) (err error) {
