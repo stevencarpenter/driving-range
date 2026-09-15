@@ -111,7 +111,7 @@ func Open(stateDir string, readOnly bool) (*Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	s := &Service{Catalog: cat, Config: cfg, StateDir: stateDir, Runner: runner.New(cfg.Image)}
+	s := &Service{Catalog: cat, Config: cfg, StateDir: stateDir, Runner: runner.NewNative(cfg.Image, filepath.Join(stateDir, "workspaces"))}
 	if readOnly {
 		s.Store, err = store.OpenReadOnly(stateDir)
 	} else {
@@ -256,7 +256,7 @@ func (s *Service) SetConfig(cfg Config) error {
 		return err
 	}
 	s.Config = cfg
-	s.Runner = runner.New(cfg.Image)
+	s.Runner = runner.NewNative(cfg.Image, filepath.Join(s.StateDir, "workspaces"))
 	return nil
 }
 

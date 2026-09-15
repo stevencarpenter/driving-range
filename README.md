@@ -6,10 +6,10 @@ Solve practical editing, search, shell, and repository tasks. Correctness comes 
 
 ## Quick start
 
-From this checkout, with Go 1.26.8 or newer and a running Docker-compatible Linux engine:
+From this checkout, with Go 1.26.8 or newer, `just`, your practice tools (including `nvim`, Bash, and zsh), and a running Docker-compatible Linux engine:
 
 ```sh
-go build -o golf ./cmd/golf
+just build
 ./golf setup
 ./golf doctor
 ./golf
@@ -17,7 +17,9 @@ go build -o golf ./cmd/golf
 
 `setup` explicitly downloads the runtime's build inputs. Install and start your Docker engine first; on macOS it needs a Linux VM. `doctor` checks the daemon and the locally built image. The exercise catalog and Docker build context are embedded in the binary, so an installed binary also supports `setup`. Practice works offline after the image is built.
 
-The runtime uses Debian Linux tools, including clean Neovim, Bash, GNU utilities, mawk, Git, and jj. Your personal editor configuration and host shell history are not loaded. The base image digest and jj archive hashes are pinned; Debian packages resolve at build time. Each attempt records the resulting image ID, and resume requires that image to remain available.
+Practice launches your installed Neovim or the exercise’s Bash/zsh shell with your normal environment. Your dotfiles, Neovim plugins and keybindings, shell aliases, and tool configuration load normally. `HOME`, `XDG_*`, `NVIM_APPNAME`, and `ZDOTDIR` are inherited. Native practice has your normal host permissions and network access.
+
+Docker prepares fixtures and checks results with Debian Linux tools. The base image digest and jj archive hashes are pinned; Debian packages resolve at build time. Each attempt records the checker image ID. Native tool versions and configuration are not pinned; host utilities can differ from the Linux checker, particularly on macOS.
 
 ## Practice
 
@@ -83,11 +85,11 @@ Export refuses to overwrite an existing file. Omit `--output` to write to standa
 
 State defaults to `~/.local/state/driving-range` on both macOS and Linux. `XDG_STATE_HOME` changes the parent directory. `GOLF_STATE_DIR` overrides that location, and `golf --state-dir DIR` overrides the environment. `config.json` stores preferences; `driving-range.db` stores attempts, sessions, and checks. No telemetry or raw keystroke logs are collected.
 
-Elapsed exercise time accumulates across foreground tool sessions, including thinking time. Setup, menu navigation, and validation are excluded. An unobserved session after a crash has unknown duration; the application does not invent missing time. Comparable personal bests require the same exercise revision, seed, environment, validator, profile, and assistance.
+Elapsed exercise time accumulates across foreground tool sessions, including thinking time. Setup, menu navigation, and validation are excluded. An unobserved session after a crash has unknown duration; the application does not invent missing time. Personal bests group attempts by exercise revision, seed, checker image, validator, profile, and assistance. They do not fingerprint your native tool versions or dotfiles, so configuration changes can affect comparisons.
 
-Workspaces live in attempt-owned Docker volumes, separate from the SQLite history. Normal exit removes the session container and its background processes while retaining the volume. Startup stops leftover containers belonging to unfinished attempts before marking unclosed sessions interrupted. If Docker is unavailable, the TUI shows a recovery warning and still permits browsing exercises, progress, and settings. Execution retries cleanup before launching or checking work. Start Docker, then use `golf play ATTEMPT` to resume. Read-only history and export remain available while another process owns the writer lock.
+Native workspaces live in `workspaces/ATTEMPT_WORKSPACE/files` under the state directory, separate from SQLite history. Saved edits stay there after exit or interruption. Initial fixtures also have attempt-owned Docker volumes. Returning from a native tool checks the local files, including additions and deletions, in fresh Docker containers. Startup stops leftover containers belonging to unfinished attempts before marking unclosed sessions interrupted. If Docker is unavailable, the TUI shows a recovery warning and still permits browsing exercises, progress, and settings. Execution retries cleanup before launching or checking work. Start Docker, then use `golf play ATTEMPT` to resume. Read-only history and export remain available while another process owns the writer lock.
 
-An exercise session lasts at most one hour. Containers have no network, no host bind mounts or Docker socket, a non-root user, a read-only root filesystem, dropped capabilities, and no privilege escalation. Limits include one CPU, 512 MiB memory, 128 processes, a 64 MiB temporary directory, bounded output, and bounded validation time. Named volumes have no total disk quota; retained workspaces consume Docker storage. See [SECURITY.md](SECURITY.md) for boundaries and recovery checks.
+An exercise session lasts at most one hour. Native editors and shells run on your host; they are not sandboxed. Fixture setup, reference audits, and validation containers have no network, host bind mounts, or Docker socket. They use a non-root user, a read-only root filesystem, dropped capabilities, and no privilege escalation. Docker resource limits apply to those containers. Local snapshots reject links and special files and enforce the same size limits as Docker snapshots. See [SECURITY.md](SECURITY.md) for boundaries and recovery checks.
 
 Abandoning closes an attempt without erasing it. Deletion is separate and permanent:
 
@@ -96,7 +98,7 @@ golf abandon ATTEMPT --yes
 golf forget ATTEMPT --yes
 ```
 
-`forget` accepts only solved or abandoned attempts and removes that attempt's owned workspace and history. Do not use Docker volume pruning to reset a challenge. JSON/CSV exports preserve performance records, not workspace files, and the application has no export import command.
+`forget` accepts only solved or abandoned attempts and removes that attempt's owned local workspace, Docker volume, and history. Do not use Docker volume pruning to reset a challenge. JSON/CSV exports preserve performance records, not workspace files, and the application has no export import command.
 
 ## Configuration
 
@@ -108,29 +110,29 @@ golf config
 
 Themes are `auto`, `dark`, `light`, and `plain`. `NO_COLOR` disables accent colors. The TUI uses ASCII controls and supports an 80×24 terminal. `--plain` emits a linear overview; use the plain commands for redirected output or assistive technology.
 
-`GOLF_IMAGE` selects a trusted local runtime image for development. It changes new attempts and runtime setup, not the image ID already recorded on an attempt. There is no host execution fallback when Docker is unavailable.
+`GOLF_IMAGE` selects a trusted local runtime image for development. It changes new attempts and runtime setup, not the image ID already recorded on an attempt. Docker is required for fixture setup and checking. Native practice uses the tools already installed on your host; missing tools produce an installation error.
 
 ## Manual installation
 
 From a source checkout:
 
 ```sh
-go build -trimpath -o golf ./cmd/golf
+just build
 mkdir -p "$HOME/.local/bin"
 install -m 755 golf "$HOME/.local/bin/golf"
 export PATH="$HOME/.local/bin:$PATH"
 golf --version
 ```
 
-Release packaging targets macOS arm64 and Linux amd64/arm64. `make release VERSION=v0.1.0` builds archives and `SHA256SUMS` locally; it does not publish. No published release or signed artifact is assumed by these instructions. For a downloaded release, verify the selected archive against its checksum before extracting, then install its `golf` binary with the same `install` command. Use `shasum -a 256` on macOS or `sha256sum` on Linux. See [CONTRIBUTING.md](CONTRIBUTING.md#release-packaging) for optional provenance verification.
+Release packaging targets macOS arm64 and Linux amd64/arm64. `just VERSION=v0.1.0 release` builds archives and `SHA256SUMS` locally; it does not publish. No published release or signed artifact is assumed by these instructions. For a downloaded release, verify the selected archive against its checksum before extracting, then install its `golf` binary with the same `install` command. Use `shasum -a 256` on macOS or `sha256sum` on Linux. See [CONTRIBUTING.md](CONTRIBUTING.md#release-packaging) for optional provenance verification.
 
 ## Contributing
 
 ```sh
-make check
-make setup
-make integration
-make audit-solutions
+just check
+just setup
+just integration
+just audit-solutions
 ```
 
 `check` runs unit tests, `go vet`, and catalog metadata validation without Docker. `integration` and `audit-solutions` require the locally built image and explicitly execute exercises in Docker. See [CONTRIBUTING.md](CONTRIBUTING.md) for content contracts and release checks.

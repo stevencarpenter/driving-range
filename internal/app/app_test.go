@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -175,15 +174,6 @@ func TestDockerAttemptLifecycle(t *testing.T) {
 	}
 }
 
-func appDockerOutput(t *testing.T, ctx context.Context, args ...string) string {
-	t.Helper()
-	out, err := exec.CommandContext(ctx, "docker", args...).CombinedOutput()
-	if err != nil {
-		t.Fatalf("docker %v: %v\n%s", args, err, out)
-	}
-	return string(out)
-}
-
 func TestDockerPrepareRecoversBeforeFirstSessionWithoutErasingResume(t *testing.T) {
 	if os.Getenv("GOLF_INTEGRATION") != "1" {
 		t.Skip("set GOLF_INTEGRATION=1 for real isolated execution")
@@ -230,17 +220,22 @@ func TestDockerPrepareRecoversBeforeFirstSessionWithoutErasingResume(t *testing.
 		t.Fatal(err)
 	}
 	defer play.Session.Finish(context.Canceled)
-	container := strings.Fields(appDockerOutput(t, ctx, "ps", "--quiet", "--filter", "label=io.driving-range.attempt="+a.ID))
-	if len(container) != 1 {
-		t.Fatalf("expected one prepared container, got %v", container)
-	}
+	workspace := play.Command().Dir
 	for name, want := range ch.Fixtures[0].Files {
-		if got := appDockerOutput(t, ctx, "exec", container[0], "cat", "--", "/workspace/"+name); got != want {
-			t.Fatalf("first-session recovery retained partial fixture %s: got %q want %q", name, got, want)
+		got, err := os.ReadFile(filepath.Join(workspace, name))
+		if err != nil || string(got) != want {
+			t.Fatalf("first-session recovery retained partial fixture %s: got %q want %q: %v", name, got, want, err)
 		}
 	}
-	appDockerOutput(t, ctx, "exec", container[0], "test", "!", "-e", "/workspace/preparation-only")
-	appDockerOutput(t, ctx, "exec", container[0], "/bin/bash", "--noprofile", "--norc", "-c", `printf 'player edit\n' > "$1"; printf saved > /workspace/player-note`, "golf-test", "/workspace/"+ch.Entrypoint)
+	if _, err = os.Stat(filepath.Join(workspace, "preparation-only")); !os.IsNotExist(err) {
+		t.Fatal("partial preparation survived", err)
+	}
+	if err = os.WriteFile(filepath.Join(workspace, ch.Entrypoint), []byte("player edit\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err = os.WriteFile(filepath.Join(workspace, "player-note"), []byte("saved"), 0600); err != nil {
+		t.Fatal(err)
+	}
 	if _, err = s.Finish(ctx, play, context.Canceled); err != nil {
 		t.Fatal(err)
 	}
@@ -249,15 +244,12 @@ func TestDockerPrepareRecoversBeforeFirstSessionWithoutErasingResume(t *testing.
 		t.Fatal(err)
 	}
 	defer play.Session.Finish(context.Canceled)
-	container = strings.Fields(appDockerOutput(t, ctx, "ps", "--quiet", "--filter", "label=io.driving-range.attempt="+a.ID))
-	if len(container) != 1 {
-		t.Fatalf("expected one resumed container, got %v", container)
+	workspace = play.Command().Dir
+	if got, err := os.ReadFile(filepath.Join(workspace, ch.Entrypoint)); err != nil || string(got) != "player edit\n" {
+		t.Fatalf("resume erased player edit: %q: %v", got, err)
 	}
-	if got := appDockerOutput(t, ctx, "exec", container[0], "cat", "--", "/workspace/"+ch.Entrypoint); got != "player edit\n" {
-		t.Fatalf("resume erased player edit: %q", got)
-	}
-	if got := appDockerOutput(t, ctx, "exec", container[0], "cat", "/workspace/player-note"); got != "saved" {
-		t.Fatalf("resume erased player file: %q", got)
+	if got, err := os.ReadFile(filepath.Join(workspace, "player-note")); err != nil || string(got) != "saved" {
+		t.Fatalf("resume erased player file: %q: %v", got, err)
 	}
 	if _, err = s.Finish(ctx, play, context.Canceled); err != nil {
 		t.Fatal(err)

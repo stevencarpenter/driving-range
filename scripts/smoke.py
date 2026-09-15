@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Real PTY smoke: terminal restoration, saved attempts, signals, native editors.
 
-Run after `make build` and `golf setup`: python3 scripts/smoke.py.
+Run after `just build` and `golf setup`: python3 scripts/smoke.py.
 Uses Python's standard library and only temporary state/owned Docker volumes.
 """
 
@@ -21,6 +21,7 @@ import time
 
 ROOT = Path(__file__).resolve().parents[1]
 BINARY = ROOT / "golf"
+PRACTICE_ENV = {}
 
 
 class Terminal:
@@ -31,7 +32,7 @@ class Terminal:
         self.process = subprocess.Popen(
             [str(BINARY), "--state-dir", str(state), *args],
             stdin=self.slave, stdout=self.slave, stderr=self.slave,
-            env=dict(os.environ, TERM="xterm-256color", NO_COLOR="1"),
+            env=dict(os.environ, TERM="xterm-256color", NO_COLOR="1", **PRACTICE_ENV),
             start_new_session=True,
         )
         self.output = b""
@@ -99,9 +100,21 @@ def session(state, args, input_bytes, expected):
 
 
 def main():
-    assert BINARY.is_file(), "Run make build first"
+    assert BINARY.is_file(), "Run just build first"
     with tempfile.TemporaryDirectory(prefix="golf-pty-") as directory:
         state = Path(directory)
+        config = state / "config" / "golf-smoke"
+        config.mkdir(parents=True)
+        (config / "init.lua").write_text(
+            'vim.keymap.set("n", "Q", ":%s/port=3000/port=8080/<CR>:wq<CR>")\n'
+        )
+        PRACTICE_ENV.update(
+            XDG_CONFIG_HOME=str(state / "config"),
+            XDG_DATA_HOME=str(state / "data"),
+            XDG_STATE_HOME=str(state / "editor-state"),
+            XDG_CACHE_HOME=str(state / "cache"),
+            NVIM_APPNAME="golf-smoke",
+        )
         try:
             session(state, ["play", "search.error-records"], b"exit\n", 1)
             first = json.loads(plain(state, "export"))["attempts"][0]
@@ -152,7 +165,7 @@ def main():
                 terminal.output = b""
                 terminal.send(b"\r")
                 terminal.wait_text(b"port=3000")
-                terminal.send(b":%s/port=3000/port=8080/\r:wq\r")
+                terminal.send(b"Q")
                 terminal.wait_text(b"PASS")
                 terminal.send(b"q")
                 terminal.finish(0)
@@ -160,7 +173,7 @@ def main():
                 terminal.close()
             results = json.loads(plain(state, "export"))
             assert any(a["exercise_id"] == "vim.change-value" and a["status"] == "solved" for a in results["attempts"])
-            print("PASS: shell failure/resume/retry, SIGTERM persistence, TUI resize and native Neovim handoff, terminal restoration")
+            print("PASS: shell failure/resume/retry, SIGTERM persistence, TUI resize and native Neovim custom keybinding, terminal restoration")
         finally:
             # IDs come exclusively from this test's temporary database.
             if (state / "driving-range.db").exists():

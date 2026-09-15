@@ -1,36 +1,36 @@
 # Contributing
 
-Build and test with Go 1.26.8 or newer. CI and release builds pin Go 1.26.8. Docker is required only for interactive practice and execution checks.
+Build and test with Go 1.26.8 or newer and `just`. CI and release builds pin Go 1.26.8. Docker is required for fixture setup and execution checks. Interactive practice uses installed host tools and their normal configuration.
 
 ## Implementation defaults
 
 1. Trace the affected flow and callers before editing. Keep changes focused on the requested behavior.
 2. Reuse existing code, then prefer the Go standard library and native platform features. Use `maps.Equal` and `slices.Contains` instead of manual equality or membership loops. New dependencies need a concrete requirement that existing facilities cannot meet.
 3. Implement supported behavior only. Keep catalog validation and runner behavior consistent; remove unreachable modes and speculative configuration. Add abstractions when current callers require them.
-4. Preserve validation, Docker isolation, ownership checks, durable writes, crash recovery, terminal restoration, and accessibility. Reducing line count does not justify weakening these contracts.
-5. Before merging to `main`, run `make check` and retain a focused regression check for changed nontrivial behavior. Run Docker integration and affected solution audits for runner or validator changes, `make smoke` for terminal handoff changes, and race tests for concurrency changes. Report commands and observed results; distinguish skipped checks from passes.
+4. Preserve validation, Docker isolation for setup and checks, native workspace ownership checks, durable writes, crash recovery, terminal restoration, and accessibility. Reducing line count does not justify weakening these contracts.
+5. Before merging to `main`, run `just check` and retain a focused regression check for changed nontrivial behavior. Run Docker integration and affected solution audits for runner or validator changes, `just smoke` for terminal handoff changes, and race tests for concurrency changes. Report commands and observed results; distinguish skipped checks from passes.
 
 ## Checks
 
 ```sh
-make check
+just check
 ```
 
-This runs unit tests, `go vet ./...`, and `golf audit` for catalog metadata. Runtime tests skip unless `GOLF_INTEGRATION=1`. A passing ordinary test run does not verify Docker isolation or reference solutions.
+This runs unit tests, `go vet ./...`, and `golf audit` for catalog metadata. The terminal smoke check requires native Neovim and Bash as well as Docker. Runtime tests skip unless `GOLF_INTEGRATION=1`. A passing ordinary test run does not verify Docker isolation or reference solutions.
 
 Run the execution checks against a trusted local Docker engine:
 
 ```sh
-make setup
-make integration
-make audit-solutions
+just setup
+just integration
+just audit-solutions
 ```
 
-`integration` verifies runtime behavior with temporary, owned workspaces. `audit-solutions` rejects starters that already pass and reference solutions that fail. To inspect one track, run `./golf audit --solutions --track jj`. `GOLF_IMAGE` selects the application image; `GOLF_TEST_IMAGE` selects the integration test image. `make integration` maps a nonempty `GOLF_IMAGE` to `GOLF_TEST_IMAGE` for consistency.
+`integration` verifies runtime behavior with temporary, owned workspaces. `audit-solutions` rejects starters that already pass and reference solutions that fail. To inspect one track, run `./golf audit --solutions --track jj`. `GOLF_IMAGE` selects the application image; `GOLF_TEST_IMAGE` selects the integration test image. `just integration` maps a nonempty `GOLF_IMAGE` to `GOLF_TEST_IMAGE` for consistency.
 
 CI runs ordinary checks on Linux and macOS. Docker checks run only when a maintainer dispatches the CI workflow with `docker_checks` enabled. They build and audit the native Linux amd64 and arm64 runtimes separately. Crosscompilation proves binary construction, not terminal behavior or execution on another architecture.
 
-`make smoke` runs the terminal smoke script against the built binary and requires Python 3 and the prepared Docker runtime.
+`just smoke` runs the terminal smoke script against the built binary and requires Python 3 and the prepared Docker runtime.
 
 ## Exercise contract
 
@@ -39,7 +39,7 @@ Edit `internal/catalog/data/catalog.json`. Each challenge has an immutable ID/re
 1. Supply a starter fixture and explicit success conditions. Keep data synthetic and deterministic.
 2. Choose `tree` for exact file contents, `stdout` for replayable submissions, or `commands` for repository-state checks. Current packs require exact output, including trailing newlines and ordering.
 3. For `stdout`, declare the submission filename and interpreter arguments. Include at least two fixtures that exercise different inputs. The checker replays only the declared submission file against each fresh fixture.
-4. Run `make check` and the affected track's `audit --solutions`. An unchanged starter must fail; the reference must pass. Add a wrong-answer regression when it protects a meaningful validation boundary.
+4. Run `just check` and the affected track's `audit --solutions`. An unchanged starter must fail; the reference must pass. Add a wrong-answer regression when it protects a meaningful validation boundary.
 5. Attribute source material and record review evidence. Passing code checks does not mean a human reviewed the brief or teaching objective.
 
 Fixture paths must be relative regular files with no traversal, symlinks, hard links, devices, or file/directory collisions. Setup and reference scripts execute trusted code inside the sandbox. Never add network dependencies, secrets, personal shell history, or host paths to an exercise.
@@ -51,8 +51,8 @@ Submit focused changes with the relevant validation command and observed result.
 ## Release packaging
 
 ```sh
-make check
-make release VERSION=v0.1.0
+just check
+just VERSION=v0.1.0 release
 ```
 
 The release script creates a new `dist/v0.1.0` directory containing `golf_v0.1.0_darwin_arm64.tar.gz`, `golf_v0.1.0_linux_amd64.tar.gz`, `golf_v0.1.0_linux_arm64.tar.gz`, and `SHA256SUMS`. Each archive includes the binary, documentation, and license notices. It refuses to replace an existing output directory. Set `GO` to an alternate Go executable or `RELEASE_DIR` to a new output directory if needed.

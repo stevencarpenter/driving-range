@@ -316,7 +316,7 @@ func (m Model) detailView() string {
 }
 
 func (m Model) settingsView() string {
-	return strings.Join([]string{"SETTINGS", "", "Track: " + m.service.Config.Track + " [t] Choose", "Theme: " + m.service.Config.Theme + " [l] Cycle light / dark / plain", "Profile: standard Linux tools in Docker", "Image: " + m.service.Config.Image, "", "[d] Check dependencies", "First use: run golf setup from your shell to build the tool image.", "No automatic installation or host execution fallback.", "", "State directory:", m.service.StateDir, "", "Exports are saved under this directory's exports folder.", "NO_COLOR disables accents. All controls use ASCII text.", "For linear output and exports, use golf --help.", "No account, network during exercises, or telemetry is required."}, "\n")
+	return strings.Join([]string{"SETTINGS", "", "Track: " + m.service.Config.Track + " [t] Choose", "Theme: " + m.service.Config.Theme + " [l] Cycle light / dark / plain", "Practice: native tools and your dotfiles", "Image: " + m.service.Config.Image, "", "[d] Check dependencies", "First use: run golf setup from your shell to build the tool image.", "Docker prepares fixtures and validates your work.", "", "State directory:", m.service.StateDir, "", "Exports are saved under this directory's exports folder.", "NO_COLOR disables accents. All controls use ASCII text.", "For linear output and exports, use golf --help.", "No account or telemetry. Native tools use your normal host access."}, "\n")
 }
 
 func (m Model) keyHelp() string {

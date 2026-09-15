@@ -145,7 +145,7 @@ func run(args []string, out io.Writer) error {
 		if len(args) > 0 {
 			return errors.New("usage: golf setup")
 		}
-		fmt.Fprintln(out, "Building the isolated Linux runtime. This explicitly downloads pinned build inputs; local exercises will run without network access.")
+		fmt.Fprintln(out, "Building the isolated Linux runtime. This explicitly downloads pinned build inputs; fixture setup and validation will run without network access.")
 		ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 		defer cancel()
 		return runner.New(cfg.Image).BuildImage(ctx, out)
@@ -316,7 +316,7 @@ func run(args []string, out io.Writer) error {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		childErr := cmd.Run()
-		// A canceled Docker client can exit before restoring its raw terminal.
+		// A canceled child process can exit before restoring its terminal.
 		restoreErr := term.Restore(os.Stdin.Fd(), terminalState)
 		result, e := s.Finish(ctx, play, childErr)
 		printResult(out, result)
@@ -497,7 +497,7 @@ func usage(w io.Writer) {
   forget ATTEMPT --yes               Permanently delete one finished attempt
   version                           Print the build version
 
-Practice uses real Linux tools in isolated Docker containers. No account or
+Practice uses your native tools and dotfiles; Docker prepares and checks files. No account or
 telemetry is required. State is independent of vim-golf. An expired daily
 schedule leaves the entire practice catalog available.`)
 }

@@ -1,4 +1,4 @@
-// Package runner executes curated exercises inside isolated Docker containers.
+// Package runner launches native practice and isolates setup and validation in Docker.
 package runner
 
 import (
@@ -32,7 +32,10 @@ const maxFiles = 4096
 
 var volumePattern = regexp.MustCompile(`^(golf-|driving-range-)[a-zA-Z0-9][a-zA-Z0-9_.-]{0,120}$`)
 
-type Runner struct{ image string }
+type Runner struct {
+	image      string
+	nativeRoot string
+}
 type Report struct {
 	Available bool   `json:"available"`
 	ImageID   string `json:"image_id"`
@@ -52,6 +55,8 @@ type Session struct {
 	commandStarted bool
 	cleanupOnce    sync.Once
 	cleanupErr     error
+	directory      string
+	command        *exec.Cmd
 }
 
 func New(image string) *Runner {
@@ -189,6 +194,9 @@ func (r *Runner) CleanupContainers(ctx context.Context, attempts []model.Attempt
 }
 
 func (r *Runner) Prepare(ctx context.Context, c model.Challenge, a model.Attempt) (*Session, error) {
+	if r.nativeRoot != "" {
+		return r.prepareNative(ctx, c, a)
+	}
 	if len(c.Fixtures) == 0 {
 		return nil, errors.New("exercise has no fixtures")
 	}
@@ -236,6 +244,11 @@ func (r *Runner) Prepare(ctx context.Context, c model.Challenge, a model.Attempt
 }
 
 func (s *Session) Command() *exec.Cmd {
+	if s.directory != "" {
+		s.commandStarted = true
+		s.started = time.Now()
+		return s.command
+	}
 	var argv []string
 	switch s.challenge.Editor {
 	case "nvim", "vim":
@@ -252,11 +265,13 @@ func (s *Session) Command() *exec.Cmd {
 
 func (s *Session) Finish(childErr error) model.SessionResult {
 	s.once.Do(func() {
-		s.stopCleanup()
+		if s.stopCleanup != nil {
+			s.stopCleanup()
+		}
 		interrupted := s.ctx.Err() != nil || errors.Is(childErr, context.Canceled) || errors.Is(childErr, context.DeadlineExceeded)
 		s.cancel()
 		code := exitCode(childErr)
-		if s.commandStarted && !interrupted && childErr == nil {
+		if s.directory == "" && s.commandStarted && !interrupted && childErr == nil {
 			var err error
 			code, err = containerStatus(s.container, s.statusFile)
 			if err != nil {
@@ -266,7 +281,7 @@ func (s *Session) Finish(childErr error) model.SessionResult {
 		var exitErr *exec.ExitError
 		signaled := errors.As(childErr, &exitErr) && exitErr.ExitCode() < 0
 		result := model.SessionResult{DurationMS: time.Since(s.started).Milliseconds(), DurationKnown: true, ExitCode: code, Interrupted: interrupted || code == 130 || code == 137 || signaled}
-		if childErr != nil && !result.Interrupted {
+		if childErr != nil && !result.Interrupted && !(s.directory != "" && errors.As(childErr, &exitErr)) {
 			result.Error = childErr.Error()
 		}
 		if err := s.cleanupContainer(); err != nil {
@@ -279,6 +294,9 @@ func (s *Session) Finish(childErr error) model.SessionResult {
 }
 
 func (s *Session) cleanupContainer() error {
+	if s.directory != "" {
+		return nil
+	}
 	s.cleanupOnce.Do(func() { s.cleanupErr = s.runner.removeContainer(s.container) })
 	return s.cleanupErr
 }
@@ -288,7 +306,7 @@ func (r *Runner) Execute(ctx context.Context, c model.Challenge, a model.Attempt
 	if len(script) > maxOutput {
 		return model.SessionResult{}, errors.New("submission exceeds 2 MiB")
 	}
-	s, err := r.Prepare(ctx, c, a)
+	s, err := New(r.image).Prepare(ctx, c, a)
 	if err != nil {
 		return model.SessionResult{}, err
 	}
@@ -383,6 +401,9 @@ func (r *Runner) Cleanup(ctx context.Context, a model.Attempt) error {
 		return err
 	}
 	_ = fresh
+	if err = r.cleanupNative(a); err != nil {
+		return err
+	}
 	_, _, err = docker(ctx, nil, "volume", "rm", a.Workspace)
 	return err
 }
@@ -518,6 +539,11 @@ func readSnapshot(input io.Reader) (map[string]string, error) {
 }
 
 func (r *Runner) snapshot(ctx context.Context, a model.Attempt) (map[string]string, error) {
+	if dir, err := r.nativeDirectory(a); err != nil {
+		return nil, err
+	} else if dir != "" {
+		return nativeSnapshot(dir)
+	}
 	container, err := r.create(ctx, a, true)
 	if err != nil {
 		return nil, err
