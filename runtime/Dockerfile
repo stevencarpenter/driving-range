@@ -1,3 +1,6 @@
+# check=skip=SecretsUsedInArgOrEnv
+
+# GIT_CONFIG_KEY_* names public Git settings, not secrets. Keep their runtime overrides.
 FROM debian:trixie-slim@sha256:d7e12182ce18b85b93007c1dedf31f2d29e01ccf3182cc4017c709b6259bc132
 ARG TARGETARCH
 # Security fixes for packages inherited from the pinned base (September 2026 audit).
