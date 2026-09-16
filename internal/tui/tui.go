@@ -11,9 +11,8 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/spinner"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stevencarpenter/driving-range/internal/app"
 	"github.com/stevencarpenter/driving-range/internal/model"
 )
@@ -32,7 +31,6 @@ const (
 // Model keeps navigation separate from the persisted attempt lifecycle.
 type Model struct {
 	service          *app.Service
-	renderer         *lipgloss.Renderer
 	spinner          spinner.Model
 	lifecycle        *lifecycle
 	screen           screen
@@ -57,6 +55,10 @@ type Model struct {
 	sessions         []model.Session
 	best             *model.Progress
 	now              func() time.Time
+	// darkBackground drives the auto theme. Lip Gloss v2 has no renderer to
+	// query, so the program reports it through tea.BackgroundColorMsg and
+	// tests set it directly.
+	darkBackground bool
 }
 
 type loadedMsg struct {
@@ -84,17 +86,21 @@ type detailMsg struct {
 }
 
 func New(s *app.Service) Model {
-	return Model{service: s, spinner: spinner.New(spinner.WithSpinner(spinner.MiniDot)), renderer: lipgloss.NewRenderer(os.Stdout), lifecycle: newLifecycle(), width: 80, height: 24, chooseTrack: s.Config.Track == "", now: time.Now}
+	return Model{service: s, spinner: spinner.New(spinner.WithSpinner(spinner.MiniDot)), lifecycle: newLifecycle(), width: 80, height: 24, chooseTrack: s.Config.Track == "", now: time.Now, darkBackground: true}
 }
 
 func Run(s *app.Service) (err error) {
 	m := New(s)
 	defer func() { err = errors.Join(err, m.lifecycle.shutdown()) }()
-	_, err = tea.NewProgram(m, tea.WithAltScreen()).Run()
+	_, err = tea.NewProgram(m).Run()
 	return err
 }
 
-func (m Model) Init() tea.Cmd { return m.refresh() }
+func (m Model) Init() tea.Cmd {
+	// The auto theme needs the terminal background. v1 asked the Lip Gloss
+	// renderer; v2 answers with a tea.BackgroundColorMsg.
+	return tea.Batch(m.refresh(), tea.RequestBackgroundColor)
+}
 
 func (m Model) refresh() tea.Cmd {
 	s := m.service
@@ -106,6 +112,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width, m.height = max(1, msg.Width), max(1, msg.Height)
 		m.offset = 0
+		return m, nil
+	case tea.BackgroundColorMsg:
+		m.darkBackground = msg.IsDark()
 		return m, nil
 	case loadedMsg:
 		if msg.err != nil {
@@ -172,7 +181,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var cmd tea.Cmd
 		m.spinner, cmd = m.spinner.Update(msg)
 		return m, cmd
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		next, cmd := m.key(msg)
 		updated := next.(Model)
 		if !m.busy && updated.busy {
@@ -183,7 +192,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m Model) key(key tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m Model) key(key tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	k := key.String()
 	if m.busy {
 		return m, nil
@@ -212,8 +221,10 @@ func (m Model) key(key tea.KeyMsg) (tea.Model, tea.Cmd) {
 		case "ctrl+u":
 			m.query = ""
 		default:
-			if key.Type == tea.KeyRunes {
-				m.query += string(key.Runes)
+			// v2 reports the printable text a key produced; it is empty
+			// for keys that produce none.
+			if key.Text != "" {
+				m.query += key.Text
 			}
 		}
 		m.selected, m.offset = 0, 0

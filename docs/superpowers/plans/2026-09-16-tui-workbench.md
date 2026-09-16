@@ -34,7 +34,7 @@ Findings from the design spike that are not obvious from the code, ordered by ho
 
 **1. Nobody has run Neovim in this pane yet.** The spike validated key encoding, chunk handling, resize, OSC interception, and rendering, using `sh`, `cat`, and `cat -v`. It never launched a real editor. The whole design assumes a full-screen alternate-screen application behaves, and that assumption is untested. After Task 3 passes, before building anything on top of it, write a throwaway `main` that runs `pane.Start(exec.Command("nvim"), 80, 24)` and prints `Render()` on a ticker. Confirm the status line, syntax colors, cursor position, and `:q` all work. If that fails, stop and report rather than continuing to Task 4.
 
-**2. `SendKey` deadlocks if nothing drains the emulator.** The emulator's input path is an `io.Pipe`. Calling `SendKey` or `SendText` with no reader on `Emulator.Read()` blocks forever, and Go kills the process with `fatal error: all goroutines are asleep - deadlock!`, which does not point at the cause. `Start` launches the draining goroutine, so `Session` is safe. Any test that constructs a bare `vt.Emulator` or `vt.SafeEmulator` must start its own reader first.
+**2. The emulator deadlocks without a drain, even if you never send a key.** Its input path is an `io.Pipe`, and it writes *replies* into that pipe while parsing child output: a DECRQM mode query answered in `handleRequestMode` is enough. Bubble Tea v2 queries modes at startup, so any real TUI child triggers this within milliseconds. With no reader on `Emulator.Read()`, `Write` blocks and Go kills the process with `fatal error: all goroutines are asleep - deadlock!`, whose stack points at the parser, not the cause. `Start` launches the draining goroutine, so `Session` is safe. Any code that constructs a bare `vt.Emulator` or `vt.SafeEmulator`, including a read-only observer that only calls `Render()`, must start its own reader first. This was hit for real while smoke testing the migrated TUI.
 
 **3. `Render()` trims trailing whitespace per line.** A 40 column emulator with the text `hello` renders a 5 column string, not 40. Always set an explicit `Width` and `Height` on the containing Lip Gloss style, or the pane will jump around as content changes. This is why `workbench.view` sets both.
 
@@ -44,7 +44,16 @@ Findings from the design spike that are not obvious from the code, ordered by ho
 
 **6. A security hook will flag the test fixtures.** `exec.Command("/bin/sh", "-c", ...)` in the pane tests trips a command-injection warning. Those arguments are hardcoded literals with no user input, so it is a false positive. Do not rewrite the tests to appease it.
 
-**7. Regenerating the key corpus.** Task 2 ships a 15 case table. To widen encoder coverage, the full set of sequences a terminal actually sends can be extracted from Bubble Tea's own table:
+**7. Lip Gloss v2 rendering differences found while migrating.** These bit the existing test suite and will bite the workbench view in Tasks 5 and 7.
+
+- `Style.Width(n)` now counts border and padding *inside* `n`. v1 excluded them, so v1 code that wrote `Width(w - 2)` to leave room for a border must become `Width(w)`. Both `Model.goal` and `Model.panel` needed this.
+- The reset sequence is `\x1b[m`, not v1's `\x1b[0m`. `onSurface` matched the old spelling and silently became a no-op, which `TestNestedStyleRestoresContainingSurface` caught. It now uses the `styleReset` constant in `internal/tui/layout.go`.
+- `Render()` emits truecolor unconditionally, with no terminal detection. Profile downgrade happens when Bubble Tea writes to the terminal. Tests no longer need to force a profile.
+- Alternate screen is a `tea.View` field, not a program option. `tea.WithAltScreen` is gone. v2 also exits the altscreen automatically on quit, so sample `IsAltScreen()` while the program is running or it reads false.
+- `help.Model.Width` is now the `SetWidth(int)` method, and `progress.Model.EmptyColor` is a `color.Color` rather than a string.
+- There is no `lipgloss.Renderer`. `Model` carries a `darkBackground bool` fed by `tea.BackgroundColorMsg`, requested in `Init` via `tea.RequestBackgroundColor`. Tests set the field directly.
+
+**8. Regenerating the key corpus.** Task 2 ships a 15 case table. To widen encoder coverage, the full set of sequences a terminal actually sends can be extracted from Bubble Tea's own table:
 
 ```bash
 awk '/^var sequences = map\[string\]Key\{/,/^\}/' \
@@ -71,7 +80,7 @@ That is the v1 module, kept here only as a corpus source. It yields 142 entries.
 
 ---
 
-### Task 1: Migrate the TUI to Charm v2
+### Task 1: Migrate the TUI to Charm v2 (DONE)
 
 The migration is one unit because the package does not compile between the dependency swap and the API updates. The gate is the existing test suite with no behavioral assertion changed.
 
@@ -85,7 +94,7 @@ The migration is one unit because the package does not compile between the depen
 - Consumes: nothing.
 - Produces: `internal/tui` on Bubble Tea v2. `Model.View() tea.View`. Key handling on `tea.KeyPressMsg`. Styling without `lipgloss.Renderer`.
 
-- [ ] **Step 1: Record the current test baseline**
+- [x] **Step 1: Record the current test baseline**
 
 ```bash
 cd /Users/carpenter/projects/driving-range
@@ -94,7 +103,7 @@ go test ./... 2>&1 | tee /tmp/golf-baseline.txt
 
 Expected: all packages `ok` or `no test files`. This is the artifact Task 1 must reproduce.
 
-- [ ] **Step 2: Swap the dependencies**
+- [x] **Step 2: Swap the dependencies**
 
 ```bash
 go get charm.land/bubbletea/v2@v2.0.9
@@ -105,7 +114,7 @@ go mod edit -droprequire=github.com/charmbracelet/lipgloss
 go mod edit -droprequire=github.com/charmbracelet/bubbles
 ```
 
-- [ ] **Step 3: Update imports across the package**
+- [x] **Step 3: Update imports across the package**
 
 In `internal/tui/*.go` and `cmd/golf/main.go`, replace:
 
@@ -119,7 +128,7 @@ In `internal/tui/*.go` and `cmd/golf/main.go`, replace:
 | `github.com/charmbracelet/bubbles/help` | `charm.land/bubbles/v2/help` |
 | `github.com/charmbracelet/bubbles/key` | `charm.land/bubbles/v2/key` |
 
-- [ ] **Step 4: Remove the Lip Gloss renderer**
+- [x] **Step 4: Remove the Lip Gloss renderer**
 
 Lip Gloss v2 has no `Renderer`. In `internal/tui/tui.go`, delete the `renderer *lipgloss.Renderer` field from `Model` and drop `renderer: lipgloss.NewRenderer(os.Stdout)` from `New`.
 
@@ -137,7 +146,7 @@ if m.service.Config.Theme == "light" || (m.service.Config.Theme == "auto" && !li
 
 `lipgloss.HasDarkBackground(in, out term.File) bool` is the v2 replacement. `os` is already imported in `styles.go`.
 
-- [ ] **Step 5: Update the Model interface**
+- [x] **Step 5: Update the Model interface**
 
 Bubble Tea v2 changes `View() string` to `View() tea.View`. In `internal/tui/layout.go`, rename the existing method to `render()` and add the interface method:
 
@@ -149,7 +158,7 @@ func (m Model) render() string {
 }
 ```
 
-- [ ] **Step 6: Update key handling**
+- [x] **Step 6: Update key handling**
 
 `tea.KeyMsg` becomes `tea.KeyPressMsg`. Key identity moves from a `Type` enum to a `Code` rune plus a `Mod` bitmask. In `internal/tui/tui.go`, the `case tea.KeyMsg:` arm becomes `case tea.KeyPressMsg:`. Replace type comparisons with `msg.String()` comparisons, which are stable across both versions:
 
@@ -164,7 +173,7 @@ func (m Model) render() string {
 | `msg.Type == tea.KeyPgUp` | `msg.String() == "pgup"` |
 | `msg.Type == tea.KeyPgDown` | `msg.String() == "pgdown"` |
 
-- [ ] **Step 7: Update the Bubbles constructors**
+- [x] **Step 7: Update the Bubbles constructors**
 
 `viewport.New` takes options in v2. In `internal/tui/layout.go`:
 
@@ -176,7 +185,7 @@ The progress bar loses `WithGradient` and `WithColorProfile`. In `internal/tui/l
 
 `spinner.New`, `spinner.WithSpinner`, `spinner.MiniDot`, `spinner.TickMsg`, and `spinner.Model.Update` keep their v1 signatures.
 
-- [ ] **Step 8: Update the tests**
+- [x] **Step 8: Update the tests**
 
 Nearly all of this is one function. `press(m Model, key string) (Model, tea.Cmd)` at `internal/tui/tui_test.go:43` maps a key name to a `tea.KeyMsg`, and the tests call `press` rather than constructing messages themselves. Rewrite `press` and most of the migration is done:
 
@@ -226,7 +235,7 @@ Where a test calls `m.View()`, it now receives a `tea.View`. Use `m.View().Conte
 
 Do not change any assertion about rendered content or model state.
 
-- [ ] **Step 9: Build and run the suite**
+- [x] **Step 9: Build and run the suite**
 
 ```bash
 go build ./... && go test ./... 2>&1 | tee /tmp/golf-v2.txt
@@ -235,7 +244,7 @@ diff <(grep -E '^(ok|FAIL)' /tmp/golf-baseline.txt) <(grep -E '^(ok|FAIL)' /tmp/
 
 Expected: `go build` clean, every package that was `ok` is `ok`, and the diff shows no `FAIL` that was not already failing.
 
-- [ ] **Step 10: Verify the TUI renders**
+- [x] **Step 10: Verify the TUI renders**
 
 ```bash
 just build && ./golf --plain list vim | head -5
@@ -243,11 +252,11 @@ just build && ./golf --plain list vim | head -5
 
 Expected: the exercise list prints with no escape sequences.
 
-- [ ] **Step 11: Regenerate third-party notices**
+- [x] **Step 11: Regenerate third-party notices**
 
 Follow the procedure in `CONTRIBUTING.md:84`.
 
-- [ ] **Step 12: Commit**
+- [x] **Step 12: Commit**
 
 ```bash
 git add go.mod go.sum internal/tui cmd/golf THIRD_PARTY_NOTICES.md

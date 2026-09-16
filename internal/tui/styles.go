@@ -4,9 +4,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/help"
+	"charm.land/bubbles/v2/key"
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 )
 
@@ -21,7 +21,7 @@ func (m Model) plain() bool {
 }
 
 func (m Model) styles() viewStyles {
-	base := m.renderer.NewStyle()
+	base := lipgloss.NewStyle()
 	s := viewStyles{text: base, title: base, section: base, muted: base, selected: base, action: base,
 		danger: base, warning: base, key: base, nav: base, canvas: base, surface: base, brand: base, badge: base.Padding(0, 1), goal: base, border: base}
 	if m.plain() {
@@ -30,7 +30,7 @@ func (m Model) styles() viewStyles {
 	ink, muted, canvas, surface := "#EEE9FA", "#B6ABC9", "#15111F", "#221B30"
 	purple, teal, selection, edge := "#C5A2FF", "#75E4CD", "#7045AF", "#65517F"
 	goalBG, goalFG := "#123F3C", "#C3FFED"
-	if m.service.Config.Theme == "light" || (m.service.Config.Theme == "auto" && !m.renderer.HasDarkBackground()) {
+	if m.service.Config.Theme == "light" || (m.service.Config.Theme == "auto" && !m.darkBackground) {
 		ink, muted, canvas, surface = "#302442", "#655478", "#EEE8F8", "#FAF7FF"
 		purple, teal, selection, edge = "#6B349A", "#176953", "#7045AF", "#AC95C4"
 		goalBG, goalFG = "#D7F4E9", "#164F3F"
@@ -105,9 +105,10 @@ func (m Model) goal(objective string) string {
 	if m.contentWidth() < 8 {
 		return paint(styles.title, "GOAL\n"+objective)
 	}
+	// Lip Gloss v2 counts border and padding inside Width; v1 excluded them.
 	box := styles.goal.Border(m.border()).
 		BorderForeground(styles.key.GetForeground()).Padding(0, 1).
-		Width(m.contentWidth() - 2)
+		Width(m.contentWidth())
 	return paint(box, "GOAL\n"+objective)
 }
 
@@ -173,7 +174,7 @@ func (m Model) listRow(title, track, difficulty, status string, selected, header
 func (m Model) footerKeys(text string) string {
 	s := m.styles()
 	h := help.New()
-	h.Width = max(1, m.width-2*m.margin())
+	h.SetWidth(max(1, m.width-2*m.margin()))
 	h.ShortSeparator = "   "
 	h.Ellipsis = "..."
 	h.Styles.ShortKey = s.key.Background(s.canvas.GetBackground())

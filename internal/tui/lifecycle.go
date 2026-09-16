@@ -5,7 +5,7 @@ import (
 	"errors"
 	"sync"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 // lifecycle is shared by Model copies. Bubble Tea deliberately does not wait
