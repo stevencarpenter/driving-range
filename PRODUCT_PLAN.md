@@ -30,7 +30,7 @@ The inspected checkout is `stevencarpenter/vim-golf` at commit `c7f161029896e88d
 | Start tree, expected tree, brief, and entrypoint; recursive diff determines success. [Runner](../vim-golf/vim-golf) | Reuse this content pattern for editing exercises. Add different validators only when their tracks need them. |
 | Work files and cumulative Neovim input logs survive reopening. The best raw-byte count is stored per day. [Runner](../vim-golf/vim-golf) | Preserve resume. Introduce distinct attempts and sessions with durable history. |
 | Reset removes that day's work, log, and best score. [Runner](../vim-golf/vim-golf) | Retry creates a new attempt. Erasing history becomes a separate explicit operation. |
-| Personal Neovim configuration, LazyVim/Yanky/Harpoon conventions, macOS clipboard, and tmux brief integration appear in the curriculum. [README](../vim-golf/README.md), [capstone](../vim-golf/challenges/2026-08-31/challenge.md) | Provide a standardized baseline. Label configuration-specific exercises and offer personal-environment practice separately. |
+| Personal Neovim configuration, LazyVim/Yanky/Harpoon conventions, macOS clipboard, and tmux brief integration appear in the curriculum. [README](../vim-golf/README.md), [capstone](../vim-golf/challenges/2026-08-31/challenge.md) | Use the player’s installed Neovim and configuration for practice. Keep fixture setup and validation in Docker. |
 
 The runner has no general per-attempt timing/history ledger. Its raw-input byte count is explicitly not a portable keystroke score. The existing tests cover resumed input accumulation and persistent short briefs. [Tests](../vim-golf/tests/test_runner.py)
 
@@ -127,7 +127,7 @@ Thirty launch exercises means ten per track. This provides ten scheduled days pe
 
 | Track | Exercise examples | Validation and delivery |
 | --- | --- | --- |
-| Vim/Neovim | Text objects, search/change/repeat, registers, macros, multi-file edits. | MVP uses standard Neovim and exact trees. Distinct Vim compatibility and personal plugin profiles follow. |
+| Vim/Neovim | Text objects, search/change/repeat, registers, macros, multi-file edits. | Practice uses installed Neovim, personal plugins and keybindings, and exact tree checks. |
 | Regex, rg, grep | Select matching log records; distinguish whole words, captures, inverse matches, and excluded paths. | MVP uses explicit regex dialect/tool versions and stdout checks, including additional fixtures for reusable command submissions. |
 | fd, find | Locate files by path, type, depth, and metadata; handle whitespace and leading dashes. | Next search expansion. Validate path sets with explicit order/duplicate policy and deterministic fixture metadata. |
 | sed, awk | Targeted substitutions, field extraction, grouping, and aggregation. | Next text-processing expansion. Test reusable commands on multiple fixtures; label GNU/BSD and awk dialect differences. |
@@ -202,15 +202,15 @@ Use one executable, one local database, and direct runner functions selected by 
 
 The TUI selects content and owns lifecycle state. The runner prepares a workspace and launches a real process. The validator reads only declared artifacts and returns a structured outcome. SQLite records attempts and check events. The catalog is bundled or explicitly updated from a versioned release manifest. This division supports new tools without making every tool a separate application.
 
-### Standard and personal environments
+### Native practice and isolated checks
 
-**Standard profile:** run shell commands and editors inside a pinned Linux container image. Use a non-root user, disabled network, dropped capabilities, no privilege escalation, read-only base filesystem, writable disposable workspace, and CPU/memory/process/time limits. Never mount the user's home, SSH agent, Docker socket, real repositories, or credentials into an exercise. Keep application state outside the container. Docker documents the controls; their combined behavior needs verification on supported hosts. [Runtime controls](https://docs.docker.com/engine/containers/run/), [network isolation](https://docs.docker.com/engine/network/drivers/none/)
+**Validation runtime:** run fixture setup, reference solutions, and checks inside a pinned Linux container image. Use a non-root user, disabled network, dropped capabilities, no privilege escalation, read-only base filesystem, writable disposable workspace, and CPU/memory/process/time limits. Never mount the user's home, SSH agent, Docker socket, real repositories, or credentials into an exercise. Keep application state outside the container. Docker documents the controls; their combined behavior needs verification on supported hosts. [Runtime controls](https://docs.docker.com/engine/containers/run/), [network isolation](https://docs.docker.com/engine/network/drivers/none/)
 
-**Personal profile:** later offer explicit practice using installed tools and chosen configuration. A copied workspace and clean environment are not an OS security boundary. Personal plugins, hooks, or shell configuration may access the host. Clearly label the profile as host execution and restrict it to trusted content. Do not silently fall back to it when container startup fails.
+**Native practice:** launch installed Neovim, Bash, or zsh with the player’s normal environment and dotfiles. Keep saved edits in an owned directory under application state across exit and interruption. Native tools, plugins, hooks, and shell configuration have normal host access. Docker remains required for setup and validation. Checker image IDs do not fingerprint native tool versions or personal configuration.
 
 Container isolation reduces risk but is not a guarantee against hostile workloads or kernel vulnerabilities. Accept only curated challenge packs initially. Do not execute user-contributed setup scripts on the host. Verify downloaded manifests and immutable hashes, prevent path traversal and symlink escapes during extraction, and never auto-install missing tools without a deliberate user action. [Docker security model](https://docs.docker.com/engine/security/)
 
-For Git and jj exercises, create synthetic repositories inside the execution environment. Disable inherited global configuration, hooks, signing, credential helpers, and network remotes. Validate semantic repository state rather than exact commit hashes containing timestamps. Tests run against controlled files and configuration.
+For Git and jj exercises, create synthetic repositories in Docker and export bounded snapshots for native practice. Disable inherited global configuration, hooks, signing, credential helpers, and network remotes during setup and validation. Native Git and jj use the player’s normal host configuration. Validate semantic repository state rather than exact commit hashes containing timestamps. Tests run against controlled files and configuration.
 
 Reusable shell submissions run against several fixtures to discourage hardcoded output. Free-form workspace exercises validate the resulting state. Hidden tests shipped locally are inspectable; neither mode supports a claim of adversarial integrity. Sanitize untrusted terminal output when presenting it in the outer TUI.
 
@@ -306,7 +306,7 @@ Run focused integration checks around these contracts. Content validation must r
 
 | Limit | Consequence and current decision |
 | --- | --- |
-| Arbitrary shell execution is materially riskier than editing copied files. | Standard isolated execution is a release prerequisite for shell tracks. A temporary directory is insufficient. |
+| Arbitrary shell execution is materially riskier than editing copied files. | Native shell practice has normal host permissions. Setup and validation remain isolated in Docker. A copied directory is not a sandbox. |
 | Platforms, regex dialects, shell modes, tools, and personal configurations differ. | Pin standard profiles and split comparison cohorts. Do not promise universal score portability. |
 | Local state and test fixtures can be inspected or changed. | Results are personal practice records. Defer rankings and assessment integrity. |
 | Global input recording is invasive and technically ambiguous. | Record lifecycle data by default; collect narrowly scoped metrics only with explicit opt-in and honest units. |
