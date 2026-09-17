@@ -36,6 +36,7 @@ func run(args []string, out io.Writer) error {
 	flags.SetOutput(out)
 	state := flags.String("state-dir", "", "separate state directory (or GOLF_STATE_DIR)")
 	plain := flags.Bool("plain", false, "print a linear overview instead of opening the TUI")
+	classic := flags.Bool("classic", false, "give the exercise the whole terminal instead of embedding it in a pane")
 	ver := flags.Bool("version", false, "print version")
 	flags.Usage = func() { usage(out) }
 	if err := flags.Parse(args); err != nil {
@@ -227,6 +228,9 @@ func run(args []string, out io.Writer) error {
 			return e
 		}
 		defer s.Close()
+		if *classic {
+			s.Config.Classic = true
+		}
 		return tui.Run(s)
 	}
 	switch command {
@@ -474,9 +478,11 @@ func printResult(out io.Writer, r model.CheckResult) {
 }
 
 func usage(w io.Writer) {
-	fmt.Fprintln(w, `golf [--state-dir DIR] [--plain] [COMMAND]
+	fmt.Fprintln(w, `golf [--state-dir DIR] [--plain] [--classic] [COMMAND]
 
   golf                              Open the terminal UI
+  golf --classic                    Open the terminal UI, exercises take the
+                                    whole terminal instead of a pane
   today [TRACK] [YYYY-MM-DD]         Read a published daily
   list [FILTER]                     Browse exercises
   show EXERCISE                     Read the brief

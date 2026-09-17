@@ -28,6 +28,9 @@ type Config struct {
 	Track string `json:"track"`
 	Theme string `json:"theme"`
 	Image string `json:"image"`
+	// Classic restores the pre-workbench behaviour: the child owns the whole
+	// terminal and golf disappears until it exits.
+	Classic bool `json:"classic"`
 }
 
 type Service struct {

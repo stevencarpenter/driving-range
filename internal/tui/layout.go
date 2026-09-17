@@ -17,10 +17,19 @@ import (
 func (m Model) View() tea.View {
 	v := tea.NewView(m.render())
 	v.AltScreen = true
+	// The child's cursor is a real terminal cursor, not a painted cell, so it
+	// keeps its shape and blink. The offset is the rows the band occupies.
+	if m.workbench != nil && m.workbench.session != nil {
+		x, y := m.workbench.session.Cursor()
+		v.Cursor = tea.NewCursor(x, y+m.workbench.bandRows())
+	}
 	return v
 }
 
 func (m Model) render() string {
+	if m.workbench != nil {
+		return m.workbench.view(m.width, m.height, m.styles(), m.border(), m.plain())
+	}
 	s := m.styles()
 	width, height := m.contentWidth(), m.contentHeight()
 	lines := m.contentLines()
