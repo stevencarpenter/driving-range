@@ -12,7 +12,10 @@ import (
 	"testing"
 	"time"
 
+	tea "charm.land/bubbletea/v2"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/stevencarpenter/driving-range/internal/model"
+	"github.com/stevencarpenter/driving-range/internal/pane"
 )
 
 func TestSnapshotBoundary(t *testing.T) {
@@ -420,4 +423,65 @@ func containerRunning(t *testing.T, name string) bool {
 		return false
 	}
 	return strings.TrimSpace(string(out)) == "true"
+}
+
+// TestIntegrationDockerSessionRunsUnderAPseudoTerminal covers the workbench
+// path for Docker-backed exercises. The session command is `docker exec -it`,
+// and the resize must reach the container: the kernel raises SIGWINCH on the
+// docker client, which forwards it over the API.
+func TestIntegrationDockerSessionRunsUnderAPseudoTerminal(t *testing.T) {
+	r, a := integrationRunner(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+	c := model.Challenge{
+		ID: "shell.docker-pane", Revision: 1, Profile: "standard",
+		Validator: model.Validator{Kind: "tree", OutputPolicy: "exact", Version: "1"},
+		Fixtures:  []model.Fixture{{Name: "one", Files: map[string]string{"answer.txt": "before\n"}}},
+	}
+	s, err := r.Prepare(ctx, c, a)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Finish(nil)
+
+	p, err := pane.Start(s.Command(), 80, 24)
+	if err != nil {
+		t.Fatalf("pane.Start: %v", err)
+	}
+	defer p.Close()
+
+	waitFor := func(want string, d time.Duration) string {
+		deadline := time.Now().Add(d)
+		for time.Now().Before(deadline) {
+			if out := ansi.Strip(p.Render()); strings.Contains(out, want) {
+				return out
+			}
+			time.Sleep(50 * time.Millisecond)
+		}
+		return ansi.Strip(p.Render())
+	}
+	if out := waitFor("Driving Range.", 60*time.Second); !strings.Contains(out, "Driving Range.") {
+		t.Fatalf("container shell banner never rendered:\n%s", out)
+	}
+
+	// The child polls its own size. A single sample would race the resize,
+	// which the docker client forwards asynchronously over the API, and a
+	// stale reading could never be corrected.
+	typeLine(p, "while :; do stty size; sleep 0.3; done")
+	if out := waitFor("24 80", 30*time.Second); !strings.Contains(out, "24 80") {
+		t.Fatalf("child did not start at 24x80:\n%s", out)
+	}
+	if err := p.Resize(100, 30); err != nil {
+		t.Fatalf("Resize: %v", err)
+	}
+	if out := waitFor("30 100", 30*time.Second); !strings.Contains(out, "30 100") {
+		t.Errorf("resize did not reach the container:\n%s", out)
+	}
+}
+
+func typeLine(p *pane.Session, text string) {
+	for _, r := range text {
+		p.SendKey(tea.KeyPressMsg{Code: r, Text: string(r)})
+	}
+	p.SendKey(tea.KeyPressMsg{Code: tea.KeyEnter})
 }
