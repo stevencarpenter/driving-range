@@ -26,9 +26,15 @@ Docker prepares fixtures and checks results with Debian Linux tools. The base im
 Choose a starting track on first launch. `Today`, `Practice`, `Progress`, and `Settings` are the main destinations. Use `Tab` or `1` through `4` to navigate, `j/k` or arrows to select, `Enter` to open, and `?` for help. Search the practice catalog with `/`, including tools, concepts, `difficulty:1`, `solved`, `missed`, or `untried`.
 
 1. Open an exercise and read its success conditions.
-2. Press `Enter` to launch its real editor or shell. The child tool owns the terminal and its normal keybindings.
+2. Press `Enter` to launch its real editor or shell. It runs in a pane with the objective on a band above it, and keeps its normal keybindings.
 3. Save and exit Neovim with `:wq`, or exit the exercise shell with `exit`. Golf checks the result and saves it.
 4. Resume after a failed check, request a hint with `h`, or create a separate attempt with `r`.
+
+`F12` is the only key golf takes while an exercise runs. It opens a palette: `c` check, `h` hint, `v` reveal, `b` collapse or expand the brief band, `q` quit, `Esc` back to the exercise. Every other keystroke reaches the child, including all Ctrl and Alt chords and the tmux prefix.
+
+`golf-check` and `golf-hint` do the same from the exercise prompt, taking no keys at all. A check run this way reports on the status line and leaves the attempt open, so you can keep working; the attempt is finished by the check that runs when you exit.
+
+`golf --classic` gives the exercise the whole terminal instead, which is the behaviour before the pane existed. Golf also falls back to it, and says so, if it cannot allocate a pseudo-terminal.
 
 In shell exercises, `golf-brief` prints the active brief. Output exercises require a reusable submission in `solution.sh`, or `solution.py` for Python. Edit that file inside the exercise workspace, then exit. The checker replays the submission against multiple fixtures; commands typed only at the prompt are not an output submission. File-editing exercises check the resulting tree. Git and jj exercises check repository state.
 
@@ -55,6 +61,7 @@ Run `golf help` for the complete command reference. Global flags precede the com
 
 ```sh
 golf --plain
+golf --classic
 golf list regex
 golf show vim.change-value
 golf today search 2026-09-14

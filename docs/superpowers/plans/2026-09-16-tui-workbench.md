@@ -1,5 +1,7 @@
 # Embedded Practice Workbench Implementation Plan
 
+> **Status: complete.** All ten tasks are implemented on `feat/tui-workbench`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Run the exercise shell or editor inside a pane in the `golf` TUI, under a collapsible brief band, so the brief stays visible and checks and hints can be triggered without leaving the attempt.
@@ -828,7 +830,7 @@ git commit -m "feat(pane): consume golf trigger sequences and drop child clipboa
 
 ---
 
-### Task 5: Workbench model
+### Task 5: Workbench model (DONE)
 
 **Files:**
 - Create: `internal/tui/workbench.go`
@@ -844,7 +846,7 @@ git commit -m "feat(pane): consume golf trigger sequences and drop child clipboa
 
 The band renders the goal in two lines when expanded and one line when collapsed. `F12` opens the palette. Every other key goes to the child.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```go
 package tui
@@ -929,12 +931,12 @@ func TestWorkbenchPaneHeightLeavesRoomForBandAndStatus(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `go test ./internal/tui/ -run TestWorkbench -v`
 Expected: FAIL, `undefined: newWorkbench`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```go
 package tui
@@ -1050,12 +1052,12 @@ func firstLine(brief string) string {
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `go test ./internal/tui/ -run TestWorkbench -v`
 Expected: PASS, all six tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add internal/tui/workbench.go internal/tui/workbench_test.go
@@ -1064,7 +1066,7 @@ git commit -m "feat(tui): add the workbench model with a brief band and an F12 p
 
 ---
 
-### Task 6: Mid-session check
+### Task 6: Mid-session check (DONE)
 
 The TUI wiring in Task 7 calls `Service.CheckNow`, so it must exist first.
 
@@ -1077,7 +1079,7 @@ The TUI wiring in Task 7 calls `Service.CheckNow`, so it must exist first.
 - Consumes: `Runner.snapshot` and `Runner.create` in `internal/runner`.
 - Produces: `func (s *Session) CheckNow(ctx context.Context) model.CheckResult`, `func (svc *Service) CheckNow(ctx context.Context, attemptID string) (model.CheckResult, error)`, and a `"checknow"` case in `Model.perform`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```go
 func TestCheckNowLeavesTheLiveContainerRunning(t *testing.T) {
@@ -1098,12 +1100,12 @@ func TestCheckNowOnNativeWorkspaceReadsTheLiveTree(t *testing.T) {
 
 Fill in both bodies using `integrationRunner(t)` and the container helpers already in `internal/runner/runner_test.go`. Run them with `GOLF_INTEGRATION=1 go test ./internal/runner/` after `./golf setup`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `go test ./internal/runner/ -run TestCheckNow -v`
 Expected: FAIL, `s.CheckNow undefined`.
 
-- [ ] **Step 3: Implement CheckNow**
+- [x] **Step 3: Implement CheckNow**
 
 `Runner.snapshot` at `internal/runner/runner.go:540` already creates a separate container for the Docker path. `create` at line 145 names it `"golf-session-" + randomID()` and mounts the workspace volume read-only with `--network=none`, so it does not disturb the live practice container. The native path reads the live directory through `nativeSnapshot`. Reuse both rather than writing a second snapshot path.
 
@@ -1111,7 +1113,7 @@ Expected: FAIL, `s.CheckNow undefined`.
 
 `CheckNow` records a check event the same way the existing terminal check does, and leaves the attempt open.
 
-- [ ] **Step 4: Expose it through the existing action dispatcher**
+- [x] **Step 4: Expose it through the existing action dispatcher**
 
 `func (m Model) perform(action string)` at `internal/tui/tui.go:607` already owns the busy flag, the status text, the lifecycle command, and the `operationMsg` result. Add one case to its action switch at `internal/tui/tui.go:648`, beside the existing `check`:
 
@@ -1124,12 +1126,12 @@ Expected: FAIL, `s.CheckNow undefined`.
 
 Do not add a parallel command path. Task 7 calls `m.perform("checknow")`.
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `go test ./internal/runner/ -v`
 Expected: PASS, or SKIP for the Docker case without a daemon.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add internal/runner internal/app internal/tui
@@ -1138,7 +1140,7 @@ git commit -m "feat(runner): check an attempt without ending the session"
 
 ---
 
-### Task 7: Wire the workbench into the TUI for native mode
+### Task 7: Wire the workbench into the TUI for native mode (DONE)
 
 **Files:**
 - Modify: `internal/tui/tui.go:130-140`
@@ -1152,7 +1154,7 @@ git commit -m "feat(runner): check an attempt without ending the session"
 - Consumes: `newWorkbench` from Task 5, `pane.Start` from Task 3, `Service.CheckNow` from Task 6.
 - Produces: `Model.workbench *workbench`, the `paneTickMsg` and `paneTriggerMsg` messages, `lifecycle.attach` and `lifecycle.send`, and a `Config.Classic bool` setting selecting the old handoff.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```go
 func TestClassicModeStillUsesExecProcess(t *testing.T) {
@@ -1179,16 +1181,16 @@ func TestWorkbenchModeBuildsAPane(t *testing.T) {
 
 The model helper is `testModel(t)` at `internal/tui/tui_test.go:20`. There is no play helper, so add `testPlay(t)` returning an `*app.Play` whose `Session.Command()` is `exec.Command("/bin/cat")`. `app.Play` has fields `Session`, `SessionID`, and `Attempt` only.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `go test ./internal/tui/ -run 'TestClassicMode|TestWorkbenchMode' -v`
 Expected: FAIL, `Config.Classic undefined` and `Model.workbench undefined`.
 
-- [ ] **Step 3: Add the setting**
+- [x] **Step 3: Add the setting**
 
 In `internal/app/app.go:27`, `Config` currently holds `Track string ` and `Theme string ` with json tags `"track"` and `"theme"`. Add `Classic bool` with json tag `"classic"` beside them. The test fixture builds `app.Config` at `internal/tui/tui_test.go:32`; set the field there only where a test needs it.
 
-- [ ] **Step 4: Add the lifecycle sender**
+- [x] **Step 4: Add the lifecycle sender**
 
 `OnTrigger` fires from a goroutine the emulator owns, so it needs a way into the Bubble Tea loop. In `internal/tui/lifecycle.go`, add a `program *tea.Program` field and these methods:
 
@@ -1207,7 +1209,7 @@ func (l *lifecycle) send(msg tea.Msg) {
 
 In `Run`, construct the program into a variable, call `m.lifecycle.attach(p)`, then call `p.Run()`.
 
-- [ ] **Step 5: Replace the handoff**
+- [x] **Step 5: Replace the handoff**
 
 In `internal/tui/tui.go`, add to `Model`:
 
@@ -1325,7 +1327,7 @@ Close the pane in the `exitedMsg` arm, before its existing body:
 		}
 ```
 
-- [ ] **Step 6: Render the workbench**
+- [x] **Step 6: Render the workbench**
 
 In `internal/tui/layout.go`, as the first statement of `render()`:
 
@@ -1335,7 +1337,7 @@ In `internal/tui/layout.go`, as the first statement of `render()`:
 	}
 ```
 
-- [ ] **Step 7: Place the real cursor**
+- [x] **Step 7: Place the real cursor**
 
 `tea.View` carries an optional `Cursor *tea.Cursor` that the runtime renders on top of the content, so the child's cursor is a real terminal cursor with its own shape and blink rather than a painted cell. Change `View()` in `internal/tui/layout.go`:
 
@@ -1376,16 +1378,16 @@ func TestWorkbenchBandRowsMatchPaneHeight(t *testing.T) {
 }
 ```
 
-- [ ] **Step 8: Add the flag**
+- [x] **Step 8: Add the flag**
 
 In `cmd/golf/main.go`, add a `--classic` global flag that sets `Config.Classic` for the process, and document it in `golf help`.
 
-- [ ] **Step 9: Run the tests**
+- [x] **Step 9: Run the tests**
 
 Run: `go test ./internal/tui/ ./internal/pane/ -v`
 Expected: PASS.
 
-- [ ] **Step 10: Verify by hand**
+- [x] **Step 10: Verify by hand**
 
 ```bash
 just build && ./golf
@@ -1393,7 +1395,7 @@ just build && ./golf
 
 Open a Bash exercise. Expected: the brief band is visible above a working shell prompt, typing works, `F12` opens the palette, `esc` closes it, resizing the terminal reflows the child, and `exit` returns to the TUI with a check result.
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 ```bash
 git add internal/tui internal/app cmd/golf
@@ -1402,7 +1404,7 @@ git commit -m "feat(tui): run native exercises in an embedded pane with the brie
 
 ---
 
-### Task 8: Docker mode
+### Task 8: Docker mode (DONE)
 
 The Docker path returns `docker exec -it ...` from `internal/runner/runner.go:246`. Attaching it to a pseudo-terminal needs no production change, because the kernel raises `SIGWINCH` on the `docker` client, which forwards the resize over the API. This task proves that.
 
@@ -1413,25 +1415,25 @@ The Docker path returns `docker exec -it ...` from `internal/runner/runner.go:24
 - Consumes: Task 7's wiring and `pane.Start` from Task 3.
 - Produces: no new exported symbols.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Follow the existing integration test style in `internal/runner/runner_test.go`, calling `integrationRunner(t)` (`internal/runner/runner_test.go:85`), which skips unless `GOLF_INTEGRATION=1` and returns a `*Runner` plus a `model.Attempt`. Prepare a shell exercise through the Docker runner, drive `Session.Command()` through `pane.Start`, and assert the rendered screen contains the banner `Driving Range.` that `runtime/golf-shell` prints. Then call `Resize` and assert the child observes the new width.
 
-- [ ] **Step 2: Run the test**
+- [x] **Step 2: Run the test**
 
 Run: `go test ./internal/runner/ -run TestDockerSession -v`
 Expected: FAIL with Docker running, SKIP without.
 
-- [ ] **Step 3: Make it pass**
+- [x] **Step 3: Make it pass**
 
 Task 7 already routes every prepared session through `pane.Start`, so no production change should be required. If the test passes with no source edit, that is the correct outcome. If the resize assertion fails, add `--env COLUMNS` and `--env LINES` handling in `completionArgs` at `internal/runner/runner.go:330` and re-run.
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `go test ./internal/runner/ -run TestDockerSession -v`
 Expected: PASS.
 
-- [ ] **Step 5: Verify by hand**
+- [x] **Step 5: Verify by hand**
 
 ```bash
 ./golf doctor && ./golf
@@ -1439,7 +1441,7 @@ Expected: PASS.
 
 Open a Docker-backed exercise, resize the terminal, confirm the child reflows.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add internal/runner
@@ -1448,7 +1450,7 @@ git commit -m "test(runner): cover Docker sessions driven through a pseudo-termi
 
 ---
 
-### Task 9: Runtime shims for the trigger channel
+### Task 9: Runtime shims for the trigger channel (DONE)
 
 **Files:**
 - Modify: `internal/runner/runner.go`
@@ -1460,7 +1462,7 @@ git commit -m "test(runner): cover Docker sessions driven through a pseudo-termi
 - Consumes: `pane.TriggerOSC` from Task 4, `Service.CheckNow` from Task 6.
 - Produces: `golf-check` and `golf-hint` on the exercise `PATH`, and `GOLF_WORKBENCH` in the child environment.
 
-- [ ] **Step 1: Write the Docker shims**
+- [x] **Step 1: Write the Docker shims**
 
 `runtime/golf-check`:
 
@@ -1477,20 +1479,20 @@ printf '\033]9270;golf=check\007'
 
 Both need mode `0755` and a `COPY` line in `runtime/Dockerfile` beside the existing `golf-brief` and `golf-shell`.
 
-- [ ] **Step 2: Write the native shims**
+- [x] **Step 2: Write the native shims**
 
 In `internal/runner/native.go`, beside the existing `golf-brief` write at line 124, write `golf-check` and `golf-hint` into the same `bin` directory with the same content and mode `0700`.
 
-- [ ] **Step 3: Export the environment variable**
+- [x] **Step 3: Export the environment variable**
 
 Set `GOLF_WORKBENCH=1` in the child environment when the workbench is active, and leave it unset in classic mode. For the native path this joins the existing `cmd.Env` assignment in `internal/runner/native.go`. For Docker it is an `--env` argument in `completionArgs` at `internal/runner/runner.go:330`.
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `go test ./internal/runner/ -v`
 Expected: PASS.
 
-- [ ] **Step 5: Verify by hand**
+- [x] **Step 5: Verify by hand**
 
 ```bash
 just build && ./golf setup && ./golf
@@ -1498,7 +1500,7 @@ just build && ./golf setup && ./golf
 
 Open a shell exercise, run `golf-check` at the prompt. Expected: the status line updates, the sequence does not appear on screen, and the shell keeps running.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add internal/runner runtime
@@ -1507,7 +1509,7 @@ git commit -m "feat(runtime): add golf-check and golf-hint shims for the trigger
 
 ---
 
-### Task 10: Documentation
+### Task 10: Documentation (DONE)
 
 **Files:**
 - Modify: `DESIGN.md`, `SECURITY.md`, `README.md`
@@ -1516,19 +1518,19 @@ git commit -m "feat(runtime): add golf-check and golf-hint shims for the trigger
 - Consumes: the behavior shipped in Tasks 1 through 9.
 - Produces: no code.
 
-- [ ] **Step 1: Revise DESIGN.md**
+- [x] **Step 1: Revise DESIGN.md**
 
 Replace "Child tools own the entire terminal and every key during an exercise. Restore the TUI after they exit." with a description of the workbench: the child owns a pane and every key except `F12`, the brief band stays visible and collapses to one line, and classic full-terminal handoff remains available.
 
-- [ ] **Step 2: Revise SECURITY.md**
+- [x] **Step 2: Revise SECURITY.md**
 
 The claim at line 21, "Interactive child output goes directly to your terminal; only output returning to the outer TUI is sanitized", is false under the workbench. Record that child output now passes through a virtual terminal emulator that parses bytes into cells, that escape sequences from the child cannot reach the host terminal, that OSC 52 clipboard writes are dropped, and that classic mode retains the old behavior.
 
-- [ ] **Step 3: Revise README.md**
+- [x] **Step 3: Revise README.md**
 
 Update the practice walkthrough: the brief stays visible, `F12` opens the palette, `golf-check` and `golf-hint` work at the exercise prompt, and checking no longer requires exiting. Document `--classic`.
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 ```bash
 rg -n '\x{2014}|\x{2013}' DESIGN.md SECURITY.md README.md ; go test ./...
@@ -1536,7 +1538,7 @@ rg -n '\x{2014}|\x{2013}' DESIGN.md SECURITY.md README.md ; go test ./...
 
 Expected: no dash separators reported, all tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add DESIGN.md SECURITY.md README.md

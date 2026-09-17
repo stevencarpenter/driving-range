@@ -152,7 +152,7 @@ License texts for modules linked into the macOS arm64 and Linux amd64/arm64 bina
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 
-## github.com/charmbracelet/ultraviolet v0.0.0-20260811164956-006e29f97886 (LICENSE)
+## github.com/charmbracelet/ultraviolet v0.0.0-20260910203606-6c9e17dc7a16 (LICENSE)
 
     MIT License
 
@@ -177,6 +177,30 @@ License texts for modules linked into the macOS arm64 and Linux amd64/arm64 bina
     SOFTWARE.
 
 ## github.com/charmbracelet/x/ansi v0.11.8 (LICENSE)
+
+    MIT License
+
+    Copyright (c) 2023 Charmbracelet, Inc.
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+
+## github.com/charmbracelet/x/exp/ordered v0.1.0 (LICENSE)
 
     MIT License
 
@@ -225,6 +249,30 @@ License texts for modules linked into the macOS arm64 and Linux amd64/arm64 bina
     SOFTWARE.
 
 ## github.com/charmbracelet/x/termios v0.1.1 (LICENSE)
+
+    MIT License
+
+    Copyright (c) 2023 Charmbracelet, Inc.
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+
+## github.com/charmbracelet/x/vt v0.0.0-20260913004009-c615ff2f7805 (LICENSE)
 
     MIT License
 
@@ -320,6 +368,32 @@ License texts for modules linked into the macOS arm64 and Linux amd64/arm64 bina
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 
+## github.com/creack/pty v1.1.24 (LICENSE)
+
+    Copyright (c) 2011 Keith Rarick
+
+    Permission is hereby granted, free of charge, to any person
+    obtaining a copy of this software and associated
+    documentation files (the "Software"), to deal in the
+    Software without restriction, including without limitation
+    the rights to use, copy, modify, merge, publish, distribute,
+    sublicense, and/or sell copies of the Software, and to
+    permit persons to whom the Software is furnished to do so,
+    subject to the following conditions:
+
+    The above copyright notice and this permission notice shall
+    be included in all copies or substantial portions of the
+    Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+    KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+    WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+    PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+    OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+    OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 ## github.com/dustin/go-humanize v1.0.1 (LICENSE)
 
     Copyright (c) 2005-2008  Dustin Sallings <dustin@spy.net>
@@ -396,7 +470,7 @@ License texts for modules linked into the macOS arm64 and Linux amd64/arm64 bina
 
     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-## github.com/mattn/go-runewidth v0.0.27 (LICENSE)
+## github.com/mattn/go-runewidth v0.0.30 (LICENSE)
 
     The MIT License (MIT)
 
@@ -522,7 +596,7 @@ License texts for modules linked into the macOS arm64 and Linux amd64/arm64 bina
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 
-## github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e (LICENSE)
+## github.com/xo/terminfo v1.0.0 (LICENSE)
 
     The MIT License (MIT)
 
