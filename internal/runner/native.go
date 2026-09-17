@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"syscall"
 	"time"
 
@@ -66,12 +67,32 @@ func (r *Runner) nativeDirectory(a model.Attempt) (string, error) {
 	return dir, nil
 }
 
+// nativeShell reports the interactive shell for native practice. When the
+// exercise teaches the shell itself (its editor names a shell listed in
+// Tools), that shell stays pinned. Otherwise the shell is incidental to the
+// task (python, search, fzf) and the player's SHELL is preferred, so dotfiles,
+// aliases such as vim=nvim, and keybindings load normally. Unusable SHELL
+// values fall back to the exercise shell.
+func nativeShell(c model.Challenge) string {
+	exercise := c.Editor
+	if exercise == "" {
+		exercise = "bash"
+	}
+	if slices.Contains(c.Tools, exercise) {
+		return exercise
+	}
+	if shell, err := exec.LookPath(os.Getenv("SHELL")); err == nil {
+		return shell
+	}
+	return exercise
+}
+
 func (r *Runner) prepareNative(ctx context.Context, c model.Challenge, a model.Attempt) (*Session, error) {
 	argv := []string{c.Editor, "-i"}
 	if c.Editor == "nvim" || c.Editor == "vim" {
 		argv = []string{"nvim", "--", c.Entrypoint}
-	} else if c.Editor == "" {
-		argv[0] = "bash"
+	} else {
+		argv[0] = nativeShell(c)
 	}
 	if _, err := exec.LookPath(argv[0]); err != nil {
 		return nil, fmt.Errorf("install %s on your host to practice: %w", argv[0], err)

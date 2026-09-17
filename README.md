@@ -17,7 +17,7 @@ just build
 
 `setup` explicitly downloads the runtime's build inputs. Install and start your Docker engine first; on macOS it needs a Linux VM. `doctor` checks the daemon and the locally built image. The exercise catalog and Docker build context are embedded in the binary, so an installed binary also supports `setup`. Practice works offline after the image is built.
 
-Practice launches your installed Neovim or the exercise’s Bash/zsh shell with your normal environment. Your dotfiles, Neovim plugins and keybindings, shell aliases, and tool configuration load normally. `HOME`, `XDG_*`, `NVIM_APPNAME`, and `ZDOTDIR` are inherited. Native practice has your normal host permissions and network access.
+Practice launches your installed Neovim or an interactive shell with your normal environment. Exercises that teach the shell itself use that shell; otherwise your `SHELL` is preferred. Your dotfiles, Neovim plugins and keybindings, shell aliases, and tool configuration load normally. `HOME`, `XDG_*`, `NVIM_APPNAME`, and `ZDOTDIR` are inherited. Native practice has your normal host permissions and network access.
 
 Docker prepares fixtures and checks results with Debian Linux tools. The base image digest and jj archive hashes are pinned; Debian packages resolve at build time. Each attempt records the checker image ID. Native tool versions and configuration are not pinned; host utilities can differ from the Linux checker, particularly on macOS.
 
