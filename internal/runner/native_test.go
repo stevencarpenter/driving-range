@@ -3,6 +3,7 @@ package runner
 import (
 	"context"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -116,6 +117,20 @@ func TestIntegrationNativeWorkspaceResumeAndValidation(t *testing.T) {
 		t.Fatal(err)
 	}
 	cmd := s.Command()
+	for _, action := range []string{"check", "hint"} {
+		for _, enabled := range []bool{false, true} {
+			shim := exec.Command(filepath.Join(r.nativeRoot, a.Workspace, "bin", "golf-"+action))
+			shim.Env = append(os.Environ(), "GOLF_WORKBENCH="+workbenchEnv(enabled))
+			out, err := shim.CombinedOutput()
+			if enabled {
+				if err != nil || string(out) != "\x1b]9270;golf="+action+"\a" {
+					t.Fatalf("%s trigger: %q, %v", action, out, err)
+				}
+			} else if err == nil || !strings.Contains(string(out), "needs the embedded workbench") || strings.Contains(string(out), "\x1b") {
+				t.Fatalf("%s classic mode: %q, %v", action, out, err)
+			}
+		}
+	}
 	cmd.Stdin = strings.NewReader("golf-brief; printf 'after\\n' > answer; rm delete-me; exit\n")
 	out, runErr := cmd.CombinedOutput()
 	result := s.Finish(runErr)

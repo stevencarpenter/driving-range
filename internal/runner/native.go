@@ -13,26 +13,8 @@ import (
 	"time"
 
 	"github.com/stevencarpenter/driving-range/internal/model"
+	runtimefiles "github.com/stevencarpenter/driving-range/runtime"
 )
-
-// triggerShims are the helper commands placed on the exercise PATH. golf-brief
-// prints the brief; the others ask the workbench to act without the operator
-// leaving the exercise or golf intercepting a key.
-func triggerShims() map[string]string {
-	shim := func(action, desc string) string {
-		return "#!/bin/sh\n" +
-			"if [ -z \"$GOLF_WORKBENCH\" ]; then\n" +
-			"  echo \"golf-" + action + " needs the embedded workbench. Exit the exercise to " + desc + ".\" >&2\n" +
-			"  exit 1\n" +
-			"fi\n" +
-			"printf '\\033]9270;golf=" + action + "\\007'\n"
-	}
-	return map[string]string{
-		"golf-brief": "#!/bin/sh\ncat -- \"$GOLF_BRIEF_FILE\"\n",
-		"golf-check": shim("check", "check your work"),
-		"golf-hint":  shim("hint", "get the next hint"),
-	}
-}
 
 // workbenchEnv reports the value the shims test for. It is empty in classic
 // mode, where no emulator is listening for the trigger sequence.
@@ -149,8 +131,15 @@ func (r *Runner) prepareNative(ctx context.Context, c model.Challenge, a model.A
 		if err = os.Mkdir(filepath.Join(stage, "bin"), 0700); err != nil {
 			return nil, err
 		}
-		for name, body := range triggerShims() {
-			if err = os.WriteFile(filepath.Join(stage, "bin", name), []byte(body), 0700); err != nil {
+		if err = os.WriteFile(filepath.Join(stage, "bin", "golf-brief"), []byte("#!/bin/sh\ncat -- \"$GOLF_BRIEF_FILE\"\n"), 0700); err != nil {
+			return nil, err
+		}
+		for _, name := range []string{"golf-check", "golf-hint"} {
+			body, err := runtimefiles.Files.ReadFile(name)
+			if err != nil {
+				return nil, err
+			}
+			if err = os.WriteFile(filepath.Join(stage, "bin", name), body, 0700); err != nil {
 				return nil, err
 			}
 		}

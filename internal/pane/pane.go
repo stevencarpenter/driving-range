@@ -26,17 +26,9 @@ const clipboardOSC = 52
 // emulator. The emulator parses child output into cells, so escape sequences
 // from the child never reach the host terminal.
 type Session struct {
-	cmd     *exec.Cmd
-	ptmx    *os.File
-	emu     *vt.SafeEmulator
-	changed chan struct{}
-
-	mu      sync.Mutex
-	trigger func(string)
-	// pending holds triggers that arrived before a handler was registered.
-	// The child can emit one between Start and OnTrigger, and dropping it
-	// would silently lose a check the operator asked for.
-	pending []string
+	cmd  *exec.Cmd
+	ptmx *os.File
+	emu  *vt.SafeEmulator
 
 	closeOnce sync.Once
 	closeErr  error
@@ -45,7 +37,9 @@ type Session struct {
 }
 
 // Start launches cmd on a pseudo-terminal sized to width by height.
-func Start(cmd *exec.Cmd, width, height int) (*Session, error) {
+// onTrigger receives golf actions asynchronously and may be nil. It is registered
+// before output parsing starts, so even an immediate trigger is delivered.
+func Start(cmd *exec.Cmd, width, height int, onTrigger func(string)) (*Session, error) {
 	if width < 1 || height < 1 {
 		return nil, errors.New("pane needs a positive width and height")
 	}
@@ -54,10 +48,9 @@ func Start(cmd *exec.Cmd, width, height int) (*Session, error) {
 		return nil, err
 	}
 	s := &Session{
-		cmd:     cmd,
-		ptmx:    ptmx,
-		emu:     vt.NewSafeEmulator(width, height),
-		changed: make(chan struct{}, 1),
+		cmd:  cmd,
+		ptmx: ptmx,
+		emu:  vt.NewSafeEmulator(width, height),
 	}
 	// Register handlers before any goroutine can write to the emulator.
 	// SafeEmulator.RegisterOscHandler has a value receiver, so it is not
@@ -67,15 +60,9 @@ func Start(cmd *exec.Cmd, width, height int) (*Session, error) {
 		if !found {
 			return true
 		}
-		s.mu.Lock()
-		fn := s.trigger
-		if fn == nil {
-			s.pending = append(s.pending, action)
-		}
-		s.mu.Unlock()
-		if fn != nil {
+		if onTrigger != nil {
 			// The handler runs on the output parsing goroutine; never block it.
-			go fn(action)
+			go onTrigger(action)
 		}
 		return true // consumed, so it is never rendered
 	})
@@ -88,10 +75,8 @@ func Start(cmd *exec.Cmd, width, height int) (*Session, error) {
 			n, err := ptmx.Read(buf)
 			if n > 0 {
 				s.emu.Write(buf[:n])
-				s.notify()
 			}
 			if err != nil {
-				s.notify()
 				return
 			}
 		}
@@ -106,17 +91,6 @@ func Start(cmd *exec.Cmd, width, height int) (*Session, error) {
 	return s, nil
 }
 
-func (s *Session) notify() {
-	select {
-	case s.changed <- struct{}{}:
-	default:
-	}
-}
-
-// Output signals that the rendered screen may have changed. It coalesces, so a
-// caller repainting on a ticker never falls behind a noisy child.
-func (s *Session) Output() <-chan struct{} { return s.changed }
-
 // SendKey forwards a key press to the child. Modified special keys take the
 // explicit encoder because the emulator's SendKey drops them; both paths go
 // through the emulator so their bytes stay in order.
@@ -126,23 +100,6 @@ func (s *Session) SendKey(k tea.KeyPressMsg) {
 		return
 	}
 	s.emu.SendKey(uv.KeyEvent(uv.KeyPressEvent(uv.Key(tea.Key(k)))))
-}
-
-// OnTrigger registers the handler for golf trigger sequences emitted by the
-// golf-check and golf-hint shims running inside the exercise. It gives the
-// operator a path to every workbench action that intercepts no keys at all.
-func (s *Session) OnTrigger(fn func(action string)) {
-	s.mu.Lock()
-	s.trigger = fn
-	pending := s.pending
-	s.pending = nil
-	s.mu.Unlock()
-	if fn == nil {
-		return
-	}
-	for _, action := range pending {
-		go fn(action)
-	}
 }
 
 // Resize updates the emulator and the pseudo-terminal. Resizing the

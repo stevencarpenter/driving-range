@@ -178,15 +178,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return classic()
 		}
 		life := m.lifecycle
-		session, err := pane.Start(play.Command(), m.width, max(1, m.height-5))
+		session, err := pane.Start(play.Command(), m.width, max(1, m.height-5), func(action string) { life.send(paneTriggerMsg{action}) })
 		if err != nil {
 			// No pseudo-terminal available. Say why, then fall back rather than
 			// failing an attempt that is already prepared.
 			m.notice = "Embedded pane unavailable (" + err.Error() + "). Using full-screen practice."
 			return classic()
 		}
-		session.OnTrigger(func(action string) { life.send(paneTriggerMsg{action}) })
-		m.workbench = newWorkbench(session, m.challenge.Title, m.challenge.Objective, m.challenge.Brief)
+		m.workbench = newWorkbench(session, m.challenge.Objective, m.challenge.Brief)
 		m.status = ""
 		return m, tea.Batch(paneTick(), life.command(func() tea.Msg { return exitedMsg{play, session.Wait()} }))
 	case exitedMsg:

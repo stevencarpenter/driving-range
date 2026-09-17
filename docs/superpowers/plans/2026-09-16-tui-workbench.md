@@ -46,7 +46,7 @@ Findings from the design spike that are not obvious from the code, ordered by ho
 
 **6. A security hook will flag the test fixtures.** `exec.Command("/bin/sh", "-c", ...)` in the pane tests trips a command-injection warning. Those arguments are hardcoded literals with no user input, so it is a false positive. Do not rewrite the tests to appease it.
 
-**7. A trigger can arrive before its handler is registered.** The child may print the OSC sequence between `Start` and `OnTrigger`, and on a fast Linux runner it does. Dropping it would silently lose a check the operator asked for, so `Session` buffers triggers that arrive with no handler set and delivers them when one is registered. This surfaced only in CI, where the first version of the test failed while passing locally every time.
+**7. Register the trigger callback at construction.** The child can print an OSC sequence immediately after launch. `pane.Start` accepts the callback and registers it before output parsing starts, so delivery needs neither a pending queue nor a registration mutex. `TestSessionImmediateTriggerIsNotLost` covers this startup case.
 
 **8. `RegisterOscHandler` is not concurrency safe.** On `SafeEmulator` it has a value receiver, so the emulator's mutex does not cover it, and it mutates a handler map the parser reads. Registering a handler after the output goroutine is running is a data race that `go test -race` catches. `Start` registers everything before any goroutine launches. Run `go test -race ./internal/pane/` on any change to that constructor.
 

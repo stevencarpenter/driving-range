@@ -46,7 +46,7 @@ func TestNvimEditsInPane(t *testing.T) {
 	// Matches the argv the Docker runner uses for vim exercises.
 	cmd := exec.Command("nvim", "--clean", "-i", "NONE", "--cmd", "set nomodeline", "--", file)
 	cmd.Env = append(os.Environ(), "TERM=xterm-256color")
-	s := start(t, cmd, 80, 24)
+	s := start(t, cmd, 80, 24, nil)
 
 	if out := waitForText(t, s, "port: 8080", 15*time.Second); !strings.Contains(out, "port: 8080") {
 		t.Fatalf("nvim did not render the file:\n%s", out)

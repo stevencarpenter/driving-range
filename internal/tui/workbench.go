@@ -13,10 +13,10 @@ import (
 // workbench renders an active attempt: a brief band above the child pane, a
 // status line below, and a palette opened by the single intercepted key.
 type workbench struct {
-	session            *pane.Session
-	title, goal, brief string
-	band               bool
-	palette            bool
+	session     *pane.Session
+	goal, brief string
+	band        bool
+	palette     bool
 	// bandHeight is the rows the band occupied in the last render. The band
 	// wraps, so its height cannot be assumed; the pane size and the cursor
 	// offset both depend on the measured value.
@@ -25,7 +25,6 @@ type workbench struct {
 	// resized only when the layout actually changes.
 	paneW, paneH int
 	check        string
-	hints        int
 }
 
 // paletteKeys maps a palette key to the action it emits. Toggling the band is
@@ -37,8 +36,8 @@ var paletteKeys = map[string]string{
 	"q": "quit",
 }
 
-func newWorkbench(s *pane.Session, title, goal, brief string) *workbench {
-	return &workbench{session: s, title: title, goal: goal, brief: brief, band: true, check: "not run", bandHeight: 1}
+func newWorkbench(s *pane.Session, goal, brief string) *workbench {
+	return &workbench{session: s, goal: goal, brief: brief, band: true, check: "not run", bandHeight: 1}
 }
 
 // update routes a message. It reports whether the workbench consumed it, and
@@ -191,7 +190,6 @@ func (m Model) workbenchAction(action string) (tea.Model, tea.Cmd) {
 		m.workbench.check = "running"
 		return m.perform("checknow")
 	case "hint":
-		m.workbench.hints++
 		return m.perform("hint")
 	case "reveal":
 		// Revealing records assistance, so it keeps the confirmation the

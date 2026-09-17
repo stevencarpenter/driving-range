@@ -22,9 +22,9 @@ func waitFor(t *testing.T, s *Session, want string) string {
 	return s.Render()
 }
 
-func start(t *testing.T, cmd *exec.Cmd, w, h int) *Session {
+func start(t *testing.T, cmd *exec.Cmd, w, h int, onTrigger func(string)) *Session {
 	t.Helper()
-	s, err := Start(cmd, w, h)
+	s, err := Start(cmd, w, h, onTrigger)
 	if err != nil {
 		t.Fatalf("Start: %v", err)
 	}
@@ -33,14 +33,14 @@ func start(t *testing.T, cmd *exec.Cmd, w, h int) *Session {
 }
 
 func TestSessionRendersChildOutput(t *testing.T) {
-	s := start(t, exec.Command("/bin/sh", "-c", "printf 'hello pane\\n'; sleep 30"), 40, 6)
+	s := start(t, exec.Command("/bin/sh", "-c", "printf 'hello pane\\n'; sleep 30"), 40, 6, nil)
 	if out := waitFor(t, s, "hello pane"); !strings.Contains(out, "hello pane") {
 		t.Errorf("Render() = %q, want it to contain %q", out, "hello pane")
 	}
 }
 
 func TestSessionForwardsKeys(t *testing.T) {
-	s := start(t, exec.Command("/bin/cat"), 40, 6)
+	s := start(t, exec.Command("/bin/cat"), 40, 6, nil)
 	for _, r := range "abc" {
 		s.SendKey(tea.KeyPressMsg{Code: r, Text: string(r)})
 	}
@@ -52,7 +52,7 @@ func TestSessionForwardsKeys(t *testing.T) {
 
 func TestSessionForwardsModifiedSpecialKeys(t *testing.T) {
 	// cat -v renders control bytes visibly, so the exact sequence is checked.
-	s := start(t, exec.Command("/bin/cat", "-v"), 40, 6)
+	s := start(t, exec.Command("/bin/cat", "-v"), 40, 6, nil)
 	s.SendKey(tea.KeyPressMsg{Code: tea.KeyUp, Mod: tea.ModCtrl})
 	s.SendKey(tea.KeyPressMsg{Code: tea.KeyEnter})
 	if out := waitFor(t, s, "^[[1;5A"); !strings.Contains(out, "^[[1;5A") {
@@ -64,7 +64,7 @@ func TestSessionResizePropagatesToChild(t *testing.T) {
 	// The child polls its own terminal size rather than trapping SIGWINCH,
 	// because a POSIX shell defers trap handlers until the foreground command
 	// finishes, so a trap around sleep would never run.
-	s := start(t, exec.Command("/bin/sh", "-c", "while :; do stty size; sleep 0.2; done"), 40, 6)
+	s := start(t, exec.Command("/bin/sh", "-c", "while :; do stty size; sleep 0.2; done"), 40, 6, nil)
 	if out := waitFor(t, s, "6 40"); !strings.Contains(out, "6 40") {
 		t.Fatalf("child did not start at 6x40; Render() = %q", out)
 	}
@@ -77,7 +77,7 @@ func TestSessionResizePropagatesToChild(t *testing.T) {
 }
 
 func TestSessionWaitReturnsAfterChildExits(t *testing.T) {
-	s := start(t, exec.Command("/bin/sh", "-c", "exit 3"), 40, 6)
+	s := start(t, exec.Command("/bin/sh", "-c", "exit 3"), 40, 6, nil)
 	done := make(chan error, 1)
 	go func() { done <- s.Wait() }()
 	select {
@@ -92,15 +92,14 @@ func TestSessionWaitReturnsAfterChildExits(t *testing.T) {
 }
 
 func TestSessionRejectsNonPositiveSize(t *testing.T) {
-	if _, err := Start(exec.Command("/bin/cat"), 0, 6); err == nil {
+	if _, err := Start(exec.Command("/bin/cat"), 0, 6, nil); err == nil {
 		t.Error("Start accepted a zero width")
 	}
 }
 
 func TestSessionTriggerFiresAndIsNotRendered(t *testing.T) {
-	s := start(t, exec.Command("/bin/sh", "-c", `printf 'before\033]9270;golf=check\007after\n'; sleep 30`), 40, 6)
 	got := make(chan string, 1)
-	s.OnTrigger(func(action string) {
+	s := start(t, exec.Command("/bin/sh", "-c", `printf 'before\033]9270;golf=check\007after\n'; sleep 30`), 40, 6, func(action string) {
 		select {
 		case got <- action:
 		default:
@@ -124,31 +123,24 @@ func TestSessionTriggerFiresAndIsNotRendered(t *testing.T) {
 }
 
 func TestSessionDropsClipboardWrites(t *testing.T) {
-	s := start(t, exec.Command("/bin/sh", "-c", `printf '\033]52;c;aGVsbG8=\007visible\n'; sleep 30`), 40, 6)
+	s := start(t, exec.Command("/bin/sh", "-c", `printf '\033]52;c;aGVsbG8=\007visible\n'; sleep 30`), 40, 6, nil)
 	out := waitFor(t, s, "visible")
 	if strings.Contains(out, "52;c") || strings.Contains(out, "aGVsbG8") {
 		t.Errorf("clipboard sequence leaked: %q", out)
 	}
 }
 
-func TestSessionTriggerBeforeHandlerIsNotLost(t *testing.T) {
-	// The child can emit before OnTrigger runs. Losing that trigger would
-	// silently drop a check the operator asked for.
-	s := start(t, exec.Command("/bin/sh", "-c", `printf '\033]9270;golf=check\007'; sleep 30`), 40, 6)
-	time.Sleep(500 * time.Millisecond) // let the sequence be parsed first
+func TestSessionImmediateTriggerIsNotLost(t *testing.T) {
 	got := make(chan string, 1)
-	s.OnTrigger(func(action string) {
-		select {
-		case got <- action:
-		default:
-		}
+	start(t, exec.Command("/bin/sh", "-c", `printf '\033]9270;golf=check\007'`), 40, 6, func(action string) {
+		got <- action
 	})
 	select {
 	case action := <-got:
 		if action != "check" {
-			t.Errorf("buffered trigger = %q, want %q", action, "check")
+			t.Errorf("immediate trigger = %q, want %q", action, "check")
 		}
 	case <-time.After(5 * time.Second):
-		t.Fatal("a trigger that arrived before the handler was lost")
+		t.Fatal("an immediate trigger was lost")
 	}
 }

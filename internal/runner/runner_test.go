@@ -444,7 +444,7 @@ func TestIntegrationDockerSessionRunsUnderAPseudoTerminal(t *testing.T) {
 	}
 	defer s.Finish(nil)
 
-	p, err := pane.Start(s.Command(), 80, 24)
+	p, err := pane.Start(s.Command(), 80, 24, nil)
 	if err != nil {
 		t.Fatalf("pane.Start: %v", err)
 	}
