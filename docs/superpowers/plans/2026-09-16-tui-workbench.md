@@ -698,7 +698,7 @@ git commit -m "feat(pane): run a child on a pseudo-terminal behind a virtual ter
 
 ---
 
-### Task 4: OSC trigger channel
+### Task 4: OSC trigger channel (DONE)
 
 Shell commands give a second path to check, hint, and reveal that intercepts no keys at all. The child prints a private OSC sequence, the emulator consumes it, and it never renders.
 
@@ -710,7 +710,7 @@ Shell commands give a second path to check, hint, and reveal that intercepts no 
 - Consumes: `Session` from Task 3.
 - Produces: `func (s *Session) OnTrigger(fn func(action string))`, and the exported constant `TriggerOSC = 9270`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```go
 func TestSessionTriggerFiresAndIsNotRendered(t *testing.T) {
@@ -756,12 +756,12 @@ func TestSessionDropsClipboardWrites(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `go test ./internal/pane/ -run 'TestSessionTrigger|TestSessionDropsClipboard' -v`
 Expected: FAIL, `s.OnTrigger undefined`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Add to `internal/pane/pane.go`:
 
@@ -814,12 +814,12 @@ func (s *Session) OnTrigger(fn func(action string)) {
 
 Add `"strings"` to the imports.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `go test ./internal/pane/ -v`
 Expected: PASS for all pane tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add internal/pane
