@@ -435,6 +435,31 @@ func (s *Service) Check(ctx context.Context, id string) (model.CheckResult, erro
 	return result, checkErr
 }
 
+// CheckNow validates an attempt without ending it, so the operator can check
+// work from inside a running exercise. It leaves the attempt open and the
+// child untouched; see Runner.CheckNow for why that is safe.
+func (s *Service) CheckNow(ctx context.Context, id string) (model.CheckResult, error) {
+	a, err := s.Store.Attempt(id)
+	if err != nil {
+		return model.CheckResult{}, err
+	}
+	if a.Status == "solved" || a.Status == "abandoned" {
+		return model.CheckResult{}, errors.New("finished attempts are immutable; select retry to make another attempt")
+	}
+	ch, err := s.resolveAttempt(a)
+	if err != nil {
+		return model.CheckResult{}, err
+	}
+	result, checkErr := s.Runner.CheckNow(ctx, ch, a)
+	if checkErr != nil {
+		result = model.CheckResult{Outcome: "infrastructure_error", Summary: "Could not validate exercise", Details: []string{checkErr.Error()}}
+	}
+	if err = s.Store.RecordCheck(id, result); err != nil {
+		return result, errors.Join(checkErr, fmt.Errorf("save check result: %w", err))
+	}
+	return result, checkErr
+}
+
 func (s *Service) Hint(id string) (string, error) {
 	a, err := s.Store.Attempt(id)
 	if err != nil {

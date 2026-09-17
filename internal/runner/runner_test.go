@@ -358,3 +358,66 @@ func TestIntegrationCancellationIsInterrupted(t *testing.T) {
 		t.Fatalf("handoff cancellation misclassified: %+v", result)
 	}
 }
+
+// TestIntegrationCheckNowLeavesTheSessionRunning covers the mid-session check.
+// Check removes every container carrying the attempt's owner label, which
+// would kill the exercise the operator is working in; CheckNow must not.
+func TestIntegrationCheckNowLeavesTheSessionRunning(t *testing.T) {
+	r, a := integrationRunner(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+	c := model.Challenge{
+		ID: "shell.checknow", Revision: 1, Profile: "standard",
+		Validator: model.Validator{Kind: "tree", OutputPolicy: "exact", Version: "1"},
+		Fixtures: []model.Fixture{{
+			Name:          "one",
+			Files:         map[string]string{"answer.txt": "before\n"},
+			ExpectedFiles: map[string]string{"answer.txt": "after\n"},
+		}},
+	}
+	s, err := r.Prepare(ctx, c, a)
+	if err != nil {
+		t.Fatal(err)
+	}
+	container := s.container
+
+	// Failing check while the session container is still alive.
+	result, err := r.CheckNow(ctx, c, a)
+	if err != nil {
+		t.Fatalf("CheckNow before the edit: %v", err)
+	}
+	if result.Outcome == "pass" {
+		t.Fatal("CheckNow passed before the workspace was edited")
+	}
+	if !containerRunning(t, container) {
+		t.Fatal("CheckNow stopped the live session container")
+	}
+
+	// Apply the fix through the live session container, the way the operator
+	// would by editing inside the running exercise.
+	if err := r.populate(ctx, container, map[string]string{"answer.txt": "after\n"}); err != nil {
+		t.Fatal(err)
+	}
+	result, err = r.CheckNow(ctx, c, a)
+	if err != nil {
+		t.Fatalf("CheckNow after the edit: %v", err)
+	}
+	if result.Outcome != "pass" {
+		t.Fatalf("CheckNow did not pass after the fix: %+v", result)
+	}
+	if !containerRunning(t, container) {
+		t.Fatal("the second CheckNow stopped the live session container")
+	}
+	s.Finish(nil)
+}
+
+func containerRunning(t *testing.T, name string) bool {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	out, _, err := docker(ctx, nil, "inspect", "--format", "{{.State.Running}}", name)
+	if err != nil {
+		return false
+	}
+	return strings.TrimSpace(string(out)) == "true"
+}

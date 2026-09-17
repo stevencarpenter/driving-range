@@ -659,6 +659,10 @@ func (m Model) perform(action string) (tea.Model, tea.Cmd) {
 			var result model.CheckResult
 			result, err = s.Check(m.lifecycle.ctx, id)
 			text = formatCheck(result)
+		case "checknow":
+			var result model.CheckResult
+			result, err = s.CheckNow(m.lifecycle.ctx, id)
+			text = formatCheck(result)
 		case "hint":
 			text, err = s.Hint(id)
 		case "reveal":
