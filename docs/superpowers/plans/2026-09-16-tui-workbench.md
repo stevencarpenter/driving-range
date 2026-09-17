@@ -32,7 +32,7 @@
 
 Findings from the design spike that are not obvious from the code, ordered by how much time they will cost if missed.
 
-**1. Nobody has run Neovim in this pane yet.** The spike validated key encoding, chunk handling, resize, OSC interception, and rendering, using `sh`, `cat`, and `cat -v`. It never launched a real editor. The whole design assumes a full-screen alternate-screen application behaves, and that assumption is untested. After Task 3 passes, before building anything on top of it, write a throwaway `main` that runs `pane.Start(exec.Command("nvim"), 80, 24)` and prints `Render()` on a ticker. Confirm the status line, syntax colors, cursor position, and `:q` all work. If that fails, stop and report rather than continuing to Task 4.
+**1. The Neovim gate is cleared.** The design's biggest assumption, that a full-screen alternate-screen application behaves in the pane, was unproven when this plan was written. It is now covered by `TestNvimEditsInPane` in `internal/pane/nvim_test.go`, which skips when `nvim` is absent. It launches the same argv the Docker runner uses for vim exercises, asserts the file renders and the alternate screen is active, performs a real motion edit (`f8cw9090`), writes with `:wq`, and checks both the exit status and the file contents. Keep that test passing; it is the regression guard for everything the workbench does.
 
 **2. The emulator deadlocks without a drain, even if you never send a key.** Its input path is an `io.Pipe`, and it writes *replies* into that pipe while parsing child output: a DECRQM mode query answered in `handleRequestMode` is enough. Bubble Tea v2 queries modes at startup, so any real TUI child triggers this within milliseconds. With no reader on `Emulator.Read()`, `Write` blocks and Go kills the process with `fatal error: all goroutines are asleep - deadlock!`, whose stack points at the parser, not the cause. `Start` launches the draining goroutine, so `Session` is safe. Any code that constructs a bare `vt.Emulator` or `vt.SafeEmulator`, including a read-only observer that only calls `Render()`, must start its own reader first. This was hit for real while smoke testing the migrated TUI.
 
@@ -265,7 +265,7 @@ git commit -m "refactor: migrate TUI to Bubble Tea v2, Lip Gloss v2, Bubbles v2"
 
 ---
 
-### Task 2: Modified special key encoder
+### Task 2: Modified special key encoder (DONE)
 
 `x/vt`'s `SendKey` is an exhaustive switch whose `default` branch (`x/vt/key.go:293`) handles only `key.Mod == 0`. Modified special keys produce no output. This task supplies the fallback.
 
@@ -277,7 +277,7 @@ git commit -m "refactor: migrate TUI to Bubble Tea v2, Lip Gloss v2, Bubbles v2"
 - Consumes: `charm.land/bubbletea/v2` from Task 1.
 - Produces: `func EncodeModified(k tea.Key) []byte`, returning `nil` when the emulator's own `SendKey` covers the event.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```go
 package pane
@@ -320,12 +320,12 @@ func TestEncodeModified(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `go test ./internal/pane/ -run TestEncodeModified -v`
 Expected: FAIL, `undefined: EncodeModified`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```go
 // Package pane runs an exercise child inside a pseudo-terminal and a virtual
@@ -408,12 +408,12 @@ func EncodeModified(k tea.Key) []byte {
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `go test ./internal/pane/ -run TestEncodeModified -v`
 Expected: PASS, all 15 subtests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add internal/pane/encode.go internal/pane/encode_test.go
@@ -422,7 +422,7 @@ git commit -m "feat(pane): encode modified special keys as xterm CSI sequences"
 
 ---
 
-### Task 3: Pane session
+### Task 3: Pane session (DONE)
 
 **Files:**
 - Create: `internal/pane/pane.go`
@@ -442,7 +442,7 @@ git commit -m "feat(pane): encode modified special keys as xterm CSI sequences"
   - `func (s *Session) Close() error`
   - `func (s *Session) Output() <-chan struct{}` signalling that the screen changed
 
-- [ ] **Step 1: Add the dependencies**
+- [x] **Step 1: Add the dependencies**
 
 ```bash
 go get github.com/charmbracelet/x/vt@v0.0.0-20260913004009-c615ff2f7805
@@ -450,7 +450,7 @@ go get github.com/charmbracelet/ultraviolet@v0.0.0-20260910203606-6c9e17dc7a16
 go get github.com/creack/pty@v1.1.24
 ```
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 ```go
 package pane
@@ -552,12 +552,12 @@ func TestSessionWaitReturnsAfterChildExits(t *testing.T) {
 }
 ```
 
-- [ ] **Step 3: Run the tests to verify they fail**
+- [x] **Step 3: Run the tests to verify they fail**
 
 Run: `go test ./internal/pane/ -run TestSession -v`
 Expected: FAIL, `undefined: Start`.
 
-- [ ] **Step 4: Write the implementation**
+- [x] **Step 4: Write the implementation**
 
 ```go
 package pane
@@ -682,12 +682,12 @@ func (s *Session) Close() error {
 }
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `go test ./internal/pane/ -v`
 Expected: PASS for all five session tests and the encoder test.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add internal/pane go.mod go.sum
