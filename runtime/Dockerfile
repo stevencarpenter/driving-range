@@ -21,8 +21,8 @@ RUN case "$TARGETARCH" in \
     && rm /tmp/jj.tar.gz
 RUN useradd --uid 1000 --create-home golf && mkdir /workspace && chown golf:golf /workspace \
     && dpkg-query -W > /usr/local/share/golf-packages.txt
-COPY golf-shell golf-brief /usr/local/bin/
-RUN chmod 755 /usr/local/bin/golf-shell /usr/local/bin/golf-brief
+COPY golf-shell golf-brief golf-check golf-hint /usr/local/bin/
+RUN chmod 755 /usr/local/bin/golf-shell /usr/local/bin/golf-brief /usr/local/bin/golf-check /usr/local/bin/golf-hint
 ENV HOME=/tmp/golf-home LANG=C.UTF-8 LC_ALL=C.UTF-8 TERM=xterm-256color \
     GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null \
     GIT_AUTHOR_NAME="Golf Player" GIT_AUTHOR_EMAIL=player@example.invalid \

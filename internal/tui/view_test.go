@@ -5,15 +5,13 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
-	"github.com/muesli/termenv"
 	"github.com/stevencarpenter/driving-range/internal/model"
 )
 
 func TestStyledViewsStayWithinTerminal(t *testing.T) {
 	m := testModel(t)
-	m.renderer.SetColorProfile(termenv.TrueColor)
 	t.Setenv("NO_COLOR", "")
 	if err := os.Unsetenv("NO_COLOR"); err != nil {
 		t.Fatal(err)
@@ -22,12 +20,12 @@ func TestStyledViewsStayWithinTerminal(t *testing.T) {
 	m.openChallenge(m.service.Catalog.Challenges[0], nil, today)
 	for _, theme := range []string{"dark", "light", "plain", "auto"} {
 		m.service.Config.Theme = theme
-		m.renderer.SetHasDarkBackground(theme != "auto")
+		m.darkBackground = theme != "auto"
 		for _, size := range [][2]int{{1, 1}, {12, 8}, {40, 12}, {72, 24}, {80, 24}, {120, 32}, {200, 48}} {
 			m.width, m.height = size[0], size[1]
 			for _, screen := range []screen{today, practice, progress, settings, exercise, detail} {
 				m.screen = screen
-				view := m.View()
+				view := m.render()
 				if len(strings.Split(view, "\n")) > m.height {
 					t.Fatalf("%s screen %d exceeds height at %v", theme, screen, size)
 				}
@@ -49,7 +47,6 @@ func TestStyledViewsStayWithinTerminal(t *testing.T) {
 
 func TestColorSelectionAndPlainSelectionAgree(t *testing.T) {
 	m := testModel(t)
-	m.renderer.SetColorProfile(termenv.TrueColor)
 	t.Setenv("NO_COLOR", "")
 	if err := os.Unsetenv("NO_COLOR"); err != nil {
 		t.Fatal(err)
@@ -60,10 +57,10 @@ func TestColorSelectionAndPlainSelectionAgree(t *testing.T) {
 		updated, _ := m.Update(tea.WindowSizeMsg{Width: size[0], Height: size[1]})
 		m = updated.(Model)
 		m.service.Config.Theme = "plain"
-		plain := m.View()
+		plain := m.render()
 		for _, theme := range []string{"dark", "light"} {
 			m.service.Config.Theme = theme
-			view := m.View()
+			view := m.render()
 			if !strings.Contains(view, "\x1b[") {
 				t.Fatal("color test rendered without styling")
 			}
@@ -79,7 +76,6 @@ func TestColorSelectionAndPlainSelectionAgree(t *testing.T) {
 
 func TestStyledContentCannotInjectTerminalControls(t *testing.T) {
 	m := testModel(t)
-	m.renderer.SetColorProfile(termenv.TrueColor)
 	t.Setenv("NO_COLOR", "")
 	if err := os.Unsetenv("NO_COLOR"); err != nil {
 		t.Fatal(err)
@@ -96,7 +92,7 @@ func TestStyledContentCannotInjectTerminalControls(t *testing.T) {
 	for _, screen := range []screen{today, practice, progress, settings, exercise, detail} {
 		m.screen = screen
 		m.notice = unsafe
-		view := m.View()
+		view := m.render()
 		for _, control := range []string{"\x1b[2J", "\x1b[31m", "\x1b]52", "\a", "\r", "\x00", "\u009b"} {
 			if strings.Contains(view, control) {
 				t.Fatalf("screen %d leaked %q", screen, control)
@@ -107,7 +103,7 @@ func TestStyledContentCannotInjectTerminalControls(t *testing.T) {
 		}
 	}
 	t.Setenv("NO_COLOR", "")
-	if strings.Contains(m.View(), "\x1b") {
+	if strings.Contains(m.render(), "\x1b") {
 		t.Fatal("NO_COLOR must disable all styling, including bold")
 	}
 }
@@ -117,7 +113,7 @@ func TestExercisePrioritizesActionAndInstructions(t *testing.T) {
 	m.service.Catalog.Challenges[0].Objective = "Change the requested configuration value."
 	m.records = []model.Progress{{Attempt: model.Attempt{ID: "attempt", ExerciseID: "shell.task-00", Revision: 1, Status: "active"}}}
 	m.openChallenge(m.service.Catalog.Challenges[0], nil, today)
-	view := m.View()
+	view := m.render()
 	for _, text := range []string{"[Enter] Start / resume", "GOAL", "BRIEF", "Change the requested configuration value.", "Esc back"} {
 		if !strings.Contains(view, text) {
 			t.Fatalf("missing %q from initial 80x24 exercise view:\n%s", text, view)
@@ -138,7 +134,7 @@ func TestGoalLeadsActionsAndUsesAvailableWidth(t *testing.T) {
 		m.width, m.height = width, 40
 		for _, screen := range []screen{today, exercise} {
 			m.screen = screen
-			view := m.View()
+			view := m.render()
 			if strings.Index(view, c.Objective) < 0 || strings.Index(view, c.Objective) > strings.Index(view, "[Enter]") {
 				t.Fatalf("goal must precede the primary action on screen %d", screen)
 			}
@@ -186,11 +182,11 @@ func TestWideLayoutTracksSelectionAndCollapses(t *testing.T) {
 	m.width, m.height = 160, 40
 	m.service.Catalog.Challenges[0].Objective = "First objective"
 	m.service.Catalog.Challenges[1].Objective = "Second objective"
-	if !strings.Contains(m.View(), "First objective") {
+	if !strings.Contains(m.render(), "First objective") {
 		t.Fatal("wide layout has no selected exercise preview")
 	}
 	m, _ = press(m, "j")
-	view := m.View()
+	view := m.render()
 	if !strings.Contains(view, "Second objective") || strings.Contains(view, "First objective") {
 		t.Fatal("preview did not follow keyboard selection")
 	}
@@ -200,11 +196,11 @@ func TestWideLayoutTracksSelectionAndCollapses(t *testing.T) {
 		}
 	}
 	m.width = 80
-	if strings.Contains(m.View(), "SELECTED EXERCISE") {
+	if strings.Contains(m.render(), "SELECTED EXERCISE") {
 		t.Fatal("preview did not collapse in a narrow terminal")
 	}
 	m, _ = press(m, "enter")
-	if !strings.Contains(m.View(), "Second objective") {
+	if !strings.Contains(m.render(), "Second objective") {
 		t.Fatal("selected goal is not accessible after collapsing the preview")
 	}
 }
@@ -222,9 +218,8 @@ func TestTrackProgressCountsExercisesAndHonorsNoColor(t *testing.T) {
 	}
 	m.screen, m.width, m.height = practice, 160, 40
 	m.service.Config.Theme = "dark"
-	m.renderer.SetColorProfile(termenv.TrueColor)
 	t.Setenv("NO_COLOR", "")
-	view := m.View()
+	view := m.render()
 	if strings.Contains(view, "\x1b") || strings.ContainsAny(view, "╭╮╰╯━─") {
 		t.Fatal("NO_COLOR preview must use unstyled ASCII frames and progress")
 	}
@@ -233,15 +228,14 @@ func TestTrackProgressCountsExercisesAndHonorsNoColor(t *testing.T) {
 func TestNestedStyleRestoresContainingSurface(t *testing.T) {
 	m := testModel(t)
 	m.service.Config.Theme = "dark"
-	m.renderer.SetColorProfile(termenv.TrueColor)
 	t.Setenv("NO_COLOR", "")
 	if err := os.Unsetenv("NO_COLOR"); err != nil {
 		t.Fatal(err)
 	}
 	s := m.styles()
-	prefix := strings.TrimSuffix(s.surface.Render(""), "\x1b[0m")
+	prefix := strings.TrimSuffix(s.surface.Render(""), styleReset)
 	view := onSurface(s.surface, paint(s.action, "Action")+" gap")
-	if prefix == "" || !strings.Contains(view, "\x1b[0m"+prefix+" gap") {
+	if prefix == "" || !strings.Contains(view, styleReset+prefix+" gap") {
 		t.Fatal("nested style reset exposes terminal background between elements")
 	}
 }

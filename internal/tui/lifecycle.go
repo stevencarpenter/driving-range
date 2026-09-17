@@ -5,7 +5,7 @@ import (
 	"errors"
 	"sync"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 // lifecycle is shared by Model copies. Bubble Tea deliberately does not wait
@@ -14,6 +14,7 @@ import (
 type lifecycle struct {
 	ctx       context.Context
 	cancel    context.CancelFunc
+	program   *tea.Program
 	mu        sync.Mutex
 	stopping  bool
 	wg        sync.WaitGroup
@@ -37,6 +38,25 @@ func (l *lifecycle) command(cmd tea.Cmd) tea.Cmd {
 		l.mu.Unlock()
 		defer l.wg.Done()
 		return cmd()
+	}
+}
+
+// attach records the running program so work started outside the Bubble Tea
+// event loop, such as an emulator trigger handler, can deliver a message.
+func (l *lifecycle) attach(p *tea.Program) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.program = p
+}
+
+// send delivers a message from outside the event loop. It is a no-op once
+// shutdown has begun, so a late trigger cannot revive a closing program.
+func (l *lifecycle) send(msg tea.Msg) {
+	l.mu.Lock()
+	p, stopping := l.program, l.stopping
+	l.mu.Unlock()
+	if p != nil && !stopping {
+		p.Send(msg)
 	}
 }
 

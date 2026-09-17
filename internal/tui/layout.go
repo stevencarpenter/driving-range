@@ -4,15 +4,32 @@ import (
 	"fmt"
 	"strings"
 
-	bar "github.com/charmbracelet/bubbles/progress"
-	"github.com/charmbracelet/bubbles/viewport"
-	"github.com/charmbracelet/lipgloss"
+	bar "charm.land/bubbles/v2/progress"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
-	"github.com/muesli/termenv"
 	"github.com/stevencarpenter/driving-range/internal/model"
 )
 
-func (m Model) View() string {
+// View satisfies tea.Model. Bubble Tea v2 carries alternate screen state on
+// the view rather than as a program option.
+func (m Model) View() tea.View {
+	v := tea.NewView(m.render())
+	v.AltScreen = true
+	// The child's cursor is a real terminal cursor, not a painted cell, so it
+	// keeps its shape and blink. The offset is the rows the band occupies.
+	if m.workbench != nil && m.workbench.session != nil {
+		x, y := m.workbench.session.Cursor()
+		v.Cursor = tea.NewCursor(x, y+m.workbench.bandRows())
+	}
+	return v
+}
+
+func (m Model) render() string {
+	if m.workbench != nil {
+		return m.workbench.view(m.width, m.height, m.styles(), m.border(), m.plain())
+	}
 	s := m.styles()
 	width, height := m.contentWidth(), m.contentHeight()
 	lines := m.contentLines()
@@ -30,7 +47,7 @@ func (m Model) View() string {
 			}
 		}
 	}
-	vp := viewport.New(width, height)
+	vp := viewport.New(viewport.WithWidth(width), viewport.WithHeight(height))
 	vp.SetContent(strings.Join(lines, "\n"))
 	vp.SetYOffset(offset)
 	content := vp.View()
@@ -108,17 +125,21 @@ func (m Model) View() string {
 func (m Model) panel(content string, width, height int) string {
 	s := m.styles()
 	return s.surface.Border(m.border()).BorderForeground(s.border.GetForeground()).
-		BorderBackground(s.canvas.GetBackground()).Padding(0, 1).Width(width - 2).Height(height - 2).Render(onSurface(s.surface, content))
+		BorderBackground(s.canvas.GetBackground()).Padding(0, 1).Width(width).Height(height).Render(onSurface(s.surface, content))
 }
 
-// Lip Gloss v1 resets nested styles to the terminal default. Restore the
+// styleReset is the sequence Lip Gloss v2 emits to close a style. v1 wrote the
+// longer "\x1b[0m"; matching the wrong one turns onSurface into a silent no-op.
+const styleReset = "\x1b[m"
+
+// Lip Gloss resets nested styles to the terminal default. Restore the
 // containing surface after each child reset so gaps keep the panel background.
 func onSurface(style lipgloss.Style, content string) string {
-	prefix := strings.TrimSuffix(style.Render(""), "\x1b[0m")
+	prefix := strings.TrimSuffix(style.Render(""), styleReset)
 	if prefix == "" {
 		return content
 	}
-	return style.Render(strings.ReplaceAll(content, "\x1b[0m", "\x1b[0m"+prefix))
+	return style.Render(strings.ReplaceAll(content, styleReset, styleReset+prefix))
 }
 
 func (m Model) selectedChallenge() *model.Challenge {
@@ -176,7 +197,7 @@ func (m Model) sidebar(width, height int) string {
 	} else {
 		lines = append(lines, label("BUILD YOUR PRACTICE"), "", paint(s.text, "Pick a small task. Work in your own tools. Check the result."), "", paint(s.action, " [1] Open Today "))
 	}
-	vp := viewport.New(width, height)
+	vp := viewport.New(viewport.WithWidth(width), viewport.WithHeight(height))
 	vp.SetContent(ansi.Wrap(strings.Join(lines, "\n"), width, ""))
 	return vp.View()
 }
@@ -195,17 +216,21 @@ func (m Model) trackProgress(track string, width int) string {
 			}
 		}
 	}
-	profile := m.renderer.ColorProfile()
 	full, empty := '━', '─'
 	if m.plain() {
-		profile = termenv.Ascii
 		full, empty = '#', '-'
 	}
-	p := bar.New(bar.WithWidth(width), bar.WithGradient("#B07AF0", "#75E4CD"), bar.WithColorProfile(profile), bar.WithFillCharacters(full, empty), bar.WithoutPercentage())
-	p.EmptyColor = "7"
+	p := bar.New(bar.WithWidth(width), bar.WithColors(lipgloss.Color("#B07AF0"), lipgloss.Color("#75E4CD")), bar.WithFillCharacters(full, empty), bar.WithoutPercentage())
+	p.EmptyColor = lipgloss.Color("7")
 	fraction := 0.0
 	if total > 0 {
 		fraction = float64(solved) / float64(total)
 	}
-	return p.ViewAs(fraction) + "\n" + paint(m.styles().muted, fmt.Sprintf("%d of %d exercises solved", solved, total))
+	filled := p.ViewAs(fraction)
+	if m.plain() {
+		// Lip Gloss v2 renders color unconditionally, so plain mode strips it
+		// here rather than downgrading a profile the renderer no longer owns.
+		filled = ansi.Strip(filled)
+	}
+	return filled + "\n" + paint(m.styles().muted, fmt.Sprintf("%d of %d exercises solved", solved, total))
 }

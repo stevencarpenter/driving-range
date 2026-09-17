@@ -11,11 +11,11 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/spinner"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stevencarpenter/driving-range/internal/app"
 	"github.com/stevencarpenter/driving-range/internal/model"
+	"github.com/stevencarpenter/driving-range/internal/pane"
 )
 
 type screen int
@@ -32,7 +32,6 @@ const (
 // Model keeps navigation separate from the persisted attempt lifecycle.
 type Model struct {
 	service          *app.Service
-	renderer         *lipgloss.Renderer
 	spinner          spinner.Model
 	lifecycle        *lifecycle
 	screen           screen
@@ -57,6 +56,12 @@ type Model struct {
 	sessions         []model.Session
 	best             *model.Progress
 	now              func() time.Time
+	// darkBackground drives the auto theme. Lip Gloss v2 has no renderer to
+	// query, so the program reports it through tea.BackgroundColorMsg and
+	// tests set it directly.
+	darkBackground bool
+	// workbench is non-nil while an exercise runs inside an embedded pane.
+	workbench *workbench
 }
 
 type loadedMsg struct {
@@ -72,6 +77,15 @@ type preparedMsg struct {
 	id   string
 	err  error
 }
+
+// paneTickMsg repaints the embedded pane on a fixed cadence, so a noisy child
+// cannot saturate the event loop with one message per write.
+type paneTickMsg struct{}
+
+// paneTriggerMsg carries an action the exercise requested with golf-check or
+// golf-hint, delivered from the emulator's handler goroutine.
+type paneTriggerMsg struct{ action string }
+
 type exitedMsg struct {
 	play *app.Play
 	err  error
@@ -84,17 +98,25 @@ type detailMsg struct {
 }
 
 func New(s *app.Service) Model {
-	return Model{service: s, spinner: spinner.New(spinner.WithSpinner(spinner.MiniDot)), renderer: lipgloss.NewRenderer(os.Stdout), lifecycle: newLifecycle(), width: 80, height: 24, chooseTrack: s.Config.Track == "", now: time.Now}
+	return Model{service: s, spinner: spinner.New(spinner.WithSpinner(spinner.MiniDot)), lifecycle: newLifecycle(), width: 80, height: 24, chooseTrack: s.Config.Track == "", now: time.Now, darkBackground: true}
 }
 
 func Run(s *app.Service) (err error) {
+	// The trigger shims only make sense when an emulator is listening.
+	s.Runner.SetWorkbench(!s.Config.Classic)
 	m := New(s)
 	defer func() { err = errors.Join(err, m.lifecycle.shutdown()) }()
-	_, err = tea.NewProgram(m, tea.WithAltScreen()).Run()
+	p := tea.NewProgram(m)
+	m.lifecycle.attach(p)
+	_, err = p.Run()
 	return err
 }
 
-func (m Model) Init() tea.Cmd { return m.refresh() }
+func (m Model) Init() tea.Cmd {
+	// The auto theme needs the terminal background. v1 asked the Lip Gloss
+	// renderer; v2 answers with a tea.BackgroundColorMsg.
+	return tea.Batch(m.refresh(), tea.RequestBackgroundColor)
+}
 
 func (m Model) refresh() tea.Cmd {
 	s := m.service
@@ -106,7 +128,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width, m.height = max(1, msg.Width), max(1, msg.Height)
 		m.offset = 0
+		if m.workbench != nil {
+			m.workbench.syncPane(m.width, m.height)
+		}
 		return m, nil
+	case tea.BackgroundColorMsg:
+		m.darkBackground = msg.IsDark()
+		return m, nil
+	case paneTickMsg:
+		if m.workbench == nil {
+			return m, nil
+		}
+		m.workbench.syncPane(m.width, m.height)
+		return m, paneTick()
+	case paneTriggerMsg:
+		if m.workbench == nil {
+			return m, nil
+		}
+		return m.workbenchAction(msg.action)
 	case loadedMsg:
 		if msg.err != nil {
 			m.errorText = "Read history: " + msg.err.Error()
@@ -130,9 +169,30 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, m.refresh()
 		}
-		m.status = "Exercise running. Exit the child tool to return."
-		return m, tea.ExecProcess(msg.play.Command(), func(err error) tea.Msg { return exitedMsg{msg.play, err} })
+		play := msg.play
+		classic := func() (tea.Model, tea.Cmd) {
+			m.status = "Exercise running. Exit the child tool to return."
+			return m, tea.ExecProcess(play.Command(), func(err error) tea.Msg { return exitedMsg{play, err} })
+		}
+		if !m.useWorkbench() {
+			return classic()
+		}
+		life := m.lifecycle
+		session, err := pane.Start(play.Command(), m.width, max(1, m.height-5), func(action string) { life.send(paneTriggerMsg{action}) })
+		if err != nil {
+			// No pseudo-terminal available. Say why, then fall back rather than
+			// failing an attempt that is already prepared.
+			m.notice = "Embedded pane unavailable (" + err.Error() + "). Using full-screen practice."
+			return classic()
+		}
+		m.workbench = newWorkbench(session, m.challenge.Objective, m.challenge.Brief)
+		m.status = ""
+		return m, tea.Batch(paneTick(), life.command(func() tea.Msg { return exitedMsg{play, session.Wait()} }))
 	case exitedMsg:
+		if m.workbench != nil {
+			m.workbench.session.Close()
+			m.workbench = nil
+		}
 		m.status = "Saving exercise session and checking result..."
 		s := m.service
 		return m, m.lifecycle.command(func() tea.Msg {
@@ -146,6 +206,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.status = ""
 		if msg.id != "" {
 			m.attemptID = msg.id
+		}
+		if m.workbench != nil {
+			// The workbench view owns the screen, so a full-width notice would
+			// never be seen. Results go to the status line instead.
+			m.workbench.result(msg.text, msg.err)
+			return m, m.refresh()
 		}
 		if msg.err != nil {
 			m.notice = ""
@@ -172,7 +238,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var cmd tea.Cmd
 		m.spinner, cmd = m.spinner.Update(msg)
 		return m, cmd
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		next, cmd := m.key(msg)
 		updated := next.(Model)
 		if !m.busy && updated.busy {
@@ -183,7 +249,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m Model) key(key tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m Model) key(key tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	// While an exercise runs, the child owns every key except the one the
+	// workbench intercepts. update has already forwarded it.
+	if m.workbench != nil {
+		handled, action := m.workbench.update(key)
+		if !handled || action == "" {
+			return m, nil
+		}
+		return m.workbenchAction(action)
+	}
 	k := key.String()
 	if m.busy {
 		return m, nil
@@ -212,8 +287,10 @@ func (m Model) key(key tea.KeyMsg) (tea.Model, tea.Cmd) {
 		case "ctrl+u":
 			m.query = ""
 		default:
-			if key.Type == tea.KeyRunes {
-				m.query += string(key.Runes)
+			// v2 reports the printable text a key produced; it is empty
+			// for keys that produce none.
+			if key.Text != "" {
+				m.query += key.Text
 			}
 		}
 		m.selected, m.offset = 0, 0
@@ -647,6 +724,10 @@ func (m Model) perform(action string) (tea.Model, tea.Cmd) {
 		case "check":
 			var result model.CheckResult
 			result, err = s.Check(m.lifecycle.ctx, id)
+			text = formatCheck(result)
+		case "checknow":
+			var result model.CheckResult
+			result, err = s.CheckNow(m.lifecycle.ctx, id)
 			text = formatCheck(result)
 		case "hint":
 			text, err = s.Hint(id)

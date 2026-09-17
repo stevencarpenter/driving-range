@@ -35,6 +35,9 @@ var volumePattern = regexp.MustCompile(`^(golf-|driving-range-)[a-zA-Z0-9][a-zA-
 type Runner struct {
 	image      string
 	nativeRoot string
+	// workbench reports that an emulator is listening for trigger sequences,
+	// so the golf-check and golf-hint shims should be active.
+	workbench bool
 }
 type Report struct {
 	Available bool   `json:"available"`
@@ -86,7 +89,17 @@ func (r *Runner) Doctor(ctx context.Context) (Report, error) {
 func (r *Runner) BuildImage(ctx context.Context, output io.Writer) error {
 	var buf bytes.Buffer
 	tw := tar.NewWriter(&buf)
-	for _, name := range []string{"Dockerfile", "golf-shell", "golf-brief"} {
+	// Read the context from the embedded filesystem rather than a second
+	// hardcoded list, which would silently omit a newly added shim.
+	entries, err := runtimefiles.Files.ReadDir(".")
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
 		data, err := runtimefiles.Files.ReadFile(name)
 		if err != nil {
 			return err
@@ -98,7 +111,7 @@ func (r *Runner) BuildImage(ctx context.Context, output io.Writer) error {
 			return err
 		}
 	}
-	if err := tw.Close(); err != nil {
+	if err = tw.Close(); err != nil {
 		return err
 	}
 	cmd := exec.CommandContext(ctx, "docker", "build", "--tag", r.image, "-")
@@ -260,7 +273,7 @@ func (s *Session) Command() *exec.Cmd {
 	}
 	s.commandStarted = true
 	s.started = time.Now()
-	return exec.CommandContext(s.ctx, "docker", completionArgs(s.container, s.statusFile, true, argv)...)
+	return exec.CommandContext(s.ctx, "docker", completionArgs(s.container, s.statusFile, true, argv, s.runner.workbench)...)
 }
 
 func (s *Session) Finish(childErr error) model.SessionResult {
@@ -314,7 +327,7 @@ func (r *Runner) Execute(ctx context.Context, c model.Challenge, a model.Attempt
 	defer cancel()
 	s.commandStarted = true
 	s.started = time.Now()
-	_, _, runErr := docker(bounded, strings.NewReader(script), completionArgs(s.container, s.statusFile, false, []string{"/bin/bash", "--noprofile", "--norc", "-s"})...)
+	_, _, runErr := docker(bounded, strings.NewReader(script), completionArgs(s.container, s.statusFile, false, []string{"/bin/bash", "--noprofile", "--norc", "-s"}, false)...)
 	result := s.Finish(runErr)
 	if runErr == nil && result.Error != "" {
 		runErr = errors.New(result.Error)
@@ -327,10 +340,13 @@ func (r *Runner) Execute(ctx context.Context, c model.Challenge, a model.Attempt
 
 // A successful Docker CLI exit is insufficient evidence that a candidate ran.
 // This trusted wrapper separates the child status from Docker transport errors.
-func completionArgs(container, status string, tty bool, argv []string) []string {
+func completionArgs(container, status string, tty bool, argv []string, workbench bool) []string {
 	args := []string{"exec", "--interactive"}
 	if tty {
 		args = append(args, "--tty")
+	}
+	if workbench {
+		args = append(args, "--env", "GOLF_WORKBENCH=1")
 	}
 	args = append(args, container, "/bin/bash", "--noprofile", "--norc", "-c", `marker=$1; shift; command -v -- "$1" >/dev/null || exit 126; "$@"; result=$?; printf '%s\n' "$result" > "$marker"`, "golf", status)
 	return append(args, argv...)
@@ -575,3 +591,8 @@ func (r *Runner) snapshot(ctx context.Context, a model.Attempt) (map[string]stri
 	}
 	return files, nil
 }
+
+// SetWorkbench declares whether exercises run inside the embedded pane. The
+// trigger shims refuse to act when they are not, because nothing would be
+// listening for the sequence they print.
+func (r *Runner) SetWorkbench(on bool) { r.workbench = on }

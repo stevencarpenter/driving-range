@@ -28,6 +28,9 @@ type Config struct {
 	Track string `json:"track"`
 	Theme string `json:"theme"`
 	Image string `json:"image"`
+	// Classic restores the pre-workbench behaviour: the child owns the whole
+	// terminal and golf disappears until it exits.
+	Classic bool `json:"classic"`
 }
 
 type Service struct {
@@ -430,6 +433,31 @@ func (s *Service) Check(ctx context.Context, id string) (model.CheckResult, erro
 		result = model.CheckResult{Outcome: "infrastructure_error", Summary: "Could not validate exercise", Details: []string{checkErr.Error()}}
 	}
 	if err = s.Store.RecordCheck(id, result); err != nil {
+		return result, errors.Join(checkErr, fmt.Errorf("save check result: %w", err))
+	}
+	return result, checkErr
+}
+
+// CheckNow validates an attempt without ending it, so the operator can check
+// work from inside a running exercise. It leaves the attempt open and the
+// child untouched; see Runner.CheckNow for why that is safe.
+func (s *Service) CheckNow(ctx context.Context, id string) (model.CheckResult, error) {
+	a, err := s.Store.Attempt(id)
+	if err != nil {
+		return model.CheckResult{}, err
+	}
+	if a.Status == "solved" || a.Status == "abandoned" {
+		return model.CheckResult{}, errors.New("finished attempts are immutable; select retry to make another attempt")
+	}
+	ch, err := s.resolveAttempt(a)
+	if err != nil {
+		return model.CheckResult{}, err
+	}
+	result, checkErr := s.Runner.CheckNow(ctx, ch, a)
+	if checkErr != nil {
+		result = model.CheckResult{Outcome: "infrastructure_error", Summary: "Could not validate exercise", Details: []string{checkErr.Error()}}
+	}
+	if err = s.Store.RecordInterimCheck(id, result); err != nil {
 		return result, errors.Join(checkErr, fmt.Errorf("save check result: %w", err))
 	}
 	return result, checkErr

@@ -19,6 +19,12 @@ Sidebar track progress uses a Bubbles progress bar and a textual solved count. C
 
 Put the goal before the primary action and metadata. In exercise details, follow the controls with the brief, then exercise details and attempt bookkeeping. Omit the brief's opening paragraph only when it exactly repeats the displayed objective. Keep revision IDs, elapsed time, assistance records, and runtime details secondary to the instruction they support.
 
-All controls remain keyboard accessible without special fonts or a mouse. Tab and number keys select top-level destinations; j/k or arrows move through lists or scroll text. Enter opens the selected exercise in Practice and the selected attempt detail in Progress. Child tools own the entire terminal and every key during an exercise. Restore the TUI after they exit. Strip external terminal control sequences before applying application styling.
+All controls remain keyboard accessible without special fonts or a mouse. Tab and number keys select top-level destinations; j/k or arrows move through lists or scroll text. Enter opens the selected exercise in Practice and the selected attempt detail in Progress. Strip external terminal control sequences before applying application styling.
+
+An exercise runs inside a pane in the TUI. A brief band sits above it and a status line below, so the objective stays visible while the solution is worked. The band collapses to one line. Its height is measured after rendering, because a long objective wraps; the band, the pane, and the status line always sum to the terminal height. The band omits the brief's opening line when it repeats the objective.
+
+The child owns every key except `F12`, which opens a palette offering check, hint, reveal, brief, and quit. One intercepted key keeps the child's own bindings, and the tmux prefix, intact. The `golf-check` and `golf-hint` commands reach the same actions from the exercise prompt without intercepting any key. Check results appear on the status line, which is the only surface the pane leaves free. A check taken mid-session records history but never finishes the attempt.
+
+Classic mode restores the previous behaviour, where the child owns the entire terminal and the TUI is restored after it exits. Golf also falls back to it when no pseudo-terminal is available, stating why.
 
 Today, Practice, Progress, and Settings are top-level destinations. Exercise details contain start/resume, check, hints, explanation, retry, and abandon. Destructive data removal needs explicit confirmation. Show errors with the operation and recovery action. Never claim a result was saved if persistence failed.

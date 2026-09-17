@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/spinner"
+	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/stevencarpenter/driving-range/internal/app"
 	"github.com/stevencarpenter/driving-range/internal/catalog"
@@ -41,24 +41,26 @@ func testModel(t *testing.T) Model {
 }
 
 func press(m Model, key string) (Model, tea.Cmd) {
-	var msg tea.KeyMsg
+	var msg tea.KeyPressMsg
 	switch key {
 	case "enter":
-		msg.Type = tea.KeyEnter
+		msg = tea.KeyPressMsg{Code: tea.KeyEnter}
 	case "esc":
-		msg.Type = tea.KeyEsc
+		msg = tea.KeyPressMsg{Code: tea.KeyEscape}
 	case "pgdown":
-		msg.Type = tea.KeyPgDown
+		msg = tea.KeyPressMsg{Code: tea.KeyPgDown}
 	case "pgup":
-		msg.Type = tea.KeyPgUp
+		msg = tea.KeyPressMsg{Code: tea.KeyPgUp}
 	case "ctrl+u":
-		msg.Type = tea.KeyCtrlU
+		msg = tea.KeyPressMsg{Code: 'u', Mod: tea.ModCtrl}
 	case "ctrl+c":
-		msg.Type = tea.KeyCtrlC
+		msg = tea.KeyPressMsg{Code: 'c', Mod: tea.ModCtrl}
 	case "tab":
-		msg.Type = tea.KeyTab
+		msg = tea.KeyPressMsg{Code: tea.KeyTab}
 	default:
-		msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(key)}
+		// v1 carried the whole string in Runes; v2 carries one Code rune plus
+		// the Text it produced. Every caller passes a single character.
+		msg = tea.KeyPressMsg{Code: []rune(key)[0], Text: key}
 	}
 	updated, cmd := m.Update(msg)
 	return updated.(Model), cmd
@@ -124,8 +126,8 @@ func TestPracticeSearchAndSelection(t *testing.T) {
 	m, _ = press(m, "ctrl+u")
 	m, _ = press(m, "absent")
 	m, _ = press(m, "enter")
-	if !strings.Contains(m.View(), "No exercises match") {
-		t.Fatal(m.View())
+	if !strings.Contains(m.render(), "No exercises match") {
+		t.Fatal(m.render())
 	}
 	m, cmd := press(m, "enter")
 	if cmd != nil || m.screen != practice {
@@ -142,7 +144,7 @@ func TestResizeKeepsSelectionVisibleAndOutputBounded(t *testing.T) {
 	for _, size := range [][2]int{{80, 24}, {40, 12}, {12, 8}, {1, 1}} {
 		u, _ := m.Update(tea.WindowSizeMsg{Width: size[0], Height: size[1]})
 		m = u.(Model)
-		view := m.View()
+		view := m.render()
 		lines := strings.Split(view, "\n")
 		if len(lines) > size[1] {
 			t.Fatalf("height %d: %d lines", size[1], len(lines))
@@ -166,9 +168,9 @@ func TestHelpScrollAndPageNavigation(t *testing.T) {
 		t.Fatal("page down did not advance selection")
 	}
 	m, _ = press(m, "?")
-	before := m.View()
+	before := m.render()
 	m, _ = press(m, "pgdown")
-	if m.View() == before {
+	if m.render() == before {
 		t.Fatal("help is not scrollable")
 	}
 	m, _ = press(m, "esc")
@@ -179,8 +181,8 @@ func TestHelpScrollAndPageNavigation(t *testing.T) {
 
 func TestDailyAssignmentFreezesAndExpiredScheduleIsPractice(t *testing.T) {
 	m := testModel(t)
-	if !strings.Contains(m.View(), "PRACTICE") || !strings.Contains(m.View(), "No shared assignment") {
-		t.Fatal(m.View())
+	if !strings.Contains(m.render(), "PRACTICE") || !strings.Contains(m.render(), "No shared assignment") {
+		t.Fatal(m.render())
 	}
 	a := model.Assignment{Date: "2026-09-14", Track: "shell", ExerciseID: "shell.task-00", Revision: 1, Seed: "daily"}
 	m.service.Catalog.Assignments = []model.Assignment{a}
@@ -189,8 +191,8 @@ func TestDailyAssignmentFreezesAndExpiredScheduleIsPractice(t *testing.T) {
 	if m.assignment == nil || m.assignment.Date != "2026-09-14" {
 		t.Fatal("active assignment changed at midnight")
 	}
-	if !strings.Contains(m.View(), "2026-09-14") {
-		t.Fatal(m.View())
+	if !strings.Contains(m.render(), "2026-09-14") {
+		t.Fatal(m.render())
 	}
 }
 
@@ -249,10 +251,10 @@ func TestBusyPreventsDuplicateLaunchAndQuit(t *testing.T) {
 	}
 	updated, _ := m.Update(preparedMsg{err: errors.New("missing runtime")})
 	m = updated.(Model)
-	if m.busy || !strings.Contains(m.View(), "missing runtime") {
+	if m.busy || !strings.Contains(m.render(), "missing runtime") {
 		t.Fatal("prepare failure did not restore navigation and error")
 	}
-	if strings.Contains(m.View(), "Your attempt is retained") {
+	if strings.Contains(m.render(), "Your attempt is retained") {
 		t.Fatal("failed creation claimed a saved attempt")
 	}
 }
@@ -316,7 +318,7 @@ func TestSavedAttemptAndErrorPresentation(t *testing.T) {
 	m.busy = true
 	updated, _ := m.Update(operationMsg{err: errors.New("save session: disk full")})
 	m = updated.(Model)
-	if m.busy || !strings.Contains(m.View(), "disk full") {
+	if m.busy || !strings.Contains(m.render(), "disk full") {
 		t.Fatal("save failure is not visible")
 	}
 }
@@ -326,7 +328,7 @@ func TestNoColorAndUnsafeOutput(t *testing.T) {
 	m.service.Config.Theme = "dark"
 	t.Setenv("NO_COLOR", "")
 	m.notice = "unsafe\x1b[2J\x1b]52;c;secrets\a\r\x00 output 日本語"
-	view := m.View()
+	view := m.render()
 	if strings.ContainsAny(view, "\x1b\a\r\x00") {
 		t.Fatalf("terminal controls in rendered output: %q", view)
 	}
@@ -341,13 +343,13 @@ func TestFirstLaunchAndEmptyHistory(t *testing.T) {
 	m := testModel(t)
 	m.service.Config.Track = ""
 	m = New(m.service)
-	if !m.chooseTrack || !strings.Contains(m.View(), "Choose your starting track") {
+	if !m.chooseTrack || !strings.Contains(m.render(), "Choose your starting track") {
 		t.Fatal("no initial track selection")
 	}
 	m.chooseTrack = false
 	m.screen = progress
-	if !strings.Contains(m.View(), "No attempts yet") {
-		t.Fatal(m.View())
+	if !strings.Contains(m.render(), "No attempts yet") {
+		t.Fatal(m.render())
 	}
 	m, cmd := press(m, "enter")
 	if cmd != nil || m.screen != progress {
@@ -435,12 +437,12 @@ func TestPendingRecoveryRemainsVisibleWhileBrowsing(t *testing.T) {
 	m.chooseTrack = false
 	for _, screen := range []screen{today, settings} {
 		m.screen = screen
-		if view := m.View(); !strings.Contains(view, "WORKSPACE RECOVERY PENDING") || !strings.Contains(view, "Browsing is available") {
+		if view := m.render(); !strings.Contains(view, "WORKSPACE RECOVERY PENDING") || !strings.Contains(view, "Browsing is available") {
 			t.Fatal(view)
 		}
 	}
 	m.screen = practice
-	if !strings.Contains(m.View(), "PRACTICE / archive") {
+	if !strings.Contains(m.render(), "PRACTICE / archive") {
 		t.Fatal("pending recovery prevented catalog browsing")
 	}
 }

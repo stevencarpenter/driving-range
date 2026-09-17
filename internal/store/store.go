@@ -301,6 +301,34 @@ func (s *Store) EndSession(sessionID int64, result model.SessionResult) error {
 	})
 }
 
+// RecordInterimCheck records a check taken while the exercise session is still
+// running. It keeps the history entry but never finishes the attempt: the
+// operator can keep editing after a passing probe, so only the check that runs
+// when the session ends may mark an attempt solved.
+func (s *Store) RecordInterimCheck(attemptID string, result model.CheckResult) error {
+	if result.Outcome != "pass" && result.Outcome != "fail" && result.Outcome != "infrastructure_error" {
+		return fmt.Errorf("invalid check outcome %q", result.Outcome)
+	}
+	return s.mutateAttempt(attemptID, func(tx *sql.Tx, a *model.Attempt) error {
+		if a.Status == "solved" || a.Status == "abandoned" {
+			return errors.New("finished attempts are immutable")
+		}
+		data, err := json.Marshal(result)
+		if err != nil {
+			return err
+		}
+		if _, err = tx.Exec("INSERT INTO check_events(attempt_id,created_at,result) VALUES(?,?,?)", attemptID, now(), string(data)); err != nil {
+			return err
+		}
+		if result.Outcome == "infrastructure_error" {
+			a.Status = "infrastructure_error"
+		} else {
+			a.Status = "active"
+		}
+		return nil
+	})
+}
+
 func (s *Store) RecordCheck(attemptID string, result model.CheckResult) error {
 	if result.Outcome != "pass" && result.Outcome != "fail" && result.Outcome != "infrastructure_error" {
 		return fmt.Errorf("invalid check outcome %q", result.Outcome)

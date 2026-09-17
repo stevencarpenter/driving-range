@@ -10,14 +10,34 @@ import (
 	"github.com/stevencarpenter/driving-range/internal/model"
 )
 
+// Check validates a finished attempt. It first removes the attempt's
+// containers, which is safe only once the child has exited.
 func (r *Runner) Check(ctx context.Context, c model.Challenge, a model.Attempt) (model.CheckResult, error) {
+	return r.check(ctx, c, a, true)
+}
+
+// CheckNow validates an attempt whose child is still running. It differs from
+// Check in exactly one respect: it does not call CleanupContainers, which
+// removes every container carrying the attempt's owner label and would kill
+// the exercise the operator is working in.
+//
+// Snapshotting is already safe alongside a live child. The Docker path builds
+// a separate, uniquely named container that mounts the workspace volume
+// read-only with no network, and the native path reads the live directory.
+func (r *Runner) CheckNow(ctx context.Context, c model.Challenge, a model.Attempt) (model.CheckResult, error) {
+	return r.check(ctx, c, a, false)
+}
+
+func (r *Runner) check(ctx context.Context, c model.Challenge, a model.Attempt, cleanup bool) (model.CheckResult, error) {
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 	if err := identity(a); err != nil {
 		return model.CheckResult{}, err
 	}
-	if err := r.CleanupContainers(ctx, []model.Attempt{a}); err != nil {
-		return model.CheckResult{}, err
+	if cleanup {
+		if err := r.CleanupContainers(ctx, []model.Attempt{a}); err != nil {
+			return model.CheckResult{}, err
+		}
 	}
 	fresh, err := r.ensureVolume(ctx, a)
 	if err != nil {
@@ -152,7 +172,8 @@ func (r *Runner) fixtureCommand(ctx context.Context, parent model.Attempt, fixtu
 	bounded, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	status := "/tmp/golf-status-" + randomID()
-	args := completionArgs(container, status, false, argv)
+	// Validation never runs inside the workbench, so the shims stay off.
+	args := completionArgs(container, status, false, argv, false)
 	out, _, err := docker(bounded, nil, args...)
 	if bounded.Err() != nil {
 		return "", -1, fmt.Errorf("validation command exceeded deadline: %w", bounded.Err())

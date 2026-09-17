@@ -13,7 +13,17 @@ import (
 	"time"
 
 	"github.com/stevencarpenter/driving-range/internal/model"
+	runtimefiles "github.com/stevencarpenter/driving-range/runtime"
 )
+
+// workbenchEnv reports the value the shims test for. It is empty in classic
+// mode, where no emulator is listening for the trigger sequence.
+func workbenchEnv(workbench bool) string {
+	if workbench {
+		return "1"
+	}
+	return ""
+}
 
 // NewNative uses the player's installed tools for practice and Docker for checks.
 func NewNative(image, workspaceRoot string) *Runner {
@@ -124,6 +134,15 @@ func (r *Runner) prepareNative(ctx context.Context, c model.Challenge, a model.A
 		if err = os.WriteFile(filepath.Join(stage, "bin", "golf-brief"), []byte("#!/bin/sh\ncat -- \"$GOLF_BRIEF_FILE\"\n"), 0700); err != nil {
 			return nil, err
 		}
+		for _, name := range []string{"golf-check", "golf-hint"} {
+			body, err := runtimefiles.Files.ReadFile(name)
+			if err != nil {
+				return nil, err
+			}
+			if err = os.WriteFile(filepath.Join(stage, "bin", name), body, 0700); err != nil {
+				return nil, err
+			}
+		}
 		dir = filepath.Join(r.nativeRoot, a.Workspace)
 		if err = os.Rename(stage, dir); err != nil {
 			return nil, err
@@ -132,7 +151,7 @@ func (r *Runner) prepareNative(ctx context.Context, c model.Challenge, a model.A
 	lifetime, cancel := context.WithTimeout(ctx, time.Hour)
 	cmd := exec.CommandContext(lifetime, argv[0], argv[1:]...)
 	cmd.Dir = filepath.Join(dir, "files")
-	cmd.Env = append(cmd.Environ(), "PATH="+filepath.Join(dir, "bin")+string(os.PathListSeparator)+os.Getenv("PATH"), "GOLF_BRIEF_FILE="+filepath.Join(dir, "brief.txt"))
+	cmd.Env = append(cmd.Environ(), "PATH="+filepath.Join(dir, "bin")+string(os.PathListSeparator)+os.Getenv("PATH"), "GOLF_BRIEF_FILE="+filepath.Join(dir, "brief.txt"), "GOLF_WORKBENCH="+workbenchEnv(r.workbench))
 	s := &Session{runner: r, challenge: c, ctx: lifetime, cancel: cancel, started: time.Now(), directory: dir, command: cmd}
 	return s, nil
 }
