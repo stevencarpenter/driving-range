@@ -457,7 +457,7 @@ func (s *Service) CheckNow(ctx context.Context, id string) (model.CheckResult, e
 	if checkErr != nil {
 		result = model.CheckResult{Outcome: "infrastructure_error", Summary: "Could not validate exercise", Details: []string{checkErr.Error()}}
 	}
-	if err = s.Store.RecordCheck(id, result); err != nil {
+	if err = s.Store.RecordInterimCheck(id, result); err != nil {
 		return result, errors.Join(checkErr, fmt.Errorf("save check result: %w", err))
 	}
 	return result, checkErr

@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"errors"
 	"os/exec"
 	"strings"
 	"testing"
@@ -230,3 +231,22 @@ func TestWorkbenchBandDoesNotRepeatTheObjective(t *testing.T) {
 		t.Errorf("objective appears %d times in the band, want 1:\n%s", n, view)
 	}
 }
+
+func TestWorkbenchResultLandsOnTheStatusLine(t *testing.T) {
+	m := testModel(t)
+	w := newWorkbench(nil, "t", "g", "b")
+	w.result("FAIL: one fixture differed\nexpected x, got y", nil)
+	view := w.view(80, 24, m.styles(), m.border(), true)
+	if !strings.Contains(view, "FAIL: one fixture differed") {
+		t.Errorf("check result missing from the status line:\n%s", view)
+	}
+	if strings.Contains(view, "expected x, got y") {
+		t.Error("status line must stay one line, not spill the details")
+	}
+	w.result("", errTest)
+	if !strings.Contains(w.check, "error: boom") {
+		t.Errorf("error not surfaced: %q", w.check)
+	}
+}
+
+var errTest = errors.New("boom")

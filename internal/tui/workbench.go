@@ -148,6 +148,19 @@ func paneTick() tea.Cmd {
 	return tea.Tick(paneRepaint, func(time.Time) tea.Msg { return paneTickMsg{} })
 }
 
+// result records the outcome of an action on the status line. The workbench
+// view covers the screen, so a result has nowhere else to appear.
+func (w *workbench) result(text string, err error) {
+	switch {
+	case err != nil:
+		w.check = "error: " + firstLine(err.Error())
+	case text != "":
+		w.check = firstLine(text)
+	default:
+		w.check = "done"
+	}
+}
+
 // syncPane keeps the child's terminal the same size as the pane it is drawn
 // in. The band wraps and can be toggled, so the pane size changes for reasons
 // a window resize alone does not cover.

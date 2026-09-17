@@ -102,6 +102,8 @@ func New(s *app.Service) Model {
 }
 
 func Run(s *app.Service) (err error) {
+	// The trigger shims only make sense when an emulator is listening.
+	s.Runner.SetWorkbench(!s.Config.Classic)
 	m := New(s)
 	defer func() { err = errors.Join(err, m.lifecycle.shutdown()) }()
 	p := tea.NewProgram(m)
@@ -205,6 +207,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.status = ""
 		if msg.id != "" {
 			m.attemptID = msg.id
+		}
+		if m.workbench != nil {
+			// The workbench view owns the screen, so a full-width notice would
+			// never be seen. Results go to the status line instead.
+			m.workbench.result(msg.text, msg.err)
+			return m, m.refresh()
 		}
 		if msg.err != nil {
 			m.notice = ""

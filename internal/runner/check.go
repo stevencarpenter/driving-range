@@ -172,7 +172,8 @@ func (r *Runner) fixtureCommand(ctx context.Context, parent model.Attempt, fixtu
 	bounded, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	status := "/tmp/golf-status-" + randomID()
-	args := completionArgs(container, status, false, argv)
+	// Validation never runs inside the workbench, so the shims stay off.
+	args := completionArgs(container, status, false, argv, false)
 	out, _, err := docker(bounded, nil, args...)
 	if bounded.Err() != nil {
 		return "", -1, fmt.Errorf("validation command exceeded deadline: %w", bounded.Err())

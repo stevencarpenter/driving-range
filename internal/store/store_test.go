@@ -391,3 +391,37 @@ func TestMigrationBackupAndNewerSchema(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestRecordInterimCheckKeepsTheAttemptOpen(t *testing.T) {
+	db, _ := newStore(t)
+	a := testAttempt("interim")
+	must(t, db.CreateAttempt(a))
+	if _, err := db.StartSession(a.ID); err != nil {
+		t.Fatal(err)
+	}
+	// The ordinary record refuses while a session is live, because a pass
+	// would finish an attempt the operator can still edit.
+	if err := db.RecordCheck(a.ID, model.CheckResult{Outcome: "pass", Summary: "ok"}); err == nil {
+		t.Fatal("RecordCheck should refuse while a session is open")
+	}
+	if err := db.RecordInterimCheck(a.ID, model.CheckResult{Outcome: "pass", Summary: "ok"}); err != nil {
+		t.Fatalf("RecordInterimCheck: %v", err)
+	}
+	got, err := db.Attempt(a.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Status == "solved" {
+		t.Error("a passing interim check must not finish the attempt")
+	}
+	if got.FinishedAt != nil {
+		t.Error("a passing interim check must not set a finish time")
+	}
+	checks, err := db.Checks(a.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(checks) != 1 {
+		t.Errorf("interim check was not recorded in history: %d events", len(checks))
+	}
+}

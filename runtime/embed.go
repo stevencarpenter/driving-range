@@ -3,5 +3,5 @@ package runtime
 
 import "embed"
 
-//go:embed Dockerfile golf-shell golf-brief
+//go:embed Dockerfile golf-shell golf-brief golf-check golf-hint
 var Files embed.FS

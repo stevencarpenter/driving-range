@@ -15,6 +15,34 @@ import (
 	"github.com/stevencarpenter/driving-range/internal/model"
 )
 
+// triggerShims are the helper commands placed on the exercise PATH. golf-brief
+// prints the brief; the others ask the workbench to act without the operator
+// leaving the exercise or golf intercepting a key.
+func triggerShims() map[string]string {
+	shim := func(action, desc string) string {
+		return "#!/bin/sh\n" +
+			"if [ -z \"$GOLF_WORKBENCH\" ]; then\n" +
+			"  echo \"golf-" + action + " needs the embedded workbench. Exit the exercise to " + desc + ".\" >&2\n" +
+			"  exit 1\n" +
+			"fi\n" +
+			"printf '\\033]9270;golf=" + action + "\\007'\n"
+	}
+	return map[string]string{
+		"golf-brief": "#!/bin/sh\ncat -- \"$GOLF_BRIEF_FILE\"\n",
+		"golf-check": shim("check", "check your work"),
+		"golf-hint":  shim("hint", "get the next hint"),
+	}
+}
+
+// workbenchEnv reports the value the shims test for. It is empty in classic
+// mode, where no emulator is listening for the trigger sequence.
+func workbenchEnv(workbench bool) string {
+	if workbench {
+		return "1"
+	}
+	return ""
+}
+
 // NewNative uses the player's installed tools for practice and Docker for checks.
 func NewNative(image, workspaceRoot string) *Runner {
 	r := New(image)
@@ -121,8 +149,10 @@ func (r *Runner) prepareNative(ctx context.Context, c model.Challenge, a model.A
 		if err = os.Mkdir(filepath.Join(stage, "bin"), 0700); err != nil {
 			return nil, err
 		}
-		if err = os.WriteFile(filepath.Join(stage, "bin", "golf-brief"), []byte("#!/bin/sh\ncat -- \"$GOLF_BRIEF_FILE\"\n"), 0700); err != nil {
-			return nil, err
+		for name, body := range triggerShims() {
+			if err = os.WriteFile(filepath.Join(stage, "bin", name), []byte(body), 0700); err != nil {
+				return nil, err
+			}
 		}
 		dir = filepath.Join(r.nativeRoot, a.Workspace)
 		if err = os.Rename(stage, dir); err != nil {
@@ -132,7 +162,7 @@ func (r *Runner) prepareNative(ctx context.Context, c model.Challenge, a model.A
 	lifetime, cancel := context.WithTimeout(ctx, time.Hour)
 	cmd := exec.CommandContext(lifetime, argv[0], argv[1:]...)
 	cmd.Dir = filepath.Join(dir, "files")
-	cmd.Env = append(cmd.Environ(), "PATH="+filepath.Join(dir, "bin")+string(os.PathListSeparator)+os.Getenv("PATH"), "GOLF_BRIEF_FILE="+filepath.Join(dir, "brief.txt"))
+	cmd.Env = append(cmd.Environ(), "PATH="+filepath.Join(dir, "bin")+string(os.PathListSeparator)+os.Getenv("PATH"), "GOLF_BRIEF_FILE="+filepath.Join(dir, "brief.txt"), "GOLF_WORKBENCH="+workbenchEnv(r.workbench))
 	s := &Session{runner: r, challenge: c, ctx: lifetime, cancel: cancel, started: time.Now(), directory: dir, command: cmd}
 	return s, nil
 }
