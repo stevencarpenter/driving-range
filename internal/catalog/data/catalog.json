@@ -6,7 +6,7 @@
       "track": "vim",
       "title": "Change one configuration value",
       "objective": "In config.txt change port=3000 to port=8080. Keep the comment and host unchanged.",
-      "brief": "In config.txt change port=3000 to port=8080. Keep the comment and host unchanged.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help iw opens the bundled Neovim help. :wq saves and returns to Driving Range.",
+      "brief": "Practice making a precise edit inside a configuration line. The skill is choosing the smallest useful piece of text to change while leaving its surroundings intact.\n\nIn config.txt change port=3000 to port=8080. Keep the comment and host unchanged.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help opens the bundled Neovim documentation. :wq saves and returns to Driving Range.",
       "difficulty": 1,
       "minutes": 3,
       "tools": [
@@ -17,8 +17,8 @@
         "search"
       ],
       "hints": [
-        "Search for port with /port and Enter.",
-        "Move to the number and use ciw8080 followed by Escape."
+        "Locate the setting before editing; other text on the line should stay in place.",
+        "Think about a text object that covers the value without including its separator. Combine that selection with a change operation."
       ],
       "explanation": "ciw replaces the word under the cursor. A targeted edit avoids changing unrelated numbers.",
       "reference_solution": "nvim --headless -u NONE -n config.txt '+%s/port=3000/port=8080/' '+wq'\n",
@@ -50,7 +50,7 @@
       "track": "vim",
       "title": "Rename a whole word",
       "objective": "Replace every whole word cache with store. Preserve cache_key and cached.",
-      "brief": "Replace every whole word cache with store. Preserve cache_key and cached.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help /\\< opens the bundled Neovim help. :wq saves and returns to Driving Range.",
+      "brief": "Practice renaming text without changing related identifiers. This builds the habit of defining exactly what counts as a match before applying an edit across a file.\n\nReplace every whole word cache with store. Preserve cache_key and cached.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help opens the bundled Neovim documentation. :wq saves and returns to Driving Range.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -61,8 +61,8 @@
         "substitute"
       ],
       "hints": [
-        "Search word boundaries rather than the character sequence alone.",
-        "Use :%s/\\<cache\\>/store/g to constrain the rename."
+        "Compare the standalone name with the longer identifiers. What distinguishes their boundaries?",
+        "Build a search that matches a complete word, inspect its matches, then reuse it for a file-wide replacement."
       ],
       "explanation": "Vim uses \\< and \\> for word boundaries. The g flag replaces every match on a line; % includes every line.",
       "reference_solution": "nvim --headless -u NONE -n config.txt '+%s/\\<cache\\>/store/g' '+wq'\n",
@@ -94,7 +94,7 @@
       "track": "vim",
       "title": "Replace quoted content",
       "objective": "Change the quoted message to Ready for deploy. Preserve surrounding syntax.",
-      "brief": "Change the quoted message to Ready for deploy. Preserve surrounding syntax.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help i\" opens the bundled Neovim help. :wq saves and returns to Driving Range.",
+      "brief": "Practice editing a string while preserving the syntax around it. Selecting content by its delimiters can make an edit independent of the length of the old text.\n\nChange the quoted message to Ready for deploy. Preserve surrounding syntax.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help opens the bundled Neovim documentation. :wq saves and returns to Driving Range.",
       "difficulty": 1,
       "minutes": 3,
       "tools": [
@@ -105,8 +105,8 @@
         "text-objects"
       ],
       "hints": [
-        "Place the cursor inside the first quoted string.",
-        "ci\" changes only the content between quotes."
+        "Treat the quotation marks as boundaries rather than characters to replace.",
+        "Vim distinguishes the inside of a text object from the object including its delimiters. Which selection leaves the quotes intact?"
       ],
       "explanation": "The i\" text object excludes the delimiters, so ci\" preserves the quote characters.",
       "reference_solution": "nvim --headless -u NONE -n config.txt '+1s/waiting for operator/Ready for deploy/' '+wq'\n",
@@ -138,7 +138,7 @@
       "track": "vim",
       "title": "Remove diagnostic lines",
       "objective": "Delete lines beginning exactly DEBUG. Preserve INFO and the indented DEBUG line.",
-      "brief": "Delete lines beginning exactly DEBUG. Preserve INFO and the indented DEBUG line.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help global opens the bundled Neovim help. :wq saves and returns to Driving Range.",
+      "brief": "Practice removing a class of log records without disturbing similar-looking lines. The important distinction is where a match occurs, not just which letters it contains.\n\nDelete lines beginning exactly DEBUG. Preserve INFO and the indented DEBUG line.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help opens the bundled Neovim documentation. :wq saves and returns to Driving Range.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -149,8 +149,8 @@
         "/^"
       ],
       "hints": [
-        "Use a start-of-line anchor to distinguish the example.",
-        "The :global command can apply :delete to matching lines: :g/^DEBUG/d."
+        "Compare the first character of the lines to remove with the indented example.",
+        "Use a position constraint in your pattern, then consider an Ex command that applies an operation to every matching line."
       ],
       "explanation": ":global selects lines by a pattern and runs an Ex command on each. Anchoring makes the deletion precise.",
       "reference_solution": "nvim --headless -u NONE -n config.txt '+g/^DEBUG/d' '+wq'\n",
@@ -182,7 +182,7 @@
       "track": "vim",
       "title": "Join a wrapped sentence",
       "objective": "Join the first three lines into one sentence separated by single spaces. Preserve the blank line and owner line.",
-      "brief": "Join the first three lines into one sentence separated by single spaces. Preserve the blank line and owner line.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help J opens the bundled Neovim help. :wq saves and returns to Driving Range.",
+      "brief": "Practice changing line structure without retyping text. This exercise develops control over the extent of an edit and the whitespace left between the joined parts.\n\nJoin the first three lines into one sentence separated by single spaces. Preserve the blank line and owner line.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help opens the bundled Neovim documentation. :wq saves and returns to Driving Range.",
       "difficulty": 1,
       "minutes": 3,
       "tools": [
@@ -193,8 +193,8 @@
         "count"
       ],
       "hints": [
-        "Start on the first line and consider the J command.",
-        "3J joins three lines; stop before the blank line."
+        "The sentence ends before the blank separator. Identify that boundary first.",
+        "Look for a join operation that adjusts spaces. Check how its count determines the number of lines included."
       ],
       "explanation": "J joins lines with space adjustment. A count constrains the operation to the wrapped paragraph.",
       "reference_solution": "nvim --headless -u NONE -n config.txt '+1,3join' '+wq'\n",
@@ -226,7 +226,7 @@
       "track": "vim",
       "title": "Sort only the allowlist",
       "objective": "Sort the four hostname lines alphabetically. Keep the header and footer in place.",
-      "brief": "Sort the four hostname lines alphabetically. Keep the header and footer in place.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help sort opens the bundled Neovim help. :wq saves and returns to Driving Range.",
+      "brief": "Practice applying a transformation to one region of a file. The same scoping skill helps protect comments and surrounding configuration during larger edits.\n\nSort the four hostname lines alphabetically. Keep the header and footer in place.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help opens the bundled Neovim documentation. :wq saves and returns to Driving Range.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -237,8 +237,8 @@
         "range"
       ],
       "hints": [
-        "Select the four hostname lines with linewise Visual mode.",
-        "Run :sort on the selection or :2,5sort."
+        "Identify the first and last data lines before choosing an operation.",
+        "An Ex command can operate on a range or a Visual selection. Scope the ordering operation to the data alone."
       ],
       "explanation": "Ex ranges constrain a command to selected lines. Sorting the whole file would move the comment boundaries.",
       "reference_solution": "nvim --headless -u NONE -n config.txt '+2,5sort' '+wq'\n",
@@ -270,7 +270,7 @@
       "track": "vim",
       "title": "Remove list prefixes",
       "objective": "Remove the numeric prefix and following dot-space from each task. Preserve task order and spelling.",
-      "brief": "Remove the numeric prefix and following dot-space from each task. Preserve task order and spelling.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help substitute opens the bundled Neovim help. :wq saves and returns to Driving Range.",
+      "brief": "Practice describing repeated formatting with a pattern. Removing a common prefix should preserve the text that follows, even when prefix lengths differ.\n\nRemove the numeric prefix and following dot-space from each task. Preserve task order and spelling.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help opens the bundled Neovim documentation. :wq saves and returns to Driving Range.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -281,8 +281,8 @@
         "pattern"
       ],
       "hints": [
-        "Anchor the pattern to the beginning of a line.",
-        "Use :%s/^\\d\\+\\. // to match a run of digits followed by a literal dot and space."
+        "Separate the prefix into its numeric part, punctuation, and spacing.",
+        "Constrain the match to the line start and account for more than one digit. Remember that punctuation may have a special pattern meaning."
       ],
       "explanation": "An anchored substitution expresses the transformation for every line. Escaping the dot avoids accepting any character.",
       "reference_solution": "nvim --headless -u NONE -n config.txt '+%s/^\\d\\+\\. //' '+wq'\n",
@@ -314,7 +314,7 @@
       "track": "vim",
       "title": "Put authentication before routing",
       "objective": "Move the complete auth block before the route block. Preserve the blank line between blocks and a final newline.",
-      "brief": "Move the complete auth block before the route block. Preserve the blank line between blocks and a final newline.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help move opens the bundled Neovim help. :wq saves and returns to Driving Range.",
+      "brief": "Practice reorganizing text as complete logical blocks. A correct move preserves each block internally and keeps the separator in the right place.\n\nMove the complete auth block before the route block. Preserve the blank line between blocks and a final newline.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help opens the bundled Neovim documentation. :wq saves and returns to Driving Range.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -325,8 +325,8 @@
         "linewise"
       ],
       "hints": [
-        "Use linewise deletion to capture a block in a register.",
-        "Move lines 4-5 to the start with :4,5m0, then move the blank line after them."
+        "Decide whether the blank line belongs with the block you move or needs a separate adjustment.",
+        "Linewise operations preserve whole lines. Work out the destination relative to the remaining text before moving or putting the block."
       ],
       "explanation": "Linewise registers or :move preserve an entire block. The separator is part of the required final tree.",
       "reference_solution": "nvim --headless -u NONE -n config.txt '+4,5move 0' '+5move 2' '+wq'\n",
@@ -358,7 +358,7 @@
       "track": "vim",
       "title": "Trim trailing whitespace",
       "objective": "Remove trailing spaces and tabs from every line. Preserve indentation and the empty line.",
-      "brief": "Remove trailing spaces and tabs from every line. Preserve indentation and the empty line.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help substitute opens the bundled Neovim help. :wq saves and returns to Driving Range.",
+      "brief": "Practice cleaning up invisible formatting without changing meaningful indentation. This requires distinguishing whitespace by its position in a line.\n\nRemove trailing spaces and tabs from every line. Preserve indentation and the empty line.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help opens the bundled Neovim documentation. :wq saves and returns to Driving Range.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -369,8 +369,8 @@
         "$"
       ],
       "hints": [
-        "Use the end-of-line anchor so leading indentation is not selected.",
-        "Use :%s/\\s\\+$//e. The e flag tolerates a file with no matches."
+        "Leading and trailing whitespace look similar but serve different purposes here.",
+        "Match a run of whitespace only where it reaches the line end. Check a line containing indentation before applying the edit everywhere."
       ],
       "explanation": "Whitespace at the end of a line can be removed without normalizing meaningful leading indentation.",
       "reference_solution": "nvim --headless -u NONE -n config.txt '+%s/\\s\\+$//e' '+wq'\n",
@@ -402,7 +402,7 @@
       "track": "vim",
       "title": "Update both service ports",
       "objective": "Set port=8080 in config.txt and worker.conf. Preserve each file's other values.",
-      "brief": "Set port=8080 in config.txt and worker.conf. Preserve each file's other values.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help argdo opens the bundled Neovim help. :wq saves and returns to Driving Range.",
+      "brief": "Practice carrying out a consistent edit across multiple files. The learning goal is to control both the set of files affected and the changes saved in each one.\n\nSet port=8080 in config.txt and worker.conf. Preserve each file's other values.\n\nChange the workspace files to satisfy the objective. Preserve all unrelated content. Extra files fail the exact tree check.\n\nKey reference: :help opens the bundled Neovim documentation. :wq saves and returns to Driving Range.",
       "difficulty": 3,
       "minutes": 7,
       "tools": [
@@ -413,8 +413,8 @@
         "update"
       ],
       "hints": [
-        "The argument list lets one Ex command operate on multiple files.",
-        "Open both files with :args config.txt worker.conf and run :argdo %s/port=3000/port=8080/e | update."
+        "First establish which buffers or files should participate in the edit.",
+        "Vim can repeat an Ex operation over an argument list. Plan how each modified buffer will be saved before moving to the next."
       ],
       "explanation": ":argdo repeats a command over the argument list. :update writes only modified buffers; the match remains specific to the port setting.",
       "reference_solution": "nvim --headless -u NONE -n config.txt worker.conf '+argdo %s/port=3000/port=8080/e | update' '+qa'\n",
@@ -448,7 +448,7 @@
       "track": "search",
       "title": "Find error records",
       "objective": "Print records in app.log that begin with ERROR, in input order.",
-      "brief": "Print records in app.log that begin with ERROR, in input order.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: grep --help; ^ anchors the beginning of a line.",
+      "brief": "Practice selecting log records by their level. A reliable search distinguishes a record label from the same word appearing later in a message.\n\nPrint records in app.log that begin with ERROR, in input order.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: grep --help; rg --help.",
       "difficulty": 1,
       "minutes": 3,
       "tools": [
@@ -459,8 +459,8 @@
         "log-filtering"
       ],
       "hints": [
-        "The record level appears at the start of a line.",
-        "Use the ^ anchor: grep '^ERROR' app.log."
+        "Look at where the level occurs in each record.",
+        "A regex can constrain a match to a position within a line. Use that distinction to avoid selecting incidental mentions."
       ],
       "explanation": "Anchoring avoids matching ERROR mentioned inside an unrelated log message.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\ngrep '^ERROR' app.log\nGOLF_SOLUTION\n",
@@ -504,7 +504,7 @@
       "track": "search",
       "title": "Find the standalone token",
       "objective": "Print lines in notes.txt containing the whole word fail, case sensitively.",
-      "brief": "Print lines in notes.txt containing the whole word fail, case sensitively.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: rg --help: -w, --word-regexp.",
+      "brief": "Practice distinguishing complete words from substrings. This matters when a search term also appears inside longer words or identifiers.\n\nPrint lines in notes.txt containing the whole word fail, case sensitively.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: grep --help; rg --help.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -514,8 +514,8 @@
         "word-boundaries"
       ],
       "hints": [
-        "A substring search also matches failed.",
-        "rg -w restricts matches to word boundaries."
+        "Compare a desired match with a longer word containing the same letters.",
+        "Look in the search tool documentation for word-boundary matching. Preserve the original case-sensitive behavior."
       ],
       "explanation": "Word matching treats underscores as word characters. fail_safe is intentionally excluded.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nrg -w 'fail' notes.txt\nGOLF_SOLUTION\n",
@@ -559,7 +559,7 @@
       "track": "search",
       "title": "Search literal punctuation",
       "objective": "Print lines of rules.txt containing the literal string [warn].",
-      "brief": "Print lines of rules.txt containing the literal string [warn].\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: rg --help: -F, --fixed-strings.",
+      "brief": "Practice searching for punctuation as data. Search tools can interpret the same characters differently depending on whether the pattern is literal or a regular expression.\n\nPrint lines of rules.txt containing the literal string [warn].\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: grep --help; rg --help.",
       "difficulty": 1,
       "minutes": 3,
       "tools": [
@@ -569,8 +569,8 @@
         "fixed-strings"
       ],
       "hints": [
-        "Square brackets have a regex meaning.",
-        "Use -F to interpret the entire pattern literally."
+        "Consider what square brackets mean to a regex engine.",
+        "Look for a matching mode that treats the entire search string literally, instead of escaping each special character yourself."
       ],
       "explanation": "Fixed-string mode avoids accidental character classes and makes a punctuation search easier to read.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nrg -F '[warn]' rules.txt\nGOLF_SOLUTION\n",
@@ -614,7 +614,7 @@
       "track": "search",
       "title": "Filter noisy health checks",
       "objective": "Print access.log lines that do not contain /health. Preserve their order.",
-      "brief": "Print access.log lines that do not contain /health. Preserve their order.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: grep --help: -v selects nonmatching lines; -F uses fixed strings.",
+      "brief": "Practice filtering unwanted records out of a stream. The output should retain the original form and order of every record that survives.\n\nPrint access.log lines that do not contain /health. Preserve their order.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: grep --help; rg --help.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -624,8 +624,8 @@
         "inverse-matches"
       ],
       "hints": [
-        "Inverse matching retains nonmatching records.",
-        "Combine -v with -F."
+        "Describe the records to reject before deciding which ones to print.",
+        "Look for an option that reverses the selection of matching lines. Decide whether the exclusion text needs regex interpretation."
       ],
       "explanation": "The contract excludes any occurrence, including /health/deep; matching is case sensitive.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\ngrep -vF '/health' access.log\nGOLF_SOLUTION\n",
@@ -669,7 +669,7 @@
       "track": "search",
       "title": "Extract request identifiers",
       "objective": "Print only the digits following request= in requests.log, one per line in input order.",
-      "brief": "Print only the digits following request= in requests.log, one per line in input order.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: rg --help: -o prints only matches; cut --help: -d sets a delimiter, -f selects fields.",
+      "brief": "Practice extracting one value from a larger log message. This separates finding the right field from formatting just the data that downstream tools need.\n\nPrint only the digits following request= in requests.log, one per line in input order.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: grep --help; rg --help.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -680,8 +680,8 @@
         "repetition"
       ],
       "hints": [
-        "Extract only the matching token before removing its label.",
-        "rg -o 'request=[0-9]+' requests.log | cut -d= -f2."
+        "Other numbers in a record may not be request identifiers. Use the field label to identify the right digits.",
+        "Break the task into locating the labeled token and removing its label. A matching-only output mode can help with the first part."
       ],
       "explanation": "A narrow match separates extraction from surrounding log fields; the pattern accepts multiple digits.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nrg --only-matching 'request=[0-9]+' requests.log | cut -d= -f2\nGOLF_SOLUTION\n",
@@ -725,7 +725,7 @@
       "track": "search",
       "title": "Find case-insensitive warnings",
       "objective": "Print every line in app.log containing warning, regardless of case.",
-      "brief": "Print every line in app.log containing warning, regardless of case.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: grep --help: -i ignores case distinctions.",
+      "brief": "Practice matching text independently of capitalization while preserving the original records. Search behavior and output formatting are separate concerns.\n\nPrint every line in app.log containing warning, regardless of case.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: grep --help; rg --help.",
       "difficulty": 1,
       "minutes": 3,
       "tools": [
@@ -735,8 +735,8 @@
         "case-folding"
       ],
       "hints": [
-        "Case-insensitive matching preserves the original line.",
-        "grep -i warning app.log."
+        "Changing the input to lowercase would also change the output.",
+        "Look for a search option that changes case comparison without rewriting the matching lines."
       ],
       "explanation": "Case folding changes comparison, not emitted text. The output retains the source capitalization.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\ngrep -i 'warning' app.log\nGOLF_SOLUTION\n",
@@ -780,7 +780,7 @@
       "track": "search",
       "title": "Exclude generated configuration",
       "objective": "Print sorted paths of .conf files below config/ containing enabled=true. Exclude config/generated/.",
-      "brief": "Print sorted paths of .conf files below config/ containing enabled=true. Exclude config/generated/.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: rg --help: -l emits paths, -g applies glob filters.",
+      "brief": "Practice combining content search with file selection. Repository searches often need to restrict both the file types examined and the directories included.\n\nPrint sorted paths of .conf files below config/ containing enabled=true. Exclude config/generated/.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: grep --help; rg --help.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -791,8 +791,8 @@
         "path-exclusion"
       ],
       "hints": [
-        "Use filename output and include/exclude globs.",
-        "Run rg -l -F enabled=true config -g '*.conf' -g '!**/generated/**' | sort."
+        "Separate the requirements into content, file extension, excluded directory, and output format.",
+        "Look for path-only output and file glob filters. Apply ordering after the matching file paths have been collected."
       ],
       "explanation": "Path selection is separate from content matching. Explicit sorting removes filesystem enumeration order from the result.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nrg -l -F 'enabled=true' config -g '*.conf' -g '!**/generated/**' | sort\nGOLF_SOLUTION\n",
@@ -841,7 +841,7 @@
       "track": "search",
       "title": "Locate TODO lines",
       "objective": "Print TODO lines in tasks.txt prefixed by their one-based line number and a colon.",
-      "brief": "Print TODO lines in tasks.txt prefixed by their one-based line number and a colon.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: grep --help: -n prefixes output with line numbers.",
+      "brief": "Practice retaining source locations in search output. Line numbers make a result useful for navigation as well as for identifying matching text.\n\nPrint TODO lines in tasks.txt prefixed by their one-based line number and a colon.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: grep --help; rg --help.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -851,8 +851,8 @@
         "line-numbers"
       ],
       "hints": [
-        "The tool can annotate source positions directly.",
-        "grep -nF TODO tasks.txt."
+        "Count positions in the original file, not in the filtered results.",
+        "The search tool can annotate matching lines with their source positions. Check its output options before building a separate numbering step."
       ],
       "explanation": "Line numbers refer to the original input, including lines that are not printed.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\ngrep -nF 'TODO' tasks.txt\nGOLF_SOLUTION\n",
@@ -896,7 +896,7 @@
       "track": "search",
       "title": "Match two severity levels",
       "objective": "Print records in app.log beginning WARN or ERROR followed by a space. Exclude WARNING.",
-      "brief": "Print records in app.log beginning WARN or ERROR followed by a space. Exclude WARNING.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: rg uses its default Rust regex dialect; parentheses group and | alternates.",
+      "brief": "Practice expressing several accepted record types in one search. The challenge is making positional and separator requirements apply to every alternative.\n\nPrint records in app.log beginning WARN or ERROR followed by a space. Exclude WARNING.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: grep --help; rg --help.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -907,8 +907,8 @@
         "grouping"
       ],
       "hints": [
-        "Group alternatives under a single anchor.",
-        "Use ^(WARN|ERROR) followed by a literal space."
+        "A prefix match alone can accept a longer level name that should be excluded.",
+        "Think about grouping the alternatives so they share a start constraint and a required separator after the level."
       ],
       "explanation": "Grouping makes the anchor apply to both alternatives. The trailing space distinguishes complete level names.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nrg '^(WARN|ERROR) ' app.log\nGOLF_SOLUTION\n",
@@ -952,7 +952,7 @@
       "track": "search",
       "title": "Count matching records",
       "objective": "Print the number of lines in events.txt containing the literal token event=click, followed by a newline.",
-      "brief": "Print the number of lines in events.txt containing the literal token event=click, followed by a newline.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: grep --help: -c counts selected lines; exit status 1 means no selected lines.",
+      "brief": "Practice summarizing matching records and handling an empty result. Command output and command exit status both matter when a search becomes part of a script.\n\nPrint the number of lines in events.txt containing the literal token event=click, followed by a newline.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: grep --help; rg --help.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -963,8 +963,8 @@
         "exit-status"
       ],
       "hints": [
-        "Count matching lines rather than occurrences.",
-        "grep -c prints 0 with exit status 1 when nothing matches; normalize that expected no-match status."
+        "The requested unit is matching lines, even if a token occurs more than once on one line.",
+        "Check the counting option and the documented no-match exit status. Treat an empty result deliberately without hiding actual read errors."
       ],
       "explanation": "grep distinguishes no matches from execution errors. A reusable script must accept zero while preserving real failures.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\ngrep -cF 'event=click' events.txt || test \"$?\" -eq 1\nGOLF_SOLUTION\n",
@@ -1008,7 +1008,7 @@
       "track": "shell",
       "title": "Read a filename with spaces",
       "objective": "Print the content of reports/daily summary.txt exactly.",
-      "brief": "Print the content of reports/daily summary.txt exactly.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man bash describes single and double quoting; cat --help describes file arguments.",
+      "brief": "Practice passing a filename to a command as one argument. Shell parsing happens before the command runs, so spaces in data need to survive that step.\n\nPrint the content of reports/daily summary.txt exactly.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man bash; help lists Bash builtin documentation.",
       "difficulty": 1,
       "minutes": 3,
       "tools": [
@@ -1018,8 +1018,8 @@
         "quoting"
       ],
       "hints": [
-        "A space in a filename must not split the argument.",
-        "Quote the complete path passed to cat."
+        "Consider how many arguments the command receives from an unprotected path.",
+        "Use shell quoting to preserve the path as a single argument. The output should come from reading the file, not reproducing its example contents."
       ],
       "explanation": "Shell quoting preserves the filename as one argument. The quotes themselves are removed before cat runs.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\ncat 'reports/daily summary.txt'\nGOLF_SOLUTION\n",
@@ -1063,7 +1063,7 @@
       "track": "shell",
       "title": "Read a leading-dash filename",
       "objective": "Print the content of the file named -report.txt.",
-      "brief": "Print the content of the file named -report.txt.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: cat --help; -- ends options for GNU coreutils.",
+      "brief": "Practice handling a filename that resembles a command option. This is a common boundary between shell arguments and a program's own argument parser.\n\nPrint the content of the file named -report.txt.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man bash; help lists Bash builtin documentation.",
       "difficulty": 1,
       "minutes": 3,
       "tools": [
@@ -1073,8 +1073,8 @@
         "option-delimiter"
       ],
       "hints": [
-        "A leading dash can be parsed as an option.",
-        "Use cat -- -report.txt or cat ./-report.txt."
+        "Quoting preserves an argument but does not change its first character.",
+        "Look for a way to end option parsing, or a path spelling that no longer starts with a dash."
       ],
       "explanation": "The -- delimiter ends option parsing. A ./ prefix also makes the path unambiguous.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\ncat -- -report.txt\nGOLF_SOLUTION\n",
@@ -1118,7 +1118,7 @@
       "track": "shell",
       "title": "Summarize unique hosts",
       "objective": "Print unique hostnames from hosts.txt in C-locale sorted order.",
-      "brief": "Print unique hostnames from hosts.txt in C-locale sorted order.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: sort --help: -u outputs only the first of equal lines.",
+      "brief": "Practice producing a deterministic list from repeated input. Ordering and deduplication have different behavior when identical records are separated.\n\nPrint unique hostnames from hosts.txt in C-locale sorted order.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man bash; help lists Bash builtin documentation.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -1129,8 +1129,8 @@
         "sorting"
       ],
       "hints": [
-        "Adjacent-only deduplication is insufficient on unsorted input.",
-        "sort -u combines ordering and uniqueness."
+        "Try your approach mentally on a hostname that appears twice with another hostname between the occurrences.",
+        "Look for a tool that can order records and suppress equal ones. Make sure its comparison uses the required locale."
       ],
       "explanation": "uniq only merges adjacent equal lines. sort -u satisfies both requirements in one operation.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nLC_ALL=C sort -u hosts.txt\nGOLF_SOLUTION\n",
@@ -1174,7 +1174,7 @@
       "track": "shell",
       "title": "Preserve backslashes while reading",
       "objective": "Read names.txt and print each complete line enclosed in angle brackets. Preserve spaces and backslashes.",
-      "brief": "Read names.txt and print each complete line enclosed in angle brackets. Preserve spaces and backslashes.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: help read; help printf; [[ -n value ]] tests nonempty text.",
+      "brief": "Practice reading text without silently changing it. Shell input routines have defaults for whitespace and escapes that are useful interactively but can damage file data.\n\nRead names.txt and print each complete line enclosed in angle brackets. Preserve spaces and backslashes.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man bash; help lists Bash builtin documentation.",
       "difficulty": 3,
       "minutes": 7,
       "tools": [
@@ -1185,8 +1185,8 @@
         "quoting"
       ],
       "hints": [
-        "read normally interprets backslashes and trims IFS characters.",
-        "Use IFS= read -r; handle a nonempty final line when read returns failure."
+        "Check what happens to leading spaces, backslashes, and a final line without a newline.",
+        "Review the line-reading options and field-separator behavior. A failed read can still leave useful characters in the destination variable."
       ],
       "explanation": "IFS= preserves edge whitespace, -r preserves backslashes, and the final-line guard retains input without a newline.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nwhile IFS= read -r line || [[ -n $line ]]; do printf '<%s>\\n' \"$line\"; done < names.txt\nGOLF_SOLUTION\n",
@@ -1230,7 +1230,7 @@
       "track": "shell",
       "title": "Apply a missing-value default",
       "objective": "Read the single line from region.txt. Print that value if nonempty, otherwise print local. Always end with a newline.",
-      "brief": "Read the single line from region.txt. Print that value if nonempty, otherwise print local. Always end with a newline.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: Bash parameter expansion: ${parameter:-word}.",
+      "brief": "Practice choosing a fallback for missing configuration. The key distinction is between a value being absent, empty, or present and usable.\n\nRead the single line from region.txt. Print that value if nonempty, otherwise print local. Always end with a newline.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man bash; help lists Bash builtin documentation.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -1240,8 +1240,8 @@
         "parameter-expansion"
       ],
       "hints": [
-        "Parameter expansion has a default for empty or unset values.",
-        "Use ${region:-local} after reading the file."
+        "The empty-input case needs a fallback; a nonempty value must pass through unchanged.",
+        "Review the default-value forms of parameter expansion. Check which form treats an empty value the same as an unset one."
       ],
       "explanation": "The colon makes the default apply to both empty and unset values. Without it, an empty value stays empty.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nIFS= read -r region < region.txt || :\nprintf '%s\\n' \"${region:-local}\"\nGOLF_SOLUTION\n",
@@ -1285,7 +1285,7 @@
       "track": "shell",
       "title": "Branch on command success",
       "objective": "If flag.txt contains the exact line ready, print deploy. Otherwise print wait. Ignore substring matches.",
-      "brief": "If flag.txt contains the exact line ready, print deploy. Otherwise print wait. Ignore substring matches.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: help if; grep --help: -q quiet, -x whole line, -F fixed string.",
+      "brief": "Practice using a command result to control a shell branch. A search can answer a yes-or-no question without contributing text to the final output.\n\nIf flag.txt contains the exact line ready, print deploy. Otherwise print wait. Ignore substring matches.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man bash; help lists Bash builtin documentation.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -1297,8 +1297,8 @@
         "conditionals"
       ],
       "hints": [
-        "Use the command exit status as the if condition.",
-        "grep -qxF ready flag.txt selects an exact complete line without printing it."
+        "Distinguish the search result from the message your script needs to print.",
+        "Use the search exit status as the condition. Check how to require a whole-line match and keep matching records out of stdout."
       ],
       "explanation": "An if condition consumes the status directly. Quiet matching avoids mixing the test output with the desired answer.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nif grep -qxF ready flag.txt; then printf 'deploy\\n'; else printf 'wait\\n'; fi\nGOLF_SOLUTION\n",
@@ -1342,7 +1342,7 @@
       "track": "shell",
       "title": "Split a controlled delimiter",
       "objective": "Read records.txt, whose lines are name:role with no embedded colons. Print role=name for each record.",
-      "brief": "Read records.txt, whose lines are name:role with no embedded colons. Print role=name for each record.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: help read; IFS determines the field delimiter.",
+      "brief": "Practice reading a simple delimited record into separate values. Controlling where splitting happens helps preserve data while rearranging its fields.\n\nRead records.txt, whose lines are name:role with no embedded colons. Print role=name for each record.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man bash; help lists Bash builtin documentation.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -1353,8 +1353,8 @@
         "field-splitting"
       ],
       "hints": [
-        "Set IFS only on the read command.",
-        "Use IFS=: read -r name role, then quote both printf arguments."
+        "The separator is a colon, not ordinary shell whitespace.",
+        "Configure the separator for the read operation itself. When printing the fields in their new order, keep each value a single argument."
       ],
       "explanation": "A command-local IFS selects the delimiter without changing unrelated shell expansion behavior. Spaces inside a field remain intact.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nwhile IFS=: read -r name role; do printf '%s=%s\\n' \"$role\" \"$name\"; done < records.txt\nGOLF_SOLUTION\n",
@@ -1398,7 +1398,7 @@
       "track": "shell",
       "title": "Add an integer stream",
       "objective": "Sum the nonnegative decimal integers in counts.txt and print one total. Inputs may contain leading zeroes.",
-      "brief": "Sum the nonnegative decimal integers in counts.txt and print one total. Inputs may contain leading zeroes.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: help let; Bash arithmetic supports base#number.",
+      "brief": "Practice accumulating numeric input while respecting its representation. A string of decimal digits is not always interpreted as decimal by shell arithmetic.\n\nSum the nonnegative decimal integers in counts.txt and print one total. Inputs may contain leading zeroes.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man bash; help lists Bash builtin documentation.",
       "difficulty": 3,
       "minutes": 7,
       "tools": [
@@ -1409,8 +1409,8 @@
         "numeric-bases"
       ],
       "hints": [
-        "Bash arithmetic treats a leading zero as octal unless a base is specified.",
-        "Use 10#$n when accumulating each input number."
+        "Test your reasoning with a number that starts with zero and contains an eight or nine.",
+        "Review how Bash arithmetic specifies a number base. Make the interpretation explicit when converting each input value."
       ],
       "explanation": "The base prefix declares decimal interpretation. This exercise constrains input to nonnegative integers; arbitrary text would need validation.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\ntotal=0\nwhile IFS= read -r n; do (( total += 10#$n )); done < counts.txt\nprintf '%d\\n' \"$total\"\nGOLF_SOLUTION\n",
@@ -1454,7 +1454,7 @@
       "track": "shell",
       "title": "Print data without format interpretation",
       "objective": "Print the literal prefix value= followed by the entire single-line content of value.txt and a newline. Preserve percent signs and backslashes.",
-      "brief": "Print the literal prefix value= followed by the entire single-line content of value.txt and a newline. Preserve percent signs and backslashes.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: help printf: %s formats a string argument.",
+      "brief": "Practice separating formatting instructions from text supplied as data. This keeps punctuation in a value from changing the behavior of the output operation.\n\nPrint the literal prefix value= followed by the entire single-line content of value.txt and a newline. Preserve percent signs and backslashes.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man bash; help lists Bash builtin documentation.",
       "difficulty": 1,
       "minutes": 3,
       "tools": [
@@ -1465,8 +1465,8 @@
         "data-boundaries"
       ],
       "hints": [
-        "Treat file contents as an argument, not as the printf format.",
-        "Use printf 'value=%s\\n' \"$value\"."
+        "A percent sign in the input should remain a percent sign in the output.",
+        "Keep the format string under your control and pass the file content as a separate string argument. Preserve it during reading as well as printing."
       ],
       "explanation": "A constant format string prevents data from becoming format directives or backslash escapes. echo has less portable escape behavior.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nIFS= read -r value < value.txt || :\nprintf 'value=%s\\n' \"$value\"\nGOLF_SOLUTION\n",
@@ -1510,7 +1510,7 @@
       "track": "shell",
       "title": "Enumerate immediate text files",
       "objective": "Print the basename of each immediate .txt file in inbox/, sorted. Preserve spaces; do not include nested files.",
-      "brief": "Print the basename of each immediate .txt file in inbox/, sorted. Preserve spaces; do not include nested files.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man bash: pathname expansion; ${parameter##pattern} removes the longest matching prefix.",
+      "brief": "Practice processing filenames without losing their argument boundaries. The exercise also distinguishes a path used to access a file from the basename used for display.\n\nPrint the basename of each immediate .txt file in inbox/, sorted. Preserve spaces; do not include nested files.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man bash; help lists Bash builtin documentation.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -1521,8 +1521,8 @@
         "parameter-expansion"
       ],
       "hints": [
-        "A glob expands to separate path arguments without splitting spaces inside each path.",
-        "Quote \"$file\" and use ${file##*/} to remove directory prefixes."
+        "Avoid turning a list of filenames into whitespace-separated text before processing it.",
+        "Iterate over pathname matches, preserve each expanded value, and remove only the directory prefix for display. Check that only immediate files are included."
       ],
       "explanation": "Filename expansion already preserves each matching path as one word. Command substitution around ls would lose that boundary. These fixtures contain no newline in a filename.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nfor file in inbox/*.txt; do [[ -f $file ]] && printf '%s\\n' \"${file##*/}\"; done | LC_ALL=C sort\nGOLF_SOLUTION\n",
@@ -1571,7 +1571,7 @@
       "track": "sed",
       "title": "Update only the port setting",
       "objective": "Print config.ini with port=3000 changed to port=8080 only on lines beginning port=. Preserve other numbers.",
-      "brief": "Print config.ini with port=3000 changed to port=8080 only on lines beginning port=. Preserve other numbers.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: sed --help; s/pattern/replacement/ substitutes once per line by default.",
+      "brief": "Practice constraining a stream edit to a specific setting. Similar numbers elsewhere in a configuration should not be affected by a targeted replacement.\n\nPrint config.ini with port=3000 changed to port=8080 only on lines beginning port=. Preserve other numbers.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man sed.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -1582,8 +1582,8 @@
         "anchors"
       ],
       "hints": [
-        "Constrain both the beginning and end of the setting.",
-        "Use s/^port=3000$/port=8080/."
+        "Match the setting name as well as its current value.",
+        "Consider both boundaries of the setting so a longer value or a prefixed name cannot qualify accidentally."
       ],
       "explanation": "sed transforms a stream without modifying the source. Both anchors keep similar settings unchanged.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nsed 's/^port=3000$/port=8080/' config.ini\nGOLF_SOLUTION\n",
@@ -1627,7 +1627,7 @@
       "track": "sed",
       "title": "Extract a marked block",
       "objective": "Print only the lines between BEGIN and END in payload.txt. Exclude marker lines. Each file has one block.",
-      "brief": "Print only the lines between BEGIN and END in payload.txt. Exclude marker lines. Each file has one block.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: sed --help: -n suppresses automatic printing.",
+      "brief": "Practice selecting a section of a text stream using markers. Identifying the section and deciding whether its boundary lines belong in the output are separate decisions.\n\nPrint only the lines between BEGIN and END in payload.txt. Exclude marker lines. Each file has one block.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man sed.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -1638,8 +1638,8 @@
         "stream-editing"
       ],
       "hints": [
-        "Use a pattern-addressed range with default printing disabled.",
-        "Within /^BEGIN$/,/^END$/, delete the boundaries and print the remaining lines."
+        "Find the region first, then account for the two marker lines.",
+        "Review pattern-addressed ranges and automatic printing. Arrange for only the interior lines of the selected range to reach stdout."
       ],
       "explanation": "Address ranges choose a block; -n makes every emitted line explicit. This contract excludes nested or repeated markers.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nsed -n '/^BEGIN$/,/^END$/{ /^BEGIN$/d; /^END$/d; p; }' payload.txt\nGOLF_SOLUTION\n",
@@ -1683,7 +1683,7 @@
       "track": "awk",
       "title": "Aggregate bytes by service",
       "objective": "Read usage.txt as whitespace-separated service and integer bytes. Print service total for each service, sorted by service.",
-      "brief": "Read usage.txt as whitespace-separated service and integer bytes. Print service total for each service, sorted by service.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man awk: $1 is the first field; END runs after all records.",
+      "brief": "Practice aggregating records by a shared key. Instead of treating each line independently, retain a running total for each service and emit the summary after reading the input.\n\nRead usage.txt as whitespace-separated service and integer bytes. Print service total for each service, sorted by service.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man awk.",
       "difficulty": 3,
       "minutes": 7,
       "tools": [
@@ -1694,8 +1694,8 @@
         "associative-arrays"
       ],
       "hints": [
-        "An associative array can accumulate by the first field.",
-        "sum[$1]+=$2; print the array in END and sort its output."
+        "A service may appear on multiple nonadjacent lines.",
+        "Use a keyed accumulator and separate per-record updates from final output. Array iteration does not by itself guarantee the requested order."
       ],
       "explanation": "awk arrays group arbitrary string keys. Array iteration order is unspecified, so the final sort is part of the output contract.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nawk '{sum[$1]+=$2} END {for (key in sum) print key, sum[key]}' usage.txt | LC_ALL=C sort\nGOLF_SOLUTION\n",
@@ -1739,7 +1739,7 @@
       "track": "awk",
       "title": "Select slow requests",
       "objective": "requests.csv has header path,ms and no quoted fields. Print the path for data rows with ms greater than 100, in order.",
-      "brief": "requests.csv has header path,ms and no quoted fields. Print the path for data rows with ms greater than 100, in order.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man awk: -F sets FS, NR counts input records.",
+      "brief": "Practice filtering structured records by a numeric field. Headers describe the data but should not participate in the numeric comparison.\n\nrequests.csv has header path,ms and no quoted fields. Print the path for data rows with ms greater than 100, in order.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man awk.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -1750,8 +1750,8 @@
         "numeric-filter"
       ],
       "hints": [
-        "Set a comma delimiter and skip the header.",
-        "Use NR>1 && $2>100 with print $1."
+        "Identify the field separator and distinguish the header from data rows.",
+        "Combine a data-row condition with the threshold test, then emit only the requested field. The threshold is strict, not inclusive."
       ],
       "explanation": "This controlled format can be split on commas. General CSV with quoted commas requires a CSV parser.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nawk -F, 'NR>1 && $2>100 {print $1}' requests.csv\nGOLF_SOLUTION\n",
@@ -1795,7 +1795,7 @@
       "track": "fd",
       "title": "Find Markdown source files",
       "objective": "Print sorted relative paths of .md files under docs/, excluding hidden files. Include nested files.",
-      "brief": "Print sorted relative paths of .md files under docs/, excluding hidden files. Include nested files.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: fd --help: --type f, --extension, --hidden.",
+      "brief": "Practice discovering files by type and extension across a directory tree. The goal is a reproducible path list with deliberate treatment of hidden entries.\n\nPrint sorted relative paths of .md files under docs/, excluding hidden files. Include nested files.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: fd --help.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -1806,8 +1806,8 @@
         "extensions"
       ],
       "hints": [
-        "fd has separate file-type and extension filters.",
-        "Use fd --type f --extension md . docs and sort."
+        "Separate the starting directory from the filename criteria.",
+        "Review the file-type and extension filters, including how extensions are written. Order the resulting paths explicitly."
       ],
       "explanation": "fd omits hidden paths by default. Its extension flag avoids manually escaping a suffix regex.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nfd --type f --extension md . docs | LC_ALL=C sort\nGOLF_SOLUTION\n",
@@ -1856,7 +1856,7 @@
       "track": "fd",
       "title": "Include hidden configuration",
       "objective": "Print sorted paths under settings/ whose filename ends in .conf, including hidden directories and files.",
-      "brief": "Print sorted paths under settings/ whose filename ends in .conf, including hidden directories and files.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: fd --help: -H, --hidden includes hidden files and directories.",
+      "brief": "Practice making hidden-file behavior explicit during file discovery. Default exclusions can otherwise make a seemingly correct search incomplete.\n\nPrint sorted paths under settings/ whose filename ends in .conf, including hidden directories and files.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: fd --help.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -1866,8 +1866,8 @@
         "hidden-files"
       ],
       "hints": [
-        "The default hidden-file exclusion must be changed explicitly.",
-        "Add --hidden to the extension/type query."
+        "A matching file can be hidden itself or live inside a hidden directory.",
+        "Review how the tool includes hidden entries, then combine that behavior with the filename and file-type requirements."
       ],
       "explanation": "Hidden files are a deliberate fd default. Explicitly enabling them communicates when configuration discovery needs broader scope.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nfd --hidden --type f --extension conf . settings | LC_ALL=C sort\nGOLF_SOLUTION\n",
@@ -1915,7 +1915,7 @@
       "track": "find",
       "title": "Limit discovery depth",
       "objective": "Print sorted paths of .log regular files directly inside logs/. Do not include nested logs.",
-      "brief": "Print sorted paths of .log regular files directly inside logs/. Do not include nested logs.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: find --help; GNU -maxdepth counts the starting directory as depth zero.",
+      "brief": "Practice controlling how far a filesystem search descends. A filename pattern alone does not distinguish immediate children from files deeper in the tree.\n\nPrint sorted paths of .log regular files directly inside logs/. Do not include nested logs.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man find.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -1926,8 +1926,8 @@
         "file-types"
       ],
       "hints": [
-        "find descends recursively unless its depth is constrained.",
-        "Use -maxdepth 1 and quote the name pattern."
+        "The starting directory and its immediate children occupy different depth levels.",
+        "Review the traversal depth controls and regular-file predicate. Protect the name pattern from expansion by the shell."
       ],
       "explanation": "Quoting delegates wildcard matching to find rather than the outer shell. -maxdepth is the GNU find contract used by the standard image.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nfind logs -maxdepth 1 -type f -name '*.log' -print | LC_ALL=C sort\nGOLF_SOLUTION\n",
@@ -1976,7 +1976,7 @@
       "track": "find",
       "title": "Prune generated trees",
       "objective": "Print sorted .txt file paths below project/ except any directory named generated.",
-      "brief": "Print sorted .txt file paths below project/ except any directory named generated.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man find: -prune, -o; explicit -print avoids implicit output surprises.",
+      "brief": "Practice excluding entire directory subtrees during a search. Traversal decisions and file-selection conditions must cooperate to avoid unwanted results.\n\nPrint sorted .txt file paths below project/ except any directory named generated.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man find.",
       "difficulty": 3,
       "minutes": 7,
       "tools": [
@@ -1987,8 +1987,8 @@
         "boolean-expressions"
       ],
       "hints": [
-        "Pruning stops traversal at an excluded directory.",
-        "Use directory predicate -prune -o file predicate -print."
+        "Decide what should happen when traversal reaches an excluded directory.",
+        "Review pruning and the short-circuit behavior of find expressions. Ensure excluded directories are not printed as successful matches."
       ],
       "explanation": "find expressions short-circuit. A pruned directory satisfies the left branch, so the file-printing branch is not evaluated for it.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nfind project -type d -name generated -prune -o -type f -name '*.txt' -print | LC_ALL=C sort\nGOLF_SOLUTION\n",
@@ -2037,7 +2037,7 @@
       "track": "python",
       "title": "Filter JSON records",
       "objective": "Read events.jsonl. Print the name of every object with active equal to true. Preserve input order. Each line is valid JSON.",
-      "brief": "Read events.jsonl. Print the name of every object with active equal to true. Preserve input order. Each line is valid JSON.\n\nEdit solution.py. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: python3 -m pydoc json; bool is a subclass of int, so equality alone accepts 1.",
+      "brief": "Practice processing structured records one at a time. Parsing preserves JSON types, which matters when a condition specifically requires a boolean value.\n\nRead events.jsonl. Print the name of every object with active equal to true. Preserve input order. Each line is valid JSON.\n\nEdit solution.py. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: python3 -m pydoc json; python3 -m pydoc csv.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -2048,8 +2048,8 @@
         "stream-processing"
       ],
       "hints": [
-        "Parse each record with the standard json module.",
-        "Test is True to require the JSON boolean rather than truthy values."
+        "A nonempty string and a JSON boolean can both look truthy after parsing.",
+        "Use the standard JSON parser for each line and make the active test type-specific. Keep record order when emitting names."
       ],
       "explanation": "JSON booleans, numeric values, and absent keys are distinct data. The explicit identity check enforces the declared filter.",
       "reference_solution": "cat > solution.py <<'GOLF_SOLUTION'\nimport json\nwith open('events.jsonl', encoding='utf-8') as source:\n    for line in source:\n        event = json.loads(line)\n        if event.get('active') is True:\n            print(event['name'])\nGOLF_SOLUTION\n",
@@ -2093,7 +2093,7 @@
       "track": "python",
       "title": "Read quoted CSV correctly",
       "objective": "Read people.csv with columns name,team. Print team: name for every data row. Names can contain quoted commas.",
-      "brief": "Read people.csv with columns name,team. Print team: name for every data row. Names can contain quoted commas.\n\nEdit solution.py. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: python3 -m pydoc csv; csv.DictReader maps column names to values.",
+      "brief": "Practice reading tabular data with quoted fields. A delimiter inside a quoted name is part of the value, so splitting text on every comma loses information.\n\nRead people.csv with columns name,team. Print team: name for every data row. Names can contain quoted commas.\n\nEdit solution.py. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: python3 -m pydoc json; python3 -m pydoc csv.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -2104,8 +2104,8 @@
         "structured-data"
       ],
       "hints": [
-        "A comma split cannot distinguish separators inside quotes.",
-        "csv.DictReader handles the header and quoted fields."
+        "Compare a row with a plain name to one containing a quoted comma.",
+        "The standard CSV module understands quoting and headers. Use those facilities to retrieve fields before formatting the output."
       ],
       "explanation": "The standard CSV parser understands quoted delimiters. Opening with newline=\"\" lets the parser handle record endings.",
       "reference_solution": "cat > solution.py <<'GOLF_SOLUTION'\nimport csv\nwith open('people.csv', newline='', encoding='utf-8') as source:\n    for row in csv.DictReader(source):\n        print(f\"{row['team']}: {row['name']}\")\nGOLF_SOLUTION\n",
@@ -2149,7 +2149,7 @@
       "track": "zsh",
       "title": "Preserve zsh array elements",
       "objective": "Use zsh to read the three lines in paths.txt and print each enclosed in square brackets. Preserve embedded spaces.",
-      "brief": "Use zsh to read the three lines in paths.txt and print each enclosed in square brackets. Preserve embedded spaces.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: zsh builtins: print -r disables escape processing; -- ends options.",
+      "brief": "Practice preserving complete text values as they move through zsh. Spaces inside a path are data, and should survive both input handling and output formatting.\n\nUse zsh to read the three lines in paths.txt and print each enclosed in square brackets. Preserve embedded spaces.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man zshbuiltins; man zshexpn.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -2160,8 +2160,8 @@
         "quoting"
       ],
       "hints": [
-        "zsh print -r prevents interpretation of backslash escapes.",
-        "Use a raw read loop and print -r -- \"[$item]\"."
+        "Trace one line containing a space from the file to the final output. Where could it be split or interpreted?",
+        "Review raw line input and literal output behavior in zsh. Keep the brackets as formatting around one intact value."
       ],
       "explanation": "Explicit raw input and output preserve literal path text. This checks the data result, not any interactive key sequence.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nzsh -f -c 'while IFS= read -r item; do print -r -- \"[$item]\"; done < paths.txt'\nGOLF_SOLUTION\n",
@@ -2205,7 +2205,7 @@
       "track": "zsh",
       "title": "Select regular files with a glob qualifier",
       "objective": "Use zsh to print the sorted immediate regular-file basenames in inbox/. Include only .txt files; ignore a directory whose name ends in .txt.",
-      "brief": "Use zsh to print the sorted immediate regular-file basenames in inbox/. Include only .txt files; ignore a directory whose name ends in .txt.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man zshexpn: glob qualifiers . and N; modifier :t returns the filename tail.",
+      "brief": "Practice selecting files by filesystem type as well as by name. A directory can share a file extension, so a name match alone is not sufficient.\n\nUse zsh to print the sorted immediate regular-file basenames in inbox/. Include only .txt files; ignore a directory whose name ends in .txt.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: man zshbuiltins; man zshexpn.",
       "difficulty": 3,
       "minutes": 7,
       "tools": [
@@ -2216,8 +2216,8 @@
         "path-modifiers"
       ],
       "hints": [
-        "A zsh glob qualifier can restrict matches to regular files.",
-        "Use *.txt(.N): dot selects regular files, N allows an empty match."
+        "Compare a regular file and a directory whose names both end in the requested extension.",
+        "Review zsh glob qualifiers for file type and no-match behavior. Keep path selection separate from basename output."
       ],
       "explanation": "The regular-file qualifier prevents directories with matching suffixes from being selected. :t extracts the path tail without spawning basename.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nzsh -f -c 'for item in inbox/*.txt(.N); do print -r -- ${item:t}; done' | LC_ALL=C sort\nGOLF_SOLUTION\n",
@@ -2266,7 +2266,7 @@
       "track": "fzf",
       "title": "Select a command from a candidate list",
       "objective": "Use fzf filter mode to select lines from commands.txt matching the exact substring deploy, then sort. Matching is case sensitive.",
-      "brief": "Use fzf filter mode to select lines from commands.txt matching the exact substring deploy, then sort. Matching is case sensitive.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: fzf --help: --filter, --exact, --no-ignore-case.",
+      "brief": "Practice using a selection tool in a repeatable script. Interactive fuzzy matching and exact, case-sensitive filtering solve different problems.\n\nUse fzf filter mode to select lines from commands.txt matching the exact substring deploy, then sort. Matching is case sensitive.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: fzf --help.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -2277,8 +2277,8 @@
         "filter-mode"
       ],
       "hints": [
-        "Filter mode makes fzf usable without an interactive picker.",
-        "Use --filter=deploy --exact --no-ignore-case and sort the candidates."
+        "Check each matching requirement separately: substring behavior, capitalization, and output order.",
+        "Review the noninteractive filter mode and its matching controls. Do not assume ranked results arrive in lexical order."
       ],
       "explanation": "fzf can serve as a scripted selection stage. This validates matching semantics; interactive navigation speed is not measured.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nset -o pipefail\nfzf --filter=deploy --exact --no-ignore-case < commands.txt | LC_ALL=C sort\nGOLF_SOLUTION\n",
@@ -2322,7 +2322,7 @@
       "track": "fzf",
       "title": "Search only a candidate field",
       "objective": "commands.tsv contains ID then a tab then description. Use fzf to select rows whose description contains the exact substring release. Print only IDs, sorted.",
-      "brief": "commands.tsv contains ID then a tab then description. Use fzf to select rows whose description contains the exact substring release. Print only IDs, sorted.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: fzf --help: --delimiter splits fields; --nth limits searchable fields.",
+      "brief": "Practice separating the text searched from the data returned. A row can contain an identifier needed for output that must not influence whether it matches.\n\ncommands.tsv contains ID then a tab then description. Use fzf to select rows whose description contains the exact substring release. Print only IDs, sorted.\n\nEdit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.\n\nKey reference: fzf --help.",
       "difficulty": 3,
       "minutes": 7,
       "tools": [
@@ -2333,8 +2333,8 @@
         "pipelines"
       ],
       "hints": [
-        "Limit matching to the description field without changing the selected full row.",
-        "Use --delimiter with a tab and --nth=2.., then cut -f1."
+        "A keyword in the ID should not qualify a row whose description lacks it.",
+        "Configure field boundaries and searchable fields while retaining the original selected rows. Extract identifiers only after selection."
       ],
       "explanation": "Matching fields and displayed/output data are separate concerns. --nth prevents an identifier from accidentally satisfying the query.",
       "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nset -o pipefail\nfzf --filter=release --exact --no-ignore-case --delimiter='\t' --nth=2.. < commands.tsv | cut -f1 | LC_ALL=C sort\nGOLF_SOLUTION\n",
@@ -2378,7 +2378,7 @@
       "track": "git",
       "title": "Stage only the intended file",
       "objective": "Stage the existing api.txt change. Leave notes.txt modified but unstaged. Do not commit.",
-      "brief": "Stage the existing api.txt change. Leave notes.txt modified but unstaged. Do not commit.\n\nWork only in this synthetic repository. Checks inspect repository semantics, not commit hashes.\n\nKey reference: git help; this repository has no remotes, credentials, or signing keys.\n\nThe starter repository is initialized before the shell opens. Preserve its synthetic history and unrelated files.",
+      "brief": "Practice separating one intended change from unrelated work. Git's index lets the next snapshot differ from the complete working tree.\n\nStage the existing api.txt change. Leave notes.txt modified but unstaged. Do not commit.\n\nWork only in this synthetic repository. Checks inspect repository semantics, not commit hashes.\n\nKey reference: git help; this repository has no remotes, credentials, or signing keys.\n\nThe starter repository is initialized before the shell opens. Preserve its synthetic history and unrelated files.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -2389,8 +2389,8 @@
         "selective-staging"
       ],
       "hints": [
-        "The index is the snapshot for the next commit.",
-        "git add -- api.txt stages one named path; do not use git add . here."
+        "Inspect staged and unstaged differences as two separate views.",
+        "Choose a staging scope narrow enough to include only the intended path. Verify what remains outside the index before considering the task complete."
       ],
       "explanation": "Selective staging separates an intended change from unrelated work. The check inspects both index and working tree.",
       "reference_solution": "git add -- api.txt\n",
@@ -2435,7 +2435,7 @@
       "track": "git",
       "title": "Repair the last commit message",
       "objective": "Change the current commit message from WIP to Document launch checklist. Preserve the committed file tree and one-commit history.",
-      "brief": "Change the current commit message from WIP to Document launch checklist. Preserve the committed file tree and one-commit history.\n\nWork only in this synthetic repository. Checks inspect repository semantics, not commit hashes.\n\nKey reference: git help; this repository has no remotes, credentials, or signing keys.\n\nThe starter repository is initialized before the shell opens. Preserve its synthetic history and unrelated files.",
+      "brief": "Practice correcting commit metadata without changing the recorded content. This exercise uses disposable local history to distinguish replacing a commit from adding another one.\n\nChange the current commit message from WIP to Document launch checklist. Preserve the committed file tree and one-commit history.\n\nWork only in this synthetic repository. Checks inspect repository semantics, not commit hashes.\n\nKey reference: git help; this repository has no remotes, credentials, or signing keys.\n\nThe starter repository is initialized before the shell opens. Preserve its synthetic history and unrelated files.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -2446,8 +2446,8 @@
         "commit-messages"
       ],
       "hints": [
-        "An amendment replaces the current commit while retaining its parent relationship.",
-        "git commit --amend -m 'Document launch checklist'."
+        "A new ordinary commit would change the length of the history.",
+        "Review the option for replacing the current commit. Check the staged tree before using it so a message correction does not also change content."
       ],
       "explanation": "Amending rewrites a commit identity. This is a disposable unpublished repository, so no shared history is affected.",
       "reference_solution": "git commit --amend -qm 'Document launch checklist'\n",
@@ -2491,7 +2491,7 @@
       "track": "jj",
       "title": "Describe the current jj change",
       "objective": "Set the current change description to Add launch notes. Preserve notes.txt containing the supplied text.",
-      "brief": "Set the current change description to Add launch notes. Preserve notes.txt containing the supplied text.\n\nWork only in this synthetic repository. Checks inspect repository semantics, not commit hashes.\n\nKey reference: jj help; this repository has no remotes, credentials, or signing keys.\n\nThe starter repository is initialized before the shell opens. Preserve its synthetic history and unrelated files.",
+      "brief": "Practice attaching intent to a working-copy change in jj. Its change model lets a description and file content be managed as parts of the same ongoing work.\n\nSet the current change description to Add launch notes. Preserve notes.txt containing the supplied text.\n\nWork only in this synthetic repository. Checks inspect repository semantics, not commit hashes.\n\nKey reference: jj help; this repository has no remotes, credentials, or signing keys.\n\nThe starter repository is initialized before the shell opens. Preserve its synthetic history and unrelated files.",
       "difficulty": 2,
       "minutes": 5,
       "tools": [
@@ -2502,8 +2502,8 @@
         "working-copy"
       ],
       "hints": [
-        "The working copy is a change in jj and can have a description before any separate commit action.",
-        "Use jj describe -m 'Add launch notes'."
+        "You need to change metadata, not create another file or move to a new change.",
+        "Find the command responsible for a change description and check how it targets the current working copy. Inspect the diff afterward to confirm the content stayed intact."
       ],
       "explanation": "jj tracks working-copy content in the current change. Describing that change does not require Git staging.",
       "reference_solution": "jj describe -m 'Add launch notes'\n",
@@ -2547,7 +2547,7 @@
       "track": "jj",
       "title": "Name a completed change",
       "objective": "Create a bookmark named launch on the current change, whose description is Prepare launch. Then create a new empty working-copy change on top. Preserve notes.txt.",
-      "brief": "Create a bookmark named launch on the current change, whose description is Prepare launch. Then create a new empty working-copy change on top. Preserve notes.txt.\n\nWork only in this synthetic repository. Checks inspect repository semantics, not commit hashes.\n\nKey reference: jj help; this repository has no remotes, credentials, or signing keys.\n\nThe starter repository is initialized before the shell opens. Preserve its synthetic history and unrelated files.",
+      "brief": "Practice distinguishing a named completed change from the working copy used for subsequent work. The exercise focuses on the relationship between a bookmark and its child change.\n\nCreate a bookmark named launch on the current change, whose description is Prepare launch. Then create a new empty working-copy change on top. Preserve notes.txt.\n\nWork only in this synthetic repository. Checks inspect repository semantics, not commit hashes.\n\nKey reference: jj help; this repository has no remotes, credentials, or signing keys.\n\nThe starter repository is initialized before the shell opens. Preserve its synthetic history and unrelated files.",
       "difficulty": 3,
       "minutes": 7,
       "tools": [
@@ -2558,8 +2558,8 @@
         "ancestry"
       ],
       "hints": [
-        "A bookmark names a change; jj new creates a child and moves the working copy.",
-        "Use jj bookmark create launch -r @ followed by jj new."
+        "Sketch which change should own the bookmark after the working copy advances.",
+        "A bookmark names a particular change. Plan when to assign that name relative to creating the child, then inspect the parent relationship and the child's diff."
       ],
       "explanation": "The bookmark stays on the finished change while the working copy advances to a new child. The check tests ancestry and emptiness instead of hash values.",
       "reference_solution": "jj bookmark create launch -r @\njj new\n",
