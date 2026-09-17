@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strings"
 	"sync"
 
 	tea "charm.land/bubbletea/v2"
@@ -12,6 +13,14 @@ import (
 	"github.com/charmbracelet/x/vt"
 	"github.com/creack/pty"
 )
+
+// TriggerOSC is an unregistered OSC number carrying golf actions from inside
+// the exercise. A host terminal that receives it when the workbench is not
+// running ignores it.
+const TriggerOSC = 9270
+
+// clipboardOSC is OSC 52. The child must not write the host clipboard.
+const clipboardOSC = 52
 
 // Session couples a child process on a pseudo-terminal to a virtual terminal
 // emulator. The emulator parses child output into cells, so escape sequences
@@ -21,6 +30,9 @@ type Session struct {
 	ptmx    *os.File
 	emu     *vt.SafeEmulator
 	changed chan struct{}
+
+	mu      sync.Mutex
+	trigger func(string)
 
 	closeOnce sync.Once
 	closeErr  error
@@ -43,6 +55,25 @@ func Start(cmd *exec.Cmd, width, height int) (*Session, error) {
 		emu:     vt.NewSafeEmulator(width, height),
 		changed: make(chan struct{}, 1),
 	}
+	// Register handlers before any goroutine can write to the emulator.
+	// SafeEmulator.RegisterOscHandler has a value receiver, so it is not
+	// covered by the emulator's mutex and races the parser otherwise.
+	s.emu.RegisterOscHandler(TriggerOSC, func(data []byte) bool {
+		_, action, found := strings.Cut(string(data), "golf=")
+		if !found {
+			return true
+		}
+		s.mu.Lock()
+		fn := s.trigger
+		s.mu.Unlock()
+		if fn != nil {
+			// The handler runs on the output parsing goroutine; never block it.
+			go fn(action)
+		}
+		return true // consumed, so it is never rendered
+	})
+	s.emu.RegisterOscHandler(clipboardOSC, func([]byte) bool { return true })
+
 	// Child output into the emulator.
 	go func() {
 		buf := make([]byte, 4096)
@@ -64,6 +95,7 @@ func Start(cmd *exec.Cmd, width, height int) (*Session, error) {
 	// and a child that queries modes at startup will deadlock the parser if
 	// nobody is reading.
 	go func() { io.Copy(ptmx, s.emu) }()
+
 	return s, nil
 }
 
@@ -87,6 +119,15 @@ func (s *Session) SendKey(k tea.KeyPressMsg) {
 		return
 	}
 	s.emu.SendKey(uv.KeyEvent(uv.KeyPressEvent(uv.Key(tea.Key(k)))))
+}
+
+// OnTrigger registers the handler for golf trigger sequences emitted by the
+// golf-check and golf-hint shims running inside the exercise. It gives the
+// operator a path to every workbench action that intercepts no keys at all.
+func (s *Session) OnTrigger(fn func(action string)) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.trigger = fn
 }
 
 // Resize updates the emulator and the pseudo-terminal. Resizing the

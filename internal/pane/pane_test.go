@@ -96,3 +96,37 @@ func TestSessionRejectsNonPositiveSize(t *testing.T) {
 		t.Error("Start accepted a zero width")
 	}
 }
+
+func TestSessionTriggerFiresAndIsNotRendered(t *testing.T) {
+	s := start(t, exec.Command("/bin/sh", "-c", `printf 'before\033]9270;golf=check\007after\n'; sleep 30`), 40, 6)
+	got := make(chan string, 1)
+	s.OnTrigger(func(action string) {
+		select {
+		case got <- action:
+		default:
+		}
+	})
+	select {
+	case action := <-got:
+		if action != "check" {
+			t.Errorf("trigger action = %q, want %q", action, "check")
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("trigger did not fire")
+	}
+	out := waitFor(t, s, "after")
+	if strings.Contains(out, "9270") || strings.Contains(out, "golf=check") {
+		t.Errorf("trigger sequence leaked into the rendered screen: %q", out)
+	}
+	if !strings.Contains(out, "before") || !strings.Contains(out, "after") {
+		t.Errorf("surrounding output was lost: %q", out)
+	}
+}
+
+func TestSessionDropsClipboardWrites(t *testing.T) {
+	s := start(t, exec.Command("/bin/sh", "-c", `printf '\033]52;c;aGVsbG8=\007visible\n'; sleep 30`), 40, 6)
+	out := waitFor(t, s, "visible")
+	if strings.Contains(out, "52;c") || strings.Contains(out, "aGVsbG8") {
+		t.Errorf("clipboard sequence leaked: %q", out)
+	}
+}
