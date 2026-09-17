@@ -130,3 +130,25 @@ func TestSessionDropsClipboardWrites(t *testing.T) {
 		t.Errorf("clipboard sequence leaked: %q", out)
 	}
 }
+
+func TestSessionTriggerBeforeHandlerIsNotLost(t *testing.T) {
+	// The child can emit before OnTrigger runs. Losing that trigger would
+	// silently drop a check the operator asked for.
+	s := start(t, exec.Command("/bin/sh", "-c", `printf '\033]9270;golf=check\007'; sleep 30`), 40, 6)
+	time.Sleep(500 * time.Millisecond) // let the sequence be parsed first
+	got := make(chan string, 1)
+	s.OnTrigger(func(action string) {
+		select {
+		case got <- action:
+		default:
+		}
+	})
+	select {
+	case action := <-got:
+		if action != "check" {
+			t.Errorf("buffered trigger = %q, want %q", action, "check")
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("a trigger that arrived before the handler was lost")
+	}
+}

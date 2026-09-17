@@ -33,6 +33,10 @@ type Session struct {
 
 	mu      sync.Mutex
 	trigger func(string)
+	// pending holds triggers that arrived before a handler was registered.
+	// The child can emit one between Start and OnTrigger, and dropping it
+	// would silently lose a check the operator asked for.
+	pending []string
 
 	closeOnce sync.Once
 	closeErr  error
@@ -65,6 +69,9 @@ func Start(cmd *exec.Cmd, width, height int) (*Session, error) {
 		}
 		s.mu.Lock()
 		fn := s.trigger
+		if fn == nil {
+			s.pending = append(s.pending, action)
+		}
 		s.mu.Unlock()
 		if fn != nil {
 			// The handler runs on the output parsing goroutine; never block it.
@@ -126,8 +133,16 @@ func (s *Session) SendKey(k tea.KeyPressMsg) {
 // operator a path to every workbench action that intercepts no keys at all.
 func (s *Session) OnTrigger(fn func(action string)) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	s.trigger = fn
+	pending := s.pending
+	s.pending = nil
+	s.mu.Unlock()
+	if fn == nil {
+		return
+	}
+	for _, action := range pending {
+		go fn(action)
+	}
 }
 
 // Resize updates the emulator and the pseudo-terminal. Resizing the

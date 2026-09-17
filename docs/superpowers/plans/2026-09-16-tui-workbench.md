@@ -46,9 +46,11 @@ Findings from the design spike that are not obvious from the code, ordered by ho
 
 **6. A security hook will flag the test fixtures.** `exec.Command("/bin/sh", "-c", ...)` in the pane tests trips a command-injection warning. Those arguments are hardcoded literals with no user input, so it is a false positive. Do not rewrite the tests to appease it.
 
-**7. `RegisterOscHandler` is not concurrency safe.** On `SafeEmulator` it has a value receiver, so the emulator's mutex does not cover it, and it mutates a handler map the parser reads. Registering a handler after the output goroutine is running is a data race that `go test -race` catches. `Start` registers everything before any goroutine launches. Run `go test -race ./internal/pane/` on any change to that constructor.
+**7. A trigger can arrive before its handler is registered.** The child may print the OSC sequence between `Start` and `OnTrigger`, and on a fast Linux runner it does. Dropping it would silently lose a check the operator asked for, so `Session` buffers triggers that arrive with no handler set and delivers them when one is registered. This surfaced only in CI, where the first version of the test failed while passing locally every time.
 
-**8. Lip Gloss v2 rendering differences found while migrating.** These bit the existing test suite and will bite the workbench view in Tasks 5 and 7.
+**8. `RegisterOscHandler` is not concurrency safe.** On `SafeEmulator` it has a value receiver, so the emulator's mutex does not cover it, and it mutates a handler map the parser reads. Registering a handler after the output goroutine is running is a data race that `go test -race` catches. `Start` registers everything before any goroutine launches. Run `go test -race ./internal/pane/` on any change to that constructor.
+
+**9. Lip Gloss v2 rendering differences found while migrating.** These bit the existing test suite and will bite the workbench view in Tasks 5 and 7.
 
 - `Style.Width(n)` now counts border and padding *inside* `n`. v1 excluded them, so v1 code that wrote `Width(w - 2)` to leave room for a border must become `Width(w)`. Both `Model.goal` and `Model.panel` needed this.
 - The reset sequence is `\x1b[m`, not v1's `\x1b[0m`. `onSurface` matched the old spelling and silently became a no-op, which `TestNestedStyleRestoresContainingSurface` caught. It now uses the `styleReset` constant in `internal/tui/layout.go`.
@@ -57,7 +59,7 @@ Findings from the design spike that are not obvious from the code, ordered by ho
 - `help.Model.Width` is now the `SetWidth(int)` method, and `progress.Model.EmptyColor` is a `color.Color` rather than a string.
 - There is no `lipgloss.Renderer`. `Model` carries a `darkBackground bool` fed by `tea.BackgroundColorMsg`, requested in `Init` via `tea.RequestBackgroundColor`. Tests set the field directly.
 
-**9. Regenerating the key corpus.** Task 2 ships a 15 case table. To widen encoder coverage, the full set of sequences a terminal actually sends can be extracted from Bubble Tea's own table:
+**10. Regenerating the key corpus.** Task 2 ships a 15 case table. To widen encoder coverage, the full set of sequences a terminal actually sends can be extracted from Bubble Tea's own table:
 
 ```bash
 awk '/^var sequences = map\[string\]Key\{/,/^\}/' \
