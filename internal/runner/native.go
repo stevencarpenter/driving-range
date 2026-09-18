@@ -89,13 +89,16 @@ func nativeShell(c model.Challenge) string {
 
 func (r *Runner) prepareNative(ctx context.Context, c model.Challenge, a model.Attempt) (*Session, error) {
 	argv := []string{c.Editor, "-i"}
-	if c.Editor == "nvim" || c.Editor == "vim" {
+	switch c.Editor {
+	case "nvim", "vim":
 		argv = []string{"nvim", "--", c.Entrypoint}
-	} else {
+	case "bash", "zsh", "":
+		// A shell editor is the only case the player's SHELL may replace. Any
+		// other editor hosts the exercise directly and keeps its command.
 		argv[0] = nativeShell(c)
 	}
 	if _, err := exec.LookPath(argv[0]); err != nil {
-		return nil, fmt.Errorf("install %s on your host to practice: %w", argv[0], err)
+		return nil, fmt.Errorf("install %s on your host to practice: %w", filepath.Base(argv[0]), err)
 	}
 	if c.Editor != "nvim" && c.Editor != "vim" {
 		argv = append([]string{"/bin/sh", "-c", "printf 'Driving Range. Run golf-brief for the exercise. Exit to check your work.\\n'; exec \"$@\"", "golf"}, argv...)

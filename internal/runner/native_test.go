@@ -85,8 +85,8 @@ func TestNativeShellPrefersUserShellWhenIncidental(t *testing.T) {
 	}
 	cmd = s.Command()
 	s.Finish(context.Canceled)
-	if cmd.Args[len(cmd.Args)-2] != "bash" {
-		t.Fatalf("pinned shell: %v, want bash", cmd.Args)
+	if cmd.Args[len(cmd.Args)-2] != "bash" || cmd.Args[len(cmd.Args)-1] != "-i" {
+		t.Fatalf("pinned shell: %v, want bash -i", cmd.Args)
 	}
 
 	t.Setenv("SHELL", filepath.Join(bin, "missing-shell"))
@@ -96,8 +96,22 @@ func TestNativeShellPrefersUserShellWhenIncidental(t *testing.T) {
 	}
 	cmd = s.Command()
 	s.Finish(context.Canceled)
-	if cmd.Args[len(cmd.Args)-2] != "bash" {
-		t.Fatalf("fallback shell: %v, want bash", cmd.Args)
+	if cmd.Args[len(cmd.Args)-2] != "bash" || cmd.Args[len(cmd.Args)-1] != "-i" {
+		t.Fatalf("fallback shell: %v, want bash -i", cmd.Args)
+	}
+
+	// An unset editor defaults to bash, so SHELL may still replace it when the
+	// exercise does not teach the shell.
+	t.Setenv("SHELL", fake)
+	defaulted := model.Challenge{Tools: []string{"python3"}, Entrypoint: "solution.py"}
+	s, err = r.Prepare(context.Background(), defaulted, a)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cmd = s.Command()
+	s.Finish(context.Canceled)
+	if cmd.Args[len(cmd.Args)-2] != fake || cmd.Args[len(cmd.Args)-1] != "-i" {
+		t.Fatalf("defaulted editor shell: %v, want %q -i", cmd.Args, fake)
 	}
 }
 
