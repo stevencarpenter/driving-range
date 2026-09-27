@@ -36,11 +36,9 @@ type Fixture struct {
 }
 
 type Validator struct {
-	Kind            string         `json:"kind"`
-	Version         string         `json:"version"`
-	OutputPolicy    string         `json:"output_policy"`
-	AllowExtraFiles bool           `json:"allow_extra_files,omitempty"`
-	Checks          []CommandCheck `json:"checks,omitempty"`
+	Kind    string         `json:"kind"`
+	Version string         `json:"version"`
+	Checks  []CommandCheck `json:"checks,omitempty"`
 }
 
 type CommandCheck struct {

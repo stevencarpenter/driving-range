@@ -60,8 +60,7 @@ func Decode(r io.Reader) (*Catalog, error) {
 	return &c, nil
 }
 
-func (c *Catalog) All() []model.Challenge       { return slices.Clone(c.Challenges) }
-func (c *Catalog) Schedule() []model.Assignment { return slices.Clone(c.Assignments) }
+func (c *Catalog) All() []model.Challenge { return slices.Clone(c.Challenges) }
 func (c *Catalog) Tracks() []string {
 	result := []string{}
 	for _, ch := range c.Challenges {
@@ -162,9 +161,6 @@ func (c *Catalog) Validate() error {
 		}
 		if !validPath(ch.Entrypoint) {
 			return fail("invalid entrypoint path")
-		}
-		if ch.Validator.OutputPolicy != "exact" {
-			return fail("unsupported output policy")
 		}
 		switch ch.Validator.Kind {
 		case "tree":

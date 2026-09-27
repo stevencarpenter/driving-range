@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -57,23 +58,9 @@ func TestSnapshotBoundary(t *testing.T) {
 	}
 }
 
-func TestOutputSemantics(t *testing.T) {
-	for _, tc := range []struct {
-		a, b, policy string
-		want         bool
-	}{{"a\n", "a", "exact", false}, {"a\na\n", "a\n", "exact", false}, {"b\na\n", "a\nb\n", "exact", false}, {"é\n", "é\n", "exact", true}} {
-		got, err := outputsEqual(tc.a, tc.b, tc.policy)
-		if err != nil || got != tc.want {
-			t.Fatalf("%+v: %v %v", tc, got, err)
-		}
-	}
+func TestSafeText(t *testing.T) {
 	if strings.ContainsRune(SafeText("\x1b]52;c;secret\a\r\u009b"), '\x1b') {
 		t.Fatal("terminal escape survived")
-	}
-	for _, policy := range []string{"", "exact-bytes", "unordered-lines", "line-set", "unknown"} {
-		if _, err := outputsEqual("", "", policy); err == nil {
-			t.Fatalf("unsupported policy %q accepted", policy)
-		}
 	}
 }
 
@@ -95,7 +82,7 @@ func integrationRunner(t *testing.T) (*Runner, model.Attempt) {
 	if err != nil || !report.Available {
 		t.Fatalf("runtime: %v %+v", err, report)
 	}
-	id := randomID()
+	id := rand.Text()
 	a := model.Attempt{ID: id, Workspace: "golf-test-" + id, EnvironmentID: report.ImageID}
 	t.Cleanup(func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
@@ -111,7 +98,7 @@ func TestIntegrationIsolationResumeAndChecks(t *testing.T) {
 	r, a := integrationRunner(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
-	c := model.Challenge{Editor: "nvim", Entrypoint: "answer.txt", Validator: model.Validator{Kind: "tree", OutputPolicy: "exact"}, Fixtures: []model.Fixture{{Files: map[string]string{"answer.txt": "before\n"}, ExpectedFiles: map[string]string{"answer.txt": "after\n"}}}}
+	c := model.Challenge{Editor: "nvim", Entrypoint: "answer.txt", Validator: model.Validator{Kind: "tree"}, Fixtures: []model.Fixture{{Files: map[string]string{"answer.txt": "before\n"}, ExpectedFiles: map[string]string{"answer.txt": "after\n"}}}}
 	s, err := r.Prepare(ctx, c, a)
 	if err != nil {
 		t.Fatal(err)
@@ -198,7 +185,7 @@ func TestIntegrationSubmissionReplay(t *testing.T) {
 	r, a := integrationRunner(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
-	c := model.Challenge{SubmissionFile: "solution.sh", Validator: model.Validator{Kind: "stdout", OutputPolicy: "exact"}, Fixtures: []model.Fixture{{Name: "one", Files: map[string]string{"input.txt": "one\n", "solution.sh": ""}, ExpectedStdout: "one\n"}, {Name: "two", Files: map[string]string{"input.txt": "two\n"}, ExpectedStdout: "two\n"}}}
+	c := model.Challenge{SubmissionFile: "solution.sh", SubmissionArgv: []string{"/bin/bash", "--noprofile", "--norc", "solution.sh"}, Validator: model.Validator{Kind: "stdout"}, Fixtures: []model.Fixture{{Name: "one", Files: map[string]string{"input.txt": "one\n", "solution.sh": ""}, ExpectedStdout: "one\n"}, {Name: "two", Files: map[string]string{"input.txt": "two\n"}, ExpectedStdout: "two\n"}}}
 	if _, err := r.Execute(ctx, c, a, "printf 'cat input.txt\\n' > solution.sh"); err != nil {
 		t.Fatal(err)
 	}
@@ -206,6 +193,12 @@ func TestIntegrationSubmissionReplay(t *testing.T) {
 	if err != nil || result.Outcome != "pass" {
 		t.Fatalf("replay: %+v %v", result, err)
 	}
+	c.Fixtures[0].ExpectedStdout = "one"
+	result, err = r.Check(ctx, c, a)
+	if err != nil || result.Outcome != "fail" {
+		t.Fatalf("trailing newline must match: %+v %v", result, err)
+	}
+	c.Fixtures[0].ExpectedStdout = "one\n"
 	if _, err = r.Execute(ctx, c, a, "printf 'cat input.txt >&2\\n' > solution.sh"); err != nil {
 		t.Fatal(err)
 	}
@@ -268,7 +261,7 @@ func TestIntegrationFailedPreparationCanRetry(t *testing.T) {
 	defer cancel()
 	c := model.Challenge{Fixtures: []model.Fixture{{Files: map[string]string{"input": "original"}}}}
 	wrong := a
-	wrong.EnvironmentID = "golf-nonexistent-" + randomID() + ":missing"
+	wrong.EnvironmentID = "golf-nonexistent-" + rand.Text() + ":missing"
 	if _, err := r.Prepare(ctx, c, wrong); err == nil {
 		t.Fatal("missing image accepted")
 	}
@@ -371,7 +364,7 @@ func TestIntegrationCheckNowLeavesTheSessionRunning(t *testing.T) {
 	defer cancel()
 	c := model.Challenge{
 		ID: "shell.checknow", Revision: 1, Profile: "standard",
-		Validator: model.Validator{Kind: "tree", OutputPolicy: "exact", Version: "1"},
+		Validator: model.Validator{Kind: "tree", Version: "1"},
 		Fixtures: []model.Fixture{{
 			Name:          "one",
 			Files:         map[string]string{"answer.txt": "before\n"},
@@ -435,7 +428,7 @@ func TestIntegrationDockerSessionRunsUnderAPseudoTerminal(t *testing.T) {
 	defer cancel()
 	c := model.Challenge{
 		ID: "shell.docker-pane", Revision: 1, Profile: "standard",
-		Validator: model.Validator{Kind: "tree", OutputPolicy: "exact", Version: "1"},
+		Validator: model.Validator{Kind: "tree", Version: "1"},
 		Fixtures:  []model.Fixture{{Name: "one", Files: map[string]string{"answer.txt": "before\n"}}},
 	}
 	s, err := r.Prepare(ctx, c, a)

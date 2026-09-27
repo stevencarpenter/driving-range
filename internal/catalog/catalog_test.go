@@ -52,10 +52,10 @@ func TestBundledCatalogAndFrozenSchedule(t *testing.T) {
 			t.Errorf("%s has insufficient coverage", track)
 		}
 	}
-	if len(c.Schedule()) != 30 {
-		t.Fatalf("got %d assignments", len(c.Schedule()))
+	if len(c.Assignments) != 30 {
+		t.Fatalf("got %d assignments", len(c.Assignments))
 	}
-	for _, a := range c.Schedule() {
+	for _, a := range c.Assignments {
 		if _, err := c.Resolve(a); err != nil {
 			t.Fatal(err)
 		}

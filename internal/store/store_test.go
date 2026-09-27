@@ -68,7 +68,7 @@ func TestLifecycleRestartRetryAndImmutability(t *testing.T) {
 	if _, err = s.StartSession(a.ID); !errors.Is(err, ErrFinished) {
 		t.Fatalf("solved session accepted: %v", err)
 	}
-	for _, err := range []error{s.SetAssistance(a.ID, 2, true, true), s.RecordCheck(a.ID, model.CheckResult{Outcome: "fail"}), s.FinishAttempt(a.ID, "abandoned")} {
+	for _, err := range []error{s.SetAssistance(a.ID, 2, true, true), s.RecordCheck(a.ID, model.CheckResult{Outcome: "fail"}), s.AbandonAttempt(a.ID)} {
 		if !errors.Is(err, ErrFinished) {
 			t.Fatalf("solved mutation accepted: %v", err)
 		}
@@ -240,7 +240,7 @@ func TestChecksAssistanceAndAbandon(t *testing.T) {
 	if err = s.RecordCheck(a.ID, model.CheckResult{Outcome: "banana"}); err == nil {
 		t.Fatal("invalid outcome accepted")
 	}
-	must(t, s.FinishAttempt(a.ID, "abandoned"))
+	must(t, s.AbandonAttempt(a.ID))
 	if _, err = s.StartSession(a.ID); !errors.Is(err, ErrFinished) {
 		t.Fatal("abandoned resumed")
 	}

@@ -4,7 +4,6 @@ package app
 import (
 	"context"
 	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -302,11 +301,7 @@ func (s *Service) NewAttempt(ctx context.Context, id string, assignment *model.A
 	if !report.Available || report.ImageID == "" {
 		return model.Attempt{}, fmt.Errorf("runtime not ready: %s; run golf setup", report.Message)
 	}
-	var buf [16]byte
-	if _, err = rand.Read(buf[:]); err != nil {
-		return model.Attempt{}, err
-	}
-	attemptID := hex.EncodeToString(buf[:])
+	attemptID := rand.Text()
 	a := model.Attempt{ID: attemptID, ExerciseID: ch.ID, Revision: ch.Revision, Track: ch.Track, Seed: "default", Profile: ch.Profile, EnvironmentID: report.ImageID, ValidatorVersion: ch.Validator.Version, Status: "active", CreatedAt: time.Now().UTC(), RetryOf: retryOf, Workspace: "golf-" + attemptID}
 	if assignment != nil {
 		a.AssignmentDate = assignment.Date
@@ -516,7 +511,7 @@ func (s *Service) Abandon(id string) error {
 	if err := s.retryRecovery(context.Background()); err != nil {
 		return err
 	}
-	return s.Store.FinishAttempt(id, "abandoned")
+	return s.Store.AbandonAttempt(id)
 }
 
 func (s *Service) Export(format, path string) error {

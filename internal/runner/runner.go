@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -155,7 +154,7 @@ func (r *Runner) create(ctx context.Context, a model.Attempt, readonly bool) (st
 	if image == "" {
 		image = r.image
 	}
-	name := "golf-session-" + randomID()
+	name := "golf-session-" + rand.Text()
 	mount := "type=volume,source=" + a.Workspace + ",target=/workspace"
 	if readonly {
 		mount += ",readonly"
@@ -250,7 +249,7 @@ func (r *Runner) Prepare(ctx context.Context, c model.Challenge, a model.Attempt
 		return nil, err
 	}
 	lifetime, cancel := context.WithTimeout(ctx, time.Hour)
-	s := &Session{runner: r, container: container, challenge: c, ctx: lifetime, cancel: cancel, started: time.Now(), statusFile: "/tmp/golf-status-" + randomID()}
+	s := &Session{runner: r, container: container, challenge: c, ctx: lifetime, cancel: cancel, started: time.Now(), statusFile: "/tmp/golf-status-" + rand.Text()}
 	s.stopCleanup = context.AfterFunc(lifetime, func() { s.cleanupContainer() })
 	ok = true
 	return s, nil
@@ -424,13 +423,6 @@ func (r *Runner) Cleanup(ctx context.Context, a model.Attempt) error {
 	return err
 }
 
-func randomID() string {
-	var b [16]byte
-	if _, err := rand.Read(b[:]); err != nil {
-		panic(err)
-	}
-	return hex.EncodeToString(b[:])
-}
 func exitCode(err error) int {
 	if err == nil {
 		return 0
