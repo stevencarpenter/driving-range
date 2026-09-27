@@ -14,13 +14,13 @@ All supplied instructional prose is an original draft created for this repositor
 
 `fixtures[].files` maps relative paths to UTF-8 content. The first fixture is the player's workspace. Additional fixtures test a reusable submitted script. Paths must be canonical relative file paths without traversal, backslashes, absolute roots, line breaks, or file/directory collisions. Symlinks are not part of the manifest format. Packs are limited to 8 MiB, 1,000 exercises, 200 files per fixture map, and 1 MiB per file.
 
-1. **`tree`** compares workspace files against `expected_files`. The default rejects extra files. Use a real editor exercise when final file content is the learning objective. The unchanged tree must fail. Reference scripts must leave exactly the expected files.
+1. **`tree`** compares workspace files against `expected_files`. Extra files always fail the tree check. Use a real editor exercise when final file content is the learning objective. The unchanged tree must fail. Reference scripts must leave exactly the expected files.
 2. **`stdout`** executes `submission_argv` with the player's `submission_file` copied into each fixture. Supply at least two fixtures with different input and nonempty expected output. Each fixture contains the same no-op starter file. The runner must retain the submitted file when rebuilding a fixture. The current curriculum uses `bash solution.sh` or `python3 solution.py` and exact output bytes, including the final newline. Fixture data must exercise the actual rule rather than merely changing labels.
 3. **`commands`** runs curated validator argv inside the isolated workspace. Each check declares a name, expected stdout, and expected exit status. Repository checks inspect messages, files, index state, and ancestry. Never assert a timestamp-dependent commit hash. Use `bash --noprofile --norc -c` when a semantic assertion needs shell operators.
 
 `fixtures[].setup` creates synthetic repositories inside the container. `reference_solution` is a Bash script that transforms a fresh, already initialized first fixture into the correct solution. For stdout challenges the reference writes the reusable solution file; the validator then runs it against every fixture. Never run setup, references, or submitted code on the host. A fixture directory is not an isolation boundary.
 
-The bundled exercises all use validator version `1`, profile `standard`, and output policy `exact`. Sorting is explicit in solutions when order is required. No baseline no-op script is allowed to pass. The default tree contract is exact, while repository exercises use semantic checks rather than comparing internal `.git` or `.jj` files.
+The bundled exercises all use validator version `1` and profile `standard`; stdout and tree checks compare exact bytes, and the tree check always rejects extra files. Sorting is explicit in solutions when order is required. No baseline no-op script is allowed to pass. Repository exercises use semantic checks rather than comparing internal `.git` or `.jj` files.
 
 ## Daily schedule
 
