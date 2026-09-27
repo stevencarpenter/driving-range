@@ -65,53 +65,29 @@ func TestNativeShellPrefersUserShellWhenIncidental(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
-	t.Setenv("SHELL", fake)
 
 	incidental := model.Challenge{Editor: "bash", Tools: []string{"python3"}, Entrypoint: "solution.py"}
-	s, err := r.Prepare(context.Background(), incidental, a)
-	if err != nil {
-		t.Fatal(err)
-	}
-	cmd := s.Command()
-	s.Finish(context.Canceled)
-	if cmd.Args[len(cmd.Args)-2] != fake || cmd.Args[len(cmd.Args)-1] != "-i" {
-		t.Fatalf("incidental shell: %v, want %q -i", cmd.Args, fake)
-	}
-
 	pinned := model.Challenge{Editor: "bash", Tools: []string{"bash"}, Entrypoint: "solution.sh"}
-	s, err = r.Prepare(context.Background(), pinned, a)
-	if err != nil {
-		t.Fatal(err)
-	}
-	cmd = s.Command()
-	s.Finish(context.Canceled)
-	if cmd.Args[len(cmd.Args)-2] != "bash" || cmd.Args[len(cmd.Args)-1] != "-i" {
-		t.Fatalf("pinned shell: %v, want bash -i", cmd.Args)
-	}
-
-	t.Setenv("SHELL", filepath.Join(bin, "missing-shell"))
-	s, err = r.Prepare(context.Background(), incidental, a)
-	if err != nil {
-		t.Fatal(err)
-	}
-	cmd = s.Command()
-	s.Finish(context.Canceled)
-	if cmd.Args[len(cmd.Args)-2] != "bash" || cmd.Args[len(cmd.Args)-1] != "-i" {
-		t.Fatalf("fallback shell: %v, want bash -i", cmd.Args)
-	}
-
-	// An unset editor defaults to bash, so SHELL may still replace it when the
-	// exercise does not teach the shell.
-	t.Setenv("SHELL", fake)
 	defaulted := model.Challenge{Tools: []string{"python3"}, Entrypoint: "solution.py"}
-	s, err = r.Prepare(context.Background(), defaulted, a)
-	if err != nil {
-		t.Fatal(err)
-	}
-	cmd = s.Command()
-	s.Finish(context.Canceled)
-	if cmd.Args[len(cmd.Args)-2] != fake || cmd.Args[len(cmd.Args)-1] != "-i" {
-		t.Fatalf("defaulted editor shell: %v, want %q -i", cmd.Args, fake)
+	for _, tc := range []struct {
+		name, shell, want string
+		challenge         model.Challenge
+	}{
+		{"incidental", fake, fake, incidental},
+		{"pinned", fake, "bash", pinned},
+		{"fallback", filepath.Join(bin, "missing-shell"), "bash", incidental},
+		{"defaulted", fake, fake, defaulted},
+	} {
+		t.Setenv("SHELL", tc.shell)
+		s, err := r.Prepare(context.Background(), tc.challenge, a)
+		if err != nil {
+			t.Fatalf("%s shell: %v", tc.name, err)
+		}
+		cmd := s.Command()
+		s.Finish(context.Canceled)
+		if got := cmd.Args[len(cmd.Args)-2:]; !slices.Equal(got, []string{tc.want, "-i"}) {
+			t.Fatalf("%s shell: %v, want %q -i", tc.name, cmd.Args, tc.want)
+		}
 	}
 }
 
