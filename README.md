@@ -62,7 +62,7 @@ Run `golf help` for the complete command reference. Global flags precede the com
 ```sh
 golf --plain
 golf --classic
-golf list regex
+golf list rg
 golf show vim.change-value
 golf today search 2026-09-14
 golf play vim.change-value
@@ -143,7 +143,7 @@ just integration
 just audit-solutions
 ```
 
-`check` runs unit tests, `go vet`, and catalog metadata validation without Docker. `integration` and `audit-solutions` require the locally built image and explicitly execute exercises in Docker. See [CONTRIBUTING.md](CONTRIBUTING.md) for content contracts and release checks.
+`check` runs unit tests, `go vet`, catalog metadata validation, and installation regression checks without Docker. `integration` and `audit-solutions` require the locally built image and explicitly execute exercises in Docker. See [CONTRIBUTING.md](CONTRIBUTING.md) for content contracts and release checks.
 
 The product remains open source with local history, replay, hints, and export. Accounts, billing, hosted execution, and paid infrastructure are not implemented. Subscription work depends on evidence of repeat use and willingness to pay, as described in [PRODUCT_PLAN.md](PRODUCT_PLAN.md).
 

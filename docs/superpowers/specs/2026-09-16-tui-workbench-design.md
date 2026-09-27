@@ -1,5 +1,7 @@
 # Embedded practice workbench
 
+> **Historical document (design dated 16 September 2026; marked historical 27 September 2026).** This design predates the shipped implementation and is retained as a record of the workbench migration, not a current specification. Parts have since changed: `Session.AltScreen` does not exist, and classic mode is selected by `--classic` and the stored `classic` config field, not a Settings toggle. See [README.md](../../../README.md) and [DESIGN.md](../../../DESIGN.md) for current documentation.
+
 ## Decision
 
 `golf` gains a workbench mode. It allocates a pseudo-terminal, runs the exercise child (Neovim, Bash, zsh) inside a virtual terminal emulator, and renders that emulator into a pane below a collapsible brief band. The TUI stays resident for the whole attempt. A single intercepted key (`F12`) opens a golf command palette. Every other keystroke reaches the child.

@@ -1,5 +1,7 @@
 # Driving Range
 
+> **Historical planning document (proposal dated 14 September 2026; marked historical 27 September 2026).** This is a pre-implementation product proposal, not a current specification. Current user and contributor documentation lives in [README.md](README.md), [CONTRIBUTING.md](CONTRIBUTING.md), and [docs/AUTHORING.md](docs/AUTHORING.md).
+
 Daily terminal practice for fluency that survives the next real task.
 
 Product proposal, 14 September 2026. Naming assumption: **Driving Range** is the product, `driving-range` is the new repository, and `golf` is the proposed executable. The final name in the request takes precedence over the earlier platform name. Package, executable, domain, and trademark availability remain unverified.
@@ -26,13 +28,13 @@ The inspected checkout is `stevencarpenter/vim-golf` at commit `c7f161029896e88d
 
 | Verified current behavior | Driving Range decision |
 | --- | --- |
-| 31 exercises dated August 2026, progressing from individual mechanics to a multi-file capstone. [README](../vim-golf/README.md) | Preserve the progression and realistic fixtures. Separate exercise identity from publication date. |
-| Start tree, expected tree, brief, and entrypoint; recursive diff determines success. [Runner](../vim-golf/vim-golf) | Reuse this content pattern for editing exercises. Add different validators only when their tracks need them. |
-| Work files and cumulative Neovim input logs survive reopening. The best raw-byte count is stored per day. [Runner](../vim-golf/vim-golf) | Preserve resume. Introduce distinct attempts and sessions with durable history. |
-| Reset removes that day's work, log, and best score. [Runner](../vim-golf/vim-golf) | Retry creates a new attempt. Erasing history becomes a separate explicit operation. |
-| Personal Neovim configuration, LazyVim/Yanky/Harpoon conventions, macOS clipboard, and tmux brief integration appear in the curriculum. [README](../vim-golf/README.md), [capstone](../vim-golf/challenges/2026-08-31/challenge.md) | Use the player’s installed Neovim and configuration for practice. Keep fixture setup and validation in Docker. |
+| 31 exercises dated August 2026, progressing from individual mechanics to a multi-file capstone. (vim-golf README) | Preserve the progression and realistic fixtures. Separate exercise identity from publication date. |
+| Start tree, expected tree, brief, and entrypoint; recursive diff determines success. (vim-golf runner) | Reuse this content pattern for editing exercises. Add different validators only when their tracks need them. |
+| Work files and cumulative Neovim input logs survive reopening. The best raw-byte count is stored per day. (vim-golf runner) | Preserve resume. Introduce distinct attempts and sessions with durable history. |
+| Reset removes that day's work, log, and best score. (vim-golf runner) | Retry creates a new attempt. Erasing history becomes a separate explicit operation. |
+| Personal Neovim configuration, LazyVim/Yanky/Harpoon conventions, macOS clipboard, and tmux brief integration appear in the curriculum. (vim-golf README and capstone challenge) | Use the player’s installed Neovim and configuration for practice. Keep fixture setup and validation in Docker. |
 
-The runner has no general per-attempt timing/history ledger. Its raw-input byte count is explicitly not a portable keystroke score. The existing tests cover resumed input accumulation and persistent short briefs. [Tests](../vim-golf/tests/test_runner.py)
+The runner has no general per-attempt timing/history ledger. Its raw-input byte count is explicitly not a portable keystroke score. The existing vim-golf tests cover resumed input accumulation and persistent short briefs.
 
 Hippo recalled the successful use of an explicit active-brief reference and earlier inline key references. Apply both lessons: make the active exercise explicit and keep help accessible. Its synthesis inferred built-in timing metrics from shell execution durations; the source does not support that inference. Cross-project recall found no directly applicable prior implementation of the proposed Go/Bubble Tea/SQLite platform.
 

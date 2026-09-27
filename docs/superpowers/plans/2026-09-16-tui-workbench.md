@@ -1,5 +1,7 @@
 # Embedded Practice Workbench Implementation Plan
 
+> **Historical document (plan dated 16 September 2026; marked historical 27 September 2026).** This plan records the workbench implementation as it was built and is not a current specification. Parts have since changed: `Session.AltScreen` and `Session.Output` do not exist, and classic mode has no Settings toggle. See [README.md](../../../README.md) and [DESIGN.md](../../../DESIGN.md) for current documentation.
+
 > **Status: complete.** All ten tasks are implemented on `feat/tui-workbench`.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
