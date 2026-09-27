@@ -29,8 +29,7 @@
       "editor": "nvim",
       "validator": {
         "kind": "tree",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -73,8 +72,7 @@
       "editor": "nvim",
       "validator": {
         "kind": "tree",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -117,8 +115,7 @@
       "editor": "nvim",
       "validator": {
         "kind": "tree",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -161,8 +158,7 @@
       "editor": "nvim",
       "validator": {
         "kind": "tree",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -205,8 +201,7 @@
       "editor": "nvim",
       "validator": {
         "kind": "tree",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -249,8 +244,7 @@
       "editor": "nvim",
       "validator": {
         "kind": "tree",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -293,8 +287,7 @@
       "editor": "nvim",
       "validator": {
         "kind": "tree",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -337,8 +330,7 @@
       "editor": "nvim",
       "validator": {
         "kind": "tree",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -381,8 +373,7 @@
       "editor": "nvim",
       "validator": {
         "kind": "tree",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -425,8 +416,7 @@
       "editor": "nvim",
       "validator": {
         "kind": "tree",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -471,8 +461,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -526,8 +515,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -581,8 +569,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -636,8 +623,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -692,8 +678,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -747,8 +732,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -803,8 +787,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -863,8 +846,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -919,8 +901,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -975,8 +956,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -1030,8 +1010,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -1085,8 +1064,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -1141,8 +1119,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -1197,8 +1174,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -1252,8 +1228,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -1309,8 +1284,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -1365,8 +1339,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -1421,8 +1394,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -1477,8 +1449,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -1533,8 +1504,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -1594,8 +1564,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -1650,8 +1619,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -1706,8 +1674,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -1762,8 +1729,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -1818,8 +1784,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -1878,8 +1843,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -1938,8 +1902,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -1999,8 +1962,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -2060,8 +2022,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -2116,8 +2077,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -2172,8 +2132,7 @@
       "editor": "zsh",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -2228,8 +2187,7 @@
       "editor": "zsh",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -2289,8 +2247,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -2345,8 +2302,7 @@
       "editor": "bash",
       "validator": {
         "kind": "stdout",
-        "version": "1",
-        "output_policy": "exact"
+        "version": "1"
       },
       "fixtures": [
         {
@@ -2402,7 +2358,6 @@
       "validator": {
         "kind": "commands",
         "version": "1",
-        "output_policy": "exact",
         "checks": [
           {
             "name": "index and working tree",
@@ -2459,7 +2414,6 @@
       "validator": {
         "kind": "commands",
         "version": "1",
-        "output_policy": "exact",
         "checks": [
           {
             "name": "message tree and ancestry",
@@ -2515,7 +2469,6 @@
       "validator": {
         "kind": "commands",
         "version": "1",
-        "output_policy": "exact",
         "checks": [
           {
             "name": "description and content",
@@ -2571,7 +2524,6 @@
       "validator": {
         "kind": "commands",
         "version": "1",
-        "output_policy": "exact",
         "checks": [
           {
             "name": "bookmark topology",

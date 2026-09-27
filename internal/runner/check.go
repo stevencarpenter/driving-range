@@ -2,6 +2,7 @@ package runner
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
 	"fmt"
 	"sort"
@@ -66,18 +67,13 @@ func (r *Runner) check(ctx context.Context, c model.Challenge, a model.Attempt, 
 				result.Details = append(result.Details, fmt.Sprintf("%s: expected %s; got %s", SafeText(name), preview(want), preview(actual)))
 			}
 		}
-		if !c.Validator.AllowExtraFiles {
-			for name := range files {
-				if _, ok := expected[name]; !ok {
-					result.Details = append(result.Details, "Unexpected file: "+SafeText(name))
-				}
+		for name := range files {
+			if _, ok := expected[name]; !ok {
+				result.Details = append(result.Details, "Unexpected file: "+SafeText(name))
 			}
 		}
 	case "stdout":
 		name := c.SubmissionFile
-		if name == "" {
-			name = "solution.sh"
-		}
 		if !safePath(name) {
 			return model.CheckResult{}, errors.New("invalid submission path")
 		}
@@ -87,19 +83,12 @@ func (r *Runner) check(ctx context.Context, c model.Challenge, a model.Attempt, 
 			break
 		}
 		argv := c.SubmissionArgv
-		if len(argv) == 0 {
-			argv = []string{"/bin/bash", "--noprofile", "--norc", name}
-		}
 		for _, fixture := range c.Fixtures {
 			out, code, err := r.fixtureCommand(ctx, a, fixture, map[string]string{name: script}, argv)
 			if err != nil {
 				return model.CheckResult{}, err
 			}
-			equal, err := outputsEqual(out, fixture.ExpectedStdout, c.Validator.OutputPolicy)
-			if err != nil {
-				return model.CheckResult{}, err
-			}
-			if code != 0 || !equal {
+			if code != 0 || out != fixture.ExpectedStdout {
 				result.ExitCode = code
 				result.Details = append(result.Details, fmt.Sprintf("%s: exit %d; expected %s; got %s", SafeText(fixture.Name), code, preview(fixture.ExpectedStdout), preview(out)))
 			}
@@ -115,11 +104,7 @@ func (r *Runner) check(ctx context.Context, c model.Challenge, a model.Attempt, 
 			if err != nil {
 				return model.CheckResult{}, err
 			}
-			equal, err := outputsEqual(out, check.ExpectedStdout, c.Validator.OutputPolicy)
-			if err != nil {
-				return model.CheckResult{}, err
-			}
-			if code != check.ExitCode || !equal {
+			if code != check.ExitCode || out != check.ExpectedStdout {
 				result.ExitCode = code
 				result.Details = append(result.Details, fmt.Sprintf("%s: expected exit %d and %s; got exit %d and %s", SafeText(check.Name), check.ExitCode, preview(check.ExpectedStdout), code, preview(out)))
 			}
@@ -142,7 +127,7 @@ func (r *Runner) fixtureCommand(ctx context.Context, parent model.Attempt, fixtu
 	if len(argv) == 0 {
 		return "", -1, errors.New("empty validation command")
 	}
-	id := randomID()
+	id := rand.Text()
 	a := model.Attempt{ID: id, Workspace: "golf-check-" + id, EnvironmentID: parent.EnvironmentID}
 	if _, err := r.ensureVolume(ctx, a); err != nil {
 		return "", -1, err
@@ -171,7 +156,7 @@ func (r *Runner) fixtureCommand(ctx context.Context, parent model.Attempt, fixtu
 	}
 	bounded, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	status := "/tmp/golf-status-" + randomID()
+	status := "/tmp/golf-status-" + rand.Text()
 	// Validation never runs inside the workbench, so the shims stay off.
 	args := completionArgs(container, status, false, argv, false)
 	out, _, err := docker(bounded, nil, args...)
@@ -185,42 +170,11 @@ func (r *Runner) fixtureCommand(ctx context.Context, parent model.Attempt, fixtu
 	return string(out), code, err
 }
 
-func outputsEqual(actual, expected, policy string) (bool, error) {
-	switch policy {
-	case "exact":
-		return actual == expected, nil
-	default:
-		return false, fmt.Errorf("unsupported output policy %q", policy)
-	}
-}
-
 func preview(s string) string {
 	if len(s) > 256 {
 		s = s[:256] + "..."
 	}
 	return fmt.Sprintf("%q", s)
-}
-
-// VerifyReference exercises the same preparation and checking path as players.
-func (r *Runner) VerifyReference(ctx context.Context, c model.Challenge) (model.CheckResult, error) {
-	report, err := r.Doctor(ctx)
-	if err != nil {
-		return model.CheckResult{}, err
-	}
-	if !report.Available {
-		return model.CheckResult{}, errors.New(report.Message)
-	}
-	id := randomID()
-	a := model.Attempt{ID: id, Workspace: "golf-reference-" + id, EnvironmentID: report.ImageID}
-	defer func() {
-		cleanup, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		r.Cleanup(cleanup, a)
-	}()
-	if _, err = r.Execute(ctx, c, a, c.ReferenceSolution); err != nil {
-		return model.CheckResult{}, err
-	}
-	return r.Check(ctx, c, a)
 }
 
 // Audit requires a failing baseline and a passing executable reference solution.
@@ -232,7 +186,7 @@ func (r *Runner) Audit(ctx context.Context, c model.Challenge) (model.CheckResul
 	if !report.Available {
 		return model.CheckResult{}, errors.New(report.Message)
 	}
-	id := randomID()
+	id := rand.Text()
 	a := model.Attempt{ID: id, Workspace: "golf-audit-" + id, EnvironmentID: report.ImageID}
 	defer func() {
 		cleanup, cancel := context.WithTimeout(context.Background(), 10*time.Second)

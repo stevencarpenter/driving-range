@@ -187,7 +187,7 @@ func (m Model) exerciseView() string {
 		lines = append(lines, paint(styles.muted, "Attempt: "+a.ID))
 	}
 	lines = append(lines, "", m.section("SUCCESS CONDITIONS"),
-		paint(styles.text, "Validator: "+c.Validator.Kind+" | output: "+c.Validator.OutputPolicy+" | version: "+c.Validator.Version),
+		paint(styles.text, "Validator: "+c.Validator.Kind+" | version: "+c.Validator.Version),
 		paint(styles.text, "Tools: "+strings.Join(c.Tools, ", ")), paint(styles.text, "Concepts: "+strings.Join(c.Concepts, ", ")))
 	if len(c.Fixtures) > 0 && c.Fixtures[0].ExpectedStdout != "" {
 		lines = append(lines, "", m.section("EXPECTED OUTPUT (first fixture)"), paint(styles.text, c.Fixtures[0].ExpectedStdout))

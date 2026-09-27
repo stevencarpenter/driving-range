@@ -147,7 +147,7 @@ func TestIntegrationNativeWorkspaceResumeAndValidation(t *testing.T) {
 	r := NewNative(isolated.image, t.TempDir())
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
-	c := model.Challenge{Editor: "bash", Brief: "native brief", Validator: model.Validator{Kind: "tree", OutputPolicy: "exact"}, Fixtures: []model.Fixture{{Files: map[string]string{"answer": "before\n", "delete-me": "remove\n"}, ExpectedFiles: map[string]string{"answer": "after\n"}}}}
+	c := model.Challenge{Editor: "bash", Brief: "native brief", Validator: model.Validator{Kind: "tree"}, Fixtures: []model.Fixture{{Files: map[string]string{"answer": "before\n", "delete-me": "remove\n"}, ExpectedFiles: map[string]string{"answer": "after\n"}}}}
 	s, err := r.Prepare(ctx, c, a)
 	if err != nil {
 		t.Fatal(err)
@@ -183,6 +183,13 @@ func TestIntegrationNativeWorkspaceResumeAndValidation(t *testing.T) {
 	checked, err := r.Check(ctx, c, a)
 	if err != nil || checked.Outcome != "pass" {
 		t.Fatalf("native validation: %+v, %v", checked, err)
+	}
+	if err = os.WriteFile(filepath.Join(r.nativeRoot, a.Workspace, "files", "extra"), []byte("x"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	checked, err = r.Check(ctx, c, a)
+	if err != nil || checked.Outcome != "fail" || !strings.Contains(strings.Join(checked.Details, "\n"), "Unexpected file: extra") {
+		t.Fatalf("unexpected file must fail: %+v, %v", checked, err)
 	}
 	if err = r.Cleanup(ctx, a); err != nil {
 		t.Fatal(err)

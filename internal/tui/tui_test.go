@@ -27,7 +27,7 @@ func testModel(t *testing.T) Model {
 	t.Cleanup(func() { db.Close() })
 	cat := &catalog.Catalog{}
 	for i := 0; i < 30; i++ {
-		cat.Challenges = append(cat.Challenges, model.Challenge{ID: fmt.Sprintf("shell.task-%02d", i), Revision: 1, Title: fmt.Sprintf("Task %02d", i), Track: "shell", Difficulty: 1, Tools: []string{"bash", "rg"}, Concepts: []string{"quoting"}, Profile: "standard", Brief: strings.Repeat("Read the files carefully. ", 30), Validator: model.Validator{Kind: "tree", OutputPolicy: "exact", Version: "1"}})
+		cat.Challenges = append(cat.Challenges, model.Challenge{ID: fmt.Sprintf("shell.task-%02d", i), Revision: 1, Title: fmt.Sprintf("Task %02d", i), Track: "shell", Difficulty: 1, Tools: []string{"bash", "rg"}, Concepts: []string{"quoting"}, Profile: "standard", Brief: strings.Repeat("Read the files carefully. ", 30), Validator: model.Validator{Kind: "tree", Version: "1"}})
 	}
 	s := &app.Service{Catalog: cat, Store: db, StateDir: state, Config: app.Config{Track: "shell", Theme: "plain", Image: runner.DefaultImage}}
 	m := New(s)

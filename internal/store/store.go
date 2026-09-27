@@ -377,19 +377,14 @@ func (s *Store) SetAssistance(attemptID string, hints int, revealed, external bo
 	})
 }
 
-func (s *Store) FinishAttempt(attemptID, status string) error {
-	if status != "abandoned" && status != "interrupted" && status != "infrastructure_error" {
-		return errors.New("finish status must be abandoned, interrupted, or infrastructure_error; only a passing check solves an attempt")
-	}
+func (s *Store) AbandonAttempt(attemptID string) error {
 	return s.mutateAttempt(attemptID, func(tx *sql.Tx, a *model.Attempt) error {
 		t := time.Now().UTC()
 		if _, err := tx.Exec("UPDATE sessions SET ended_at=?,duration_ms=NULL,outcome='interrupted' WHERE attempt_id=? AND ended_at IS NULL", t.Format(time.RFC3339Nano), attemptID); err != nil {
 			return err
 		}
-		a.Status = status
-		if status == "abandoned" {
-			a.FinishedAt = &t
-		}
+		a.Status = "abandoned"
+		a.FinishedAt = &t
 		return nil
 	})
 }

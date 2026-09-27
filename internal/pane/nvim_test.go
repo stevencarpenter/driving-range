@@ -51,7 +51,7 @@ func TestNvimEditsInPane(t *testing.T) {
 	if out := waitForText(t, s, "port: 8080", 15*time.Second); !strings.Contains(out, "port: 8080") {
 		t.Fatalf("nvim did not render the file:\n%s", out)
 	}
-	if !s.AltScreen() {
+	if !s.emu.IsAltScreen() {
 		t.Error("nvim should be on the alternate screen")
 	}
 	if !strings.Contains(s.Render(), "\x1b[") {

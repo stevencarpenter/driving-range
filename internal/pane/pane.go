@@ -130,9 +130,6 @@ func (s *Session) Cursor() (int, int) {
 	return p.X, p.Y
 }
 
-// AltScreen reports whether the child is on the alternate screen.
-func (s *Session) AltScreen() bool { return s.emu.IsAltScreen() }
-
 // Wait blocks until the child exits and returns its error.
 func (s *Session) Wait() error {
 	s.waitOnce.Do(func() { s.waitErr = s.cmd.Wait() })
