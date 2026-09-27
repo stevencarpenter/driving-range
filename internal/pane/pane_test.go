@@ -50,6 +50,19 @@ func TestSessionForwardsKeys(t *testing.T) {
 	}
 }
 
+func TestSessionForwardsShiftedPrintableKeys(t *testing.T) {
+	// Bubble Tea reports a shifted character as its unshifted Code plus the
+	// Shift modifier and the shifted Text. The emulator drops a modified
+	// printable rune, so SendKey must use the Text.
+	s := start(t, exec.Command("/bin/cat"), 40, 6, nil)
+	s.SendKey(tea.KeyPressMsg{Code: 'q', Text: "Q", ShiftedCode: 'Q', Mod: tea.ModShift})
+	s.SendKey(tea.KeyPressMsg{Code: ';', Text: ":", ShiftedCode: ':', Mod: tea.ModShift})
+	s.SendKey(tea.KeyPressMsg{Code: tea.KeyEnter})
+	if out := waitFor(t, s, "Q:"); !strings.Contains(out, "Q:") {
+		t.Errorf("Render() = %q, want it to contain %q", out, "Q:")
+	}
+}
+
 func TestSessionForwardsModifiedSpecialKeys(t *testing.T) {
 	// cat -v renders control bytes visibly, so the exact sequence is checked.
 	s := start(t, exec.Command("/bin/cat", "-v"), 40, 6, nil)

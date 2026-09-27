@@ -91,15 +91,22 @@ func Start(cmd *exec.Cmd, width, height int, onTrigger func(string)) (*Session, 
 	return s, nil
 }
 
-// SendKey forwards a key press to the child. Modified special keys take the
-// explicit encoder because the emulator's SendKey drops them; both paths go
-// through the emulator so their bytes stay in order.
+// SendKey forwards a key press to the child. Printable text takes the direct
+// path so shifted characters survive: the emulator emits nothing for a
+// modified printable rune, and its Code is unshifted. Modified special keys
+// take the explicit encoder for the same reason. Both paths go through the
+// emulator so their bytes stay in order.
 func (s *Session) SendKey(k tea.KeyPressMsg) {
-	if b := EncodeModified(tea.Key(k)); b != nil {
+	send := tea.Key(k)
+	if send.Text != "" && send.Mod&(tea.ModCtrl|tea.ModAlt) == 0 {
+		s.emu.SendText(send.Text)
+		return
+	}
+	if b := EncodeModified(send); b != nil {
 		s.emu.SendText(string(b))
 		return
 	}
-	s.emu.SendKey(uv.KeyEvent(uv.KeyPressEvent(uv.Key(tea.Key(k)))))
+	s.emu.SendKey(uv.KeyEvent(uv.KeyPressEvent(uv.Key(send))))
 }
 
 // Resize updates the emulator and the pseudo-terminal. Resizing the

@@ -55,6 +55,42 @@ func TestNativeCommandInheritsUserConfiguration(t *testing.T) {
 	}
 }
 
+func TestNativeShellPrefersUserShellWhenIncidental(t *testing.T) {
+	r := NewNative("unused", t.TempDir())
+	a := model.Attempt{ID: "native", Workspace: "golf-native"}
+	nativeTestWorkspace(t, r, a)
+	bin := t.TempDir()
+	fake := filepath.Join(bin, "mysh")
+	if err := os.WriteFile(fake, []byte("#!/bin/sh\nexit 0\n"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
+
+	incidental := model.Challenge{Editor: "bash", Tools: []string{"python3"}, Entrypoint: "solution.py"}
+	pinned := model.Challenge{Editor: "bash", Tools: []string{"bash"}, Entrypoint: "solution.sh"}
+	defaulted := model.Challenge{Tools: []string{"python3"}, Entrypoint: "solution.py"}
+	for _, tc := range []struct {
+		name, shell, want string
+		challenge         model.Challenge
+	}{
+		{"incidental", fake, fake, incidental},
+		{"pinned", fake, "bash", pinned},
+		{"fallback", filepath.Join(bin, "missing-shell"), "bash", incidental},
+		{"defaulted", fake, fake, defaulted},
+	} {
+		t.Setenv("SHELL", tc.shell)
+		s, err := r.Prepare(context.Background(), tc.challenge, a)
+		if err != nil {
+			t.Fatalf("%s shell: %v", tc.name, err)
+		}
+		cmd := s.Command()
+		s.Finish(context.Canceled)
+		if got := cmd.Args[len(cmd.Args)-2:]; !slices.Equal(got, []string{tc.want, "-i"}) {
+			t.Fatalf("%s shell: %v, want %q -i", tc.name, cmd.Args, tc.want)
+		}
+	}
+}
+
 func TestNativeSnapshotAndOwnershipBoundary(t *testing.T) {
 	r := NewNative("unused", t.TempDir())
 	a := model.Attempt{ID: "native", Workspace: "golf-native"}

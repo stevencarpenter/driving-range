@@ -164,7 +164,10 @@ def main():
                 terminal.wait_text(b"Change one configuration value")
                 terminal.output = b""
                 terminal.send(b"\r")
-                terminal.wait_text(b"port=3000")
+                # The objective names port=3000, so wait for pane content that only
+                # the rendered fixture has. Waiting on "port=3000" matches the
+                # preparing screen and sends the key before the child exists.
+                terminal.wait_text(b"host=localhost")
                 terminal.send(b"Q")
                 terminal.wait_text(b"PASS")
                 terminal.send(b"q")
