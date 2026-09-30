@@ -66,6 +66,52 @@ func press(m Model, key string) (Model, tea.Cmd) {
 	return updated.(Model), cmd
 }
 
+func TestNextIncompleteAfterPass(t *testing.T) {
+	m := testModel(t)
+	m.records = []model.Progress{
+		{Attempt: model.Attempt{ID: "a00", ExerciseID: "shell.task-00", Revision: 1, Status: "solved"}},
+		{Attempt: model.Attempt{ID: "a01", ExerciseID: "shell.task-01", Revision: 1, Status: "solved"}},
+		{Attempt: model.Attempt{ID: "a02", ExerciseID: "shell.task-02", Revision: 1, Status: "active"}},
+	}
+	m.openChallenge(m.service.Catalog.Challenges[0], nil, practice)
+	m, _ = press(m, "n")
+	if m.screen != exercise || m.challenge.ID != "shell.task-02" {
+		t.Fatalf("next incomplete opened %v %s", m.screen, m.challenge.ID)
+	}
+	if m.attemptID != "a02" {
+		t.Fatalf("next incomplete did not resume the active attempt: %q", m.attemptID)
+	}
+}
+
+func TestNextIncompleteWrapsToEarliestThenStops(t *testing.T) {
+	m := testModel(t)
+	for i := 1; i < 30; i++ {
+		m.records = append(m.records, model.Progress{Attempt: model.Attempt{ID: fmt.Sprintf("a%02d", i), ExerciseID: fmt.Sprintf("shell.task-%02d", i), Revision: 1, Status: "solved"}})
+	}
+	m.openChallenge(m.service.Catalog.Challenges[20], nil, practice)
+	m, _ = press(m, "n")
+	if m.challenge.ID != "shell.task-00" {
+		t.Fatalf("wrap did not reach the earliest incomplete: %s", m.challenge.ID)
+	}
+
+	m.records = append(m.records, model.Progress{Attempt: model.Attempt{ID: "a00", ExerciseID: "shell.task-00", Revision: 1, Status: "solved"}})
+	m.openChallenge(m.service.Catalog.Challenges[0], nil, practice)
+	m, _ = press(m, "n")
+	if m.challenge.ID != "shell.task-00" || !strings.Contains(m.notice, "solved") {
+		t.Fatalf("completed track did not stop: %s %q", m.challenge.ID, m.notice)
+	}
+}
+
+func TestNextIncompleteRequiresAPass(t *testing.T) {
+	m := testModel(t)
+	m.records = []model.Progress{{Attempt: model.Attempt{ID: "active", ExerciseID: "shell.task-00", Revision: 1, Status: "active"}}}
+	m.openChallenge(m.service.Catalog.Challenges[0], nil, practice)
+	m, cmd := press(m, "n")
+	if cmd != nil || m.challenge.ID != "shell.task-00" || m.screen != exercise {
+		t.Fatal("next advanced before a pass")
+	}
+}
+
 func TestSpinnerRunsOnlyDuringOperations(t *testing.T) {
 	m := testModel(t)
 	m.screen = progress

@@ -481,6 +481,14 @@ func (m Model) key(key tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		switch k {
 		case "enter", "s":
 			return m.launch(false)
+		case "n":
+			if a := m.currentAttempt(); a != nil && a.Status == "solved" {
+				if next := m.nextChallenge(); next != nil {
+					m.openChallenge(*next, nil, m.returnTo)
+				} else {
+					m.notice = "Every exercise in this track is solved."
+				}
+			}
 		case "c":
 			return m.perform("check")
 		case "h":
@@ -603,6 +611,42 @@ func (m Model) currentAttempt() *model.Attempt {
 		if r.Attempt.ID == m.attemptID {
 			a := r.Attempt
 			return &a
+		}
+	}
+	return nil
+}
+
+// solved reports whether any saved attempt marks this challenge revision solved.
+func (m Model) solved(c model.Challenge) bool {
+	for _, r := range m.records {
+		if r.Attempt.ExerciseID == c.ID && r.Attempt.Revision == c.Revision && r.Attempt.Status == "solved" {
+			return true
+		}
+	}
+	return false
+}
+
+// nextChallenge returns the next unsolved challenge in the current challenge's
+// track, scanning catalog order after the current challenge and wrapping once.
+func (m Model) nextChallenge() *model.Challenge {
+	all := m.service.Catalog.All()
+	track, start := "", 0
+	if m.challenge != nil {
+		track = m.challenge.Track
+		for i, c := range all {
+			if c.ID == m.challenge.ID && c.Revision == m.challenge.Revision {
+				start = i + 1
+				break
+			}
+		}
+	}
+	for i := 0; i < len(all); i++ {
+		c := all[(start+i)%len(all)]
+		if c.Track != track || m.challenge != nil && c.ID == m.challenge.ID && c.Revision == m.challenge.Revision {
+			continue
+		}
+		if !m.solved(c) {
+			return &c
 		}
 	}
 	return nil

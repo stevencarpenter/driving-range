@@ -165,7 +165,9 @@ func (m Model) exerciseView() string {
 		label = "DAILY / " + a.AssignmentDate + " UTC (assignment fixed for this attempt)"
 	}
 	lines := []string{paint(styles.title, c.Title), m.goal(c.Objective), paint(styles.muted, label+" / "+c.Track), ""}
-	if a != nil && (a.Status == "solved" || a.Status == "abandoned") {
+	if a != nil && a.Status == "solved" {
+		lines = append(lines, m.primary("[n] Next incomplete")+"   "+paint(styles.text, "[r] New attempt   [p] Saved result   [v] Explanation"))
+	} else if a != nil && a.Status == "abandoned" {
 		lines = append(lines, m.primary("[r] New attempt")+"   "+paint(styles.text, "[p] Saved result   [v] Explanation"))
 	} else {
 		lines = append(lines, m.primary("[Enter] Start / resume")+"   "+paint(styles.text, "[c] Check   [h] Hint"),
@@ -348,7 +350,7 @@ func (m Model) keyHelp() string {
 	case progress:
 		return "j/k move   Enter detail   e JSON   c CSV   Tab navigate   q quit"
 	case exercise:
-		return "Enter resume   c check   h hint   r retry   j/k scroll   Esc back   ? help"
+		return "Enter resume   c check   h hint   n next   r retry   j/k scroll   Esc back   ? help"
 	case detail:
 		return "j/k scroll   s share   Enter exercise   Esc back   ? help   q quit"
 	default:
@@ -375,6 +377,7 @@ EXERCISE
 Enter / s: start or resume. c: check. h: next hint.
 v: reveal explanation (confirmation records assistance).
 r: create a separate retry. a: abandon (confirmation required).
+n: after a pass, open the next unsolved exercise in this track.
 x: permanently record external assistance for this attempt.
 p: inspect saved result.
 Native editor and shell keys are untouched inside an exercise.
