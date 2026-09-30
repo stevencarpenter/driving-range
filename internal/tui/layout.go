@@ -209,11 +209,8 @@ func (m Model) trackProgress(track string, width int) string {
 			continue
 		}
 		total++
-		for _, r := range m.records {
-			if r.Attempt.ExerciseID == c.ID && r.Attempt.Revision == c.Revision && r.Attempt.Status == "solved" {
-				solved++
-				break
-			}
+		if m.solved(c) {
+			solved++
 		}
 	}
 	full, empty := '━', '─'
