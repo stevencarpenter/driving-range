@@ -24,9 +24,7 @@ Resource limits in this table apply to Docker execution, except the one-hour nat
 
 ## Dependency scan
 
-The 14 September 2026 Trivy scan of runtime image `sha256:db877ef07ae1b0792159fd370373139124d3cbb4eade88300f7941bbc654cdcf` reports **128 distinct advisory IDs** across 330 package/advisory matches: 16 high, 52 medium, 56 low, and 4 unknown. No critical finding or Debian fixed version for the remaining findings is recorded in that scan. These are package-presence findings; reachability and exploitability have not been established.
-
-The rebuilt image removes the 13 fixable advisory IDs identified in the prior scan by installing updated gzip, libc, PCRE2, and SQLite packages. Debian's trackers record the applicable [gzip](https://security-tracker.debian.org/tracker/CVE-2026-41992), [PCRE2](https://security-tracker.debian.org/tracker/CVE-2026-86145), and [SQLite](https://security-tracker.debian.org/tracker/CVE-2026-11822) fixes. The application requires Go 1.26.8 or newer, with CI and release builds pinned to 1.26.8.
+[The launch audit](docs/LAUNCH_AUDIT.md) owns the recorded image identities, scan results, package updates, and evidence scope. Package-presence findings do not establish reachability or exploitability. No scan establishes that the application or runtime is vulnerability-free.
 
 Reproduce a current image scan with an installed Trivy binary:
 
@@ -34,7 +32,7 @@ Reproduce a current image scan with an installed Trivy binary:
 trivy image --scanners vuln --format json --output trivy-runtime.json --timeout 5m driving-range-runtime:1
 ```
 
-The tag can identify a different image after rebuilding, and advisory data changes over time. Compare the report's image ID and scan timestamp before comparing counts. This preview does not claim a vulnerability-free image.
+To reproduce a recorded development-image scan, select its image from the launch audit. A tag can identify a different image after rebuilding, and advisory data changes over time. Compare the report's image ID and scan timestamp before comparing counts. This preview does not claim a vulnerability-free image.
 
 ## Runtime recovery
 
@@ -59,4 +57,4 @@ JSON exports include attempt identity, environment IDs, sessions, and check deta
 
 ## Reporting
 
-Include the source revision or `golf version`, host architecture, Docker version, exercise ID/revision, and a minimal synthetic reproduction. Do not include credentials, private workspaces, or personal history. For suspected host access, preserve logs and stop using the affected build. Contact the repository owner privately through an available established channel before posting exploit details. No response-time or supported-release guarantee is established for this preview.
+Include the source revision or `golf version`, host architecture, Docker version, exercise ID/revision, and a minimal synthetic reproduction. Do not include credentials, private workspaces, or personal history. For suspected host access, preserve logs and stop using the affected build. For a public release, use [GitHub private vulnerability reporting](https://github.com/stevencarpenter/driving-range/security/advisories/new) when the repository's Security tab exposes the Report a vulnerability button. This repository is currently private; GitHub documents that reporting feature for public repositories. The maintainer must enable it and verify receipt before public launch. If that channel is unavailable, contact the repository owner privately through an established channel; do not open a public issue with exploit details. No response-time or supported-release guarantee is established for this preview.

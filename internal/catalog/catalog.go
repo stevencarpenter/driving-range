@@ -61,6 +61,22 @@ func Decode(r io.Reader) (*Catalog, error) {
 }
 
 func (c *Catalog) All() []model.Challenge { return slices.Clone(c.Challenges) }
+
+func (c *Catalog) Current() []model.Challenge {
+	result := []model.Challenge{}
+	positions := map[string]int{}
+	for _, ch := range c.Challenges {
+		if i, ok := positions[ch.ID]; ok {
+			if ch.Revision > result[i].Revision {
+				result[i] = ch
+			}
+		} else {
+			positions[ch.ID] = len(result)
+			result = append(result, ch)
+		}
+	}
+	return result
+}
 func (c *Catalog) Tracks() []string {
 	result := []string{}
 	for _, ch := range c.Challenges {
@@ -168,6 +184,9 @@ func (c *Catalog) Validate() error {
 			if !validPath(ch.SubmissionFile) || !validArgv(ch.SubmissionArgv) || len(ch.Fixtures) < 2 {
 				return fail("stdout requires a submission and at least two fixtures")
 			}
+			if !slices.ContainsFunc(ch.Fixtures, func(f model.Fixture) bool { return f.ExpectedStdout != "" }) {
+				return fail("stdout needs a nonempty expected output to reject the no-op starter")
+			}
 		case "commands":
 			if len(ch.Validator.Checks) == 0 {
 				return fail("commands validator needs checks")
@@ -216,9 +235,6 @@ func (c *Catalog) Validate() error {
 				}
 			}
 			if ch.Validator.Kind == "stdout" {
-				if f.ExpectedStdout == "" {
-					return fail("empty stdout would accept the no-op starter")
-				}
 				if _, ok := f.Files[ch.SubmissionFile]; !ok {
 					return fail("submission file missing")
 				}

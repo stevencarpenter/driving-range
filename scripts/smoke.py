@@ -156,9 +156,13 @@ def main():
                 terminal.resize(24, 80)
                 terminal.output = b""
                 terminal.send(b"/")
-                terminal.wait_text(b"Search [/]: _")
+                # The search cursor may be emitted separately from its label.
+                terminal.wait_text(b"Type to filter   Ctrl-U clear   Enter / Esc finish")
+                terminal.output = b""
                 terminal.send(b"vim.change-value\r")
-                terminal.wait_text(b"vim.change-value")
+                # Query text may arrive as several cursor-positioned updates.
+                # Wait for Enter to leave search mode, then verify the detail.
+                terminal.wait_text(b"j/k move   / search   Enter open")
                 terminal.output = b""
                 terminal.send(b"\r")
                 terminal.wait_text(b"Change one configuration value")
@@ -178,6 +182,9 @@ def main():
             assert any(a["exercise_id"] == "vim.change-value" and a["status"] == "solved" for a in results["attempts"])
             zsh_config = state / "zsh"
             zsh_config.mkdir()
+            # Host global zshrc may run compinit and consume scripted input.
+            # Keep user rc loading enabled so the alias below is still tested.
+            (zsh_config / ".zshenv").write_text("unsetopt GLOBAL_RCS\n")
             (zsh_config / ".zshrc").write_text(
                 "alias golf-zsh-config='print -r -- GOLF_ZSH_CONFIG_LOADED'\n"
             )

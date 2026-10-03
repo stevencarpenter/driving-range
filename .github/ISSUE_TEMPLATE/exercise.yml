@@ -1,0 +1,27 @@
+name: Exercise proposal or correction
+description: Propose a practical challenge or report an unclear brief or incorrect validator.
+body:
+  - type: input
+    id: identity
+    attributes:
+      label: Track and exercise ID/revision
+      description: For a new exercise, name the tool and proposed learning objective.
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Learning objective or defect
+      description: Describe a realistic task, its success conditions, and the misconception or edge case it should teach.
+    validations:
+      required: true
+  - type: textarea
+    id: provenance
+    attributes:
+      label: Sources and rights
+      description: Link relevant tool documentation and question/answer URLs. For adaptations include authors, exact revision and license, and changes. Do not paste third-party code without compatible rights.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Validation evidence
+      description: Include synthetic inputs, expected outputs, representative wrong answers, and any executed audit results. Include reported problems with the teaching objective or instructions; human review of the whole bank is not required.

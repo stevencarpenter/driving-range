@@ -2,6 +2,7 @@
 /dist/
 /.lavish/
 /.impeccable/
+/.test-local/
 *.db
 *.db-shm
 *.db-wal

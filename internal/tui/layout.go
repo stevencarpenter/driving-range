@@ -204,7 +204,7 @@ func (m Model) sidebar(width, height int) string {
 
 func (m Model) trackProgress(track string, width int) string {
 	total, solved := 0, 0
-	for _, c := range m.service.Catalog.All() {
+	for _, c := range m.service.Catalog.Current() {
 		if c.Track != track {
 			continue
 		}

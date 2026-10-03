@@ -1,6 +1,6 @@
 # Contributing
 
-Build and test with Go 1.26.8 or newer and `just`. CI and release builds pin Go 1.26.8. Docker is required for fixture setup and execution checks. Interactive practice uses installed host tools and their normal configuration.
+Build and test with Go 1.27 or newer and `just`. CI and release builds pin Go 1.27.1. Docker is required for fixture setup and execution checks. Interactive practice uses installed host tools and their normal configuration.
 
 ## Implementation defaults
 
@@ -16,7 +16,7 @@ Build and test with Go 1.26.8 or newer and `just`. CI and release builds pin Go 
 just check
 ```
 
-This runs unit tests, `go vet ./...`, `golf audit` for catalog metadata, and installation regression checks. The terminal smoke check requires native Neovim, Bash, and zsh as well as Docker. Runtime tests skip unless `GOLF_INTEGRATION=1`. A passing ordinary test run does not verify Docker isolation or reference solutions.
+This runs unit tests, `go vet ./...`, `golf audit` for catalog metadata, installation regression checks, and runtime-shard dispatch regression checks without Docker. The terminal smoke check requires native Neovim, Bash, and zsh as well as Docker. Runtime tests skip unless `GOLF_INTEGRATION=1`. A passing ordinary test run does not verify Docker isolation or reference solutions.
 
 Run the execution checks against a trusted local Docker engine:
 
@@ -26,9 +26,9 @@ just integration
 just audit-solutions
 ```
 
-`integration` verifies runtime behavior with temporary, owned workspaces. `audit-solutions` rejects starters that already pass and reference solutions that fail. To inspect one track, run `./golf audit --solutions --track jj`. `GOLF_IMAGE` selects the application image; `GOLF_TEST_IMAGE` selects the integration test image. `just integration` maps a nonempty `GOLF_IMAGE` to `GOLF_TEST_IMAGE` for consistency.
+`integration` verifies runtime behavior with temporary, owned workspaces. Verification is partitioned into base, Vim, search, shell, awk, and ancillary shards. Every growing curriculum test belongs to exactly one shard; base runs every remaining test. Each Go invocation retains its 20-minute deadline, and individual Docker, submission, and validator deadlines remain independently bounded. `just integration` runs every shard; `just integration search` runs one. `just audit-solutions` audits all twelve tracks; a matching shard argument selects its tracks. `audit-solutions` rejects starters that already pass and reference solutions that fail. To inspect one track, run `./golf audit --solutions --track jj`. `GOLF_IMAGE` selects the application image; `GOLF_TEST_IMAGE` selects the integration test image. `just integration` maps a nonempty `GOLF_IMAGE` to `GOLF_TEST_IMAGE` for consistency.
 
-CI runs ordinary checks on Linux and macOS. Docker checks run only when a maintainer dispatches the CI workflow with `docker_checks` enabled. They build and audit the native Linux amd64 and arm64 runtimes separately. Crosscompilation proves binary construction, not terminal behavior or execution on another architecture.
+CI runs ordinary checks on Linux and macOS. Pull requests and pushes to `main` also build and audit the native Linux amd64 and arm64 runtimes separately. A maintainer can dispatch the same checks with `docker_checks` enabled. Docker jobs run integration and reference audits for every shard on both native architectures; base also runs terminal smoke. Release packaging depends on successful completion of every Linux amd64 verification shard. A metadata-only pass is not sufficient for exercise changes. The separate Go vulnerability workflow runs on pull requests, `main`, and a weekly schedule. Crosscompilation proves binary construction, not terminal behavior or execution on another architecture.
 
 `just smoke` runs the terminal smoke script against the built binary and requires Python 3 and the prepared Docker runtime.
 
@@ -40,7 +40,7 @@ Edit `internal/catalog/data/catalog.json`. Each challenge has an immutable ID/re
 2. Choose `tree` for exact file contents, `stdout` for replayable submissions, or `commands` for repository-state checks. Current packs require exact output, including trailing newlines and ordering.
 3. For `stdout`, declare the submission filename and interpreter arguments. Include at least two fixtures that exercise different inputs. The checker replays only the declared submission file against each fresh fixture.
 4. Run `just check` and the affected track's `audit --solutions`. An unchanged starter must fail; the reference must pass. Add a wrong-answer regression when it protects a meaningful validation boundary.
-5. Attribute source material and record review evidence. Passing code checks does not mean a human reviewed the brief or teaching objective.
+5. Attribute source material and record validation evidence. Follow [the source and adaptation policy](docs/SOURCES.md), including revision-specific rights for Stack Overflow material. Editorial feedback is collected as players practice and report problems; a human review of every exercise is not a publication gate. Passing code checks does not establish teaching quality. The agreed bank contains [at least 365 practice challenges across all tools](docs/CURRICULUM.md), with Vim/Neovim, regex/search, Bash/core CLI, and awk as the expanded grinding priorities. Fundamentals and deliberate repetition are included. Give each authored exercise a stable ID and a useful practice contract; retries and schedule repetitions do not add exercises.
 
 Fixture paths must be relative regular files with no traversal, symlinks, hard links, devices, or file/directory collisions. Setup and reference scripts execute trusted code inside the sandbox. Never add network dependencies, secrets, personal shell history, or host paths to an exercise.
 
@@ -67,7 +67,7 @@ tar -tzf golf_v0.1.0_darwin_arm64.tar.gz
 
 Linux also supports `sha256sum -c SHA256SUMS`. Preserve the source commit, Go version, native runtime audit logs, and actual terminal test results when reviewing a release. Do not describe crossbuilt targets as runtime-tested without execution evidence.
 
-The release workflow runs when a GitHub Release is published. It runs ordinary checks, crossbuilds the archives, and attaches them to that existing release. It does not create releases or push tags. Set the repository Actions variable `GOLF_ATTEST_RELEASES=true` to generate signed GitHub provenance attestations before upload. Attestation availability depends on the repository's GitHub plan and visibility; see [the official action documentation](https://github.com/actions/attest). No signing key needs to be stored in this repository.
+The release workflow runs when a GitHub Release is published. Linux amd64 verification jobs run every integration/reference shard and base terminal smoke. Packaging waits for all of them, runs ordinary checks, then crossbuilds the archives and attaches them to that existing release. Native Linux arm64 and macOS verification remain separate evidence; the release packaging job does not execute those archives. It does not create releases or push tags. Set the repository Actions variable `GOLF_ATTEST_RELEASES=true` to generate signed GitHub provenance attestations before upload. Attestation availability depends on the repository's GitHub plan and visibility; see [the official action documentation](https://github.com/actions/attest). No signing key needs to be stored in this repository.
 
 For a release that actually contains an attestation, verify its downloaded archive with GitHub CLI:
 

@@ -598,7 +598,7 @@ func (m Model) todayChallenge() (*model.Challenge, *model.Assignment) {
 			return &c, &a
 		}
 	}
-	for _, c := range m.service.Catalog.All() {
+	for _, c := range m.service.Catalog.Current() {
 		if c.Track == m.service.Config.Track {
 			return &c, nil
 		}
@@ -629,7 +629,7 @@ func (m Model) solved(c model.Challenge) bool {
 // nextChallenge returns the next unsolved challenge in the current challenge's
 // track, scanning catalog order after the current challenge and wrapping once.
 func (m Model) nextChallenge() *model.Challenge {
-	all := m.service.Catalog.All()
+	all := m.service.Catalog.Current()
 	track, start := "", 0
 	if m.challenge != nil {
 		track = m.challenge.Track
@@ -654,7 +654,7 @@ func (m Model) nextChallenge() *model.Challenge {
 
 func (m Model) filtered() []model.Challenge {
 	var result []model.Challenge
-	for _, c := range m.service.Catalog.All() {
+	for _, c := range m.service.Catalog.Current() {
 		status := "untried"
 		for _, r := range m.records {
 			if r.Attempt.ExerciseID == c.ID && r.Attempt.Revision == c.Revision {

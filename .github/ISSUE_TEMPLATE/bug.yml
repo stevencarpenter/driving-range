@@ -1,0 +1,25 @@
+name: Bug report
+description: Report an installation, terminal, state, or execution defect.
+body:
+  - type: markdown
+    attributes:
+      value: "For vulnerabilities, follow [SECURITY.md](https://github.com/stevencarpenter/driving-range/blob/main/SECURITY.md). Do not post credentials or personal workspaces."
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include golf version or source commit, OS/architecture, Docker version, and relevant native tool versions.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Synthetic reproduction
+      description: Commands or key sequences, exercise ID/revision, expected behavior, and observed behavior. Replace private data with synthetic data.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: Relevant error output and golf doctor output. Review for secrets before posting.
