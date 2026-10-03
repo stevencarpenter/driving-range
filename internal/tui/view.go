@@ -77,7 +77,7 @@ func (m Model) trackPicker() string {
 	lines := []string{paint(styles.title, title), paint(styles.muted, "One daily exercise. Change your track anytime in Settings."), "", m.section("TRACKS")}
 	for i, track := range m.service.Catalog.Tracks() {
 		count := 0
-		for _, c := range m.service.Catalog.All() {
+		for _, c := range m.service.Catalog.Current() {
 			if c.Track == track {
 				count++
 			}

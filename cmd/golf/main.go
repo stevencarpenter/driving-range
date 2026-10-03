@@ -77,7 +77,7 @@ func run(args []string, out io.Writer) error {
 		return nil
 	case "list":
 		filter := strings.ToLower(strings.Join(args, " "))
-		for _, ch := range cat.All() {
+		for _, ch := range cat.Current() {
 			hay := strings.ToLower(ch.ID + " " + ch.Track + " " + ch.Title + " " + strings.Join(ch.Tools, " ") + " " + strings.Join(ch.Concepts, " "))
 			if strings.Contains(hay, filter) {
 				fmt.Fprintf(out, "%-32s %-10s %dm  %s\n", ch.ID, ch.Track, ch.Minutes, safe(ch.Title))
@@ -164,7 +164,7 @@ func run(args []string, out io.Writer) error {
 		if err = cat.Validate(); err != nil {
 			return err
 		}
-		fmt.Fprintf(out, "Catalog metadata valid: %d exercises.\n", len(cat.All()))
+		fmt.Fprintf(out, "Catalog metadata valid: %d exercises, %d revisions.\n", len(cat.Current()), len(cat.All()))
 		if !*solutions {
 			return nil
 		}
@@ -179,7 +179,7 @@ func run(args []string, out io.Writer) error {
 			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 			result, e := r.Audit(ctx, ch)
 			cancel()
-			fmt.Fprintf(out, "%s %s: %s\n", safe(result.Outcome), ch.ID, safe(result.Summary))
+			fmt.Fprintf(out, "%s %s revision %d: %s\n", safe(result.Outcome), ch.ID, ch.Revision, safe(result.Summary))
 			if e != nil {
 				fmt.Fprintln(out, safe(e.Error()))
 			}
@@ -441,7 +441,7 @@ func run(args []string, out io.Writer) error {
 
 func overview(out io.Writer, cat *catalog.Catalog) error {
 	fmt.Fprintln(out, "Driving Range | daily terminal practice | local history")
-	fmt.Fprintf(out, "%d exercises across %s\n", len(cat.All()), strings.Join(cat.Tracks(), ", "))
+	fmt.Fprintf(out, "%d exercises across %s\n", len(cat.Current()), strings.Join(cat.Tracks(), ", "))
 	fmt.Fprintln(out, "Run golf in an interactive terminal for the TUI.\nPlain commands: golf today, golf list, golf show EXERCISE, golf history.\nRun golf doctor to check the runtime; golf setup builds it explicitly.")
 	return nil
 }

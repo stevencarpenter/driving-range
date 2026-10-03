@@ -70,11 +70,11 @@ func TestBundledCatalogAndFrozenSchedule(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(c.All()) != 600 {
-		t.Fatalf("got %d exercises", len(c.All()))
+	if len(c.Current()) != 600 || len(c.All()) != 602 {
+		t.Fatalf("got %d exercises, %d revisions", len(c.Current()), len(c.All()))
 	}
 	counts := map[string]int{}
-	for _, ch := range c.All() {
+	for _, ch := range c.Current() {
 		counts[ch.Track]++
 		if ch.Track == "zsh" && ch.Editor != "zsh" {
 			t.Errorf("%s launches %s instead of zsh", ch.ID, ch.Editor)

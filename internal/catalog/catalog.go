@@ -61,6 +61,22 @@ func Decode(r io.Reader) (*Catalog, error) {
 }
 
 func (c *Catalog) All() []model.Challenge { return slices.Clone(c.Challenges) }
+
+func (c *Catalog) Current() []model.Challenge {
+	result := []model.Challenge{}
+	positions := map[string]int{}
+	for _, ch := range c.Challenges {
+		if i, ok := positions[ch.ID]; ok {
+			if ch.Revision > result[i].Revision {
+				result[i] = ch
+			}
+		} else {
+			positions[ch.ID] = len(result)
+			result = append(result, ch)
+		}
+	}
+	return result
+}
 func (c *Catalog) Tracks() []string {
 	result := []string{}
 	for _, ch := range c.Challenges {
