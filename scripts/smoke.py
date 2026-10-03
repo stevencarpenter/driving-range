@@ -157,8 +157,11 @@ def main():
                 terminal.output = b""
                 terminal.send(b"/")
                 terminal.wait_text(b"Search [/]: _")
+                terminal.output = b""
                 terminal.send(b"vim.change-value\r")
-                terminal.wait_text(b"vim.change-value")
+                # Query text may arrive as several cursor-positioned updates.
+                # Wait for Enter to leave search mode, then verify the detail.
+                terminal.wait_text(b"j/k move   / search   Enter open")
                 terminal.output = b""
                 terminal.send(b"\r")
                 terminal.wait_text(b"Change one configuration value")

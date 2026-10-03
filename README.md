@@ -48,6 +48,8 @@ In shell exercises, `golf-brief` prints the active brief. Output exercises requi
 
 `v` reveals the explanation and reference solution. Revealing an active attempt records assistance. External assistance can also be recorded with `x`; assistance remains recorded for that attempt. Finished attempts are immutable. Retrying creates a new attempt and preserves the prior result and workspace.
 
+New practice and `golf list` offer the latest revision of each exercise. Saved attempts and published daily assignments retain their exact revision. See the [revision contract](docs/AUTHORING.md#content-contract) for authoring details.
+
 ### Included exercises
 
 The embedded catalog contains **600 exercises across 12 tracks**:
@@ -161,7 +163,7 @@ just integration
 just audit-solutions
 ```
 
-`check` runs unit tests, `go vet`, catalog metadata validation, and installation regression checks without Docker. `integration` and `audit-solutions` require the locally built image and explicitly execute exercises in Docker. See [CONTRIBUTING.md](CONTRIBUTING.md) for content contracts and release checks.
+See [CONTRIBUTING.md](CONTRIBUTING.md#checks) for each check's scope, prerequisites, shard selection, and release requirements.
 
 Local history, replay, hints, and export are core features. Accounts, billing, hosted execution, and paid infrastructure are not implemented. See [the current launch requirements](docs/CURRICULUM.md) and [source policy](docs/SOURCES.md) before contributing exercises.
 

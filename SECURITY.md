@@ -24,9 +24,7 @@ Resource limits in this table apply to Docker execution, except the one-hour nat
 
 ## Dependency scan
 
-The 30 September 2026 UTC Trivy 0.72.0 scan of rebuilt Linux arm64 runtime image `sha256:d28b2375d71ed9dd8692609ec57c326853622f2e4969e142df34dbb3c55aa72f` reports **148 distinct advisory IDs** across 386 package/advisory matches: 20 high, 49 medium, 72 low, and 7 unknown. No critical finding or Debian fixed version for the remaining findings is recorded in that scan. These are package-presence findings; reachability and exploitability have not been established. The image was built under the development tag `driving-range-runtime:oss-prep`; it is not a published release.
-
-The rebuild updates PCRE2 from `10.46-1~deb13u2` to `10.46-1~deb13u3`, removing the two fixable advisory IDs reported for that package by the preceding scan. Debian's [PCRE2 tracker](https://security-tracker.debian.org/tracker/source-package/pcre2) identifies the security update for the JIT out-of-bounds write advisory. Go 1.26.8 source vulnerability scans found no vulnerabilities for macOS arm64 and Linux amd64/arm64 on the same date. The application requires Go 1.27 or newer, with CI and release builds pinned to 1.27.1. These results are not a claim that the application or runtime is vulnerability-free.
+[The launch audit](docs/LAUNCH_AUDIT.md) owns the recorded image identities, scan results, package updates, and evidence scope. Package-presence findings do not establish reachability or exploitability. No scan establishes that the application or runtime is vulnerability-free.
 
 Reproduce a current image scan with an installed Trivy binary:
 
@@ -34,7 +32,7 @@ Reproduce a current image scan with an installed Trivy binary:
 trivy image --scanners vuln --format json --output trivy-runtime.json --timeout 5m driving-range-runtime:1
 ```
 
-To scan the audited development image, replace `driving-range-runtime:1` with `driving-range-runtime:oss-prep`. The tag can identify a different image after rebuilding, and advisory data changes over time. Compare the report's image ID and scan timestamp before comparing counts. This preview does not claim a vulnerability-free image.
+To reproduce a recorded development-image scan, select its image from the launch audit. A tag can identify a different image after rebuilding, and advisory data changes over time. Compare the report's image ID and scan timestamp before comparing counts. This preview does not claim a vulnerability-free image.
 
 ## Runtime recovery
 

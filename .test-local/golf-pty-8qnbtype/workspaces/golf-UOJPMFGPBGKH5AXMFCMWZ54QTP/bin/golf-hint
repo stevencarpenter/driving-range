@@ -1,8 +1,0 @@
-#!/bin/bash
-# Ask golf to get the next hint without leaving the exercise. The workbench consumes this
-# sequence, so it never reaches the terminal.
-if [ -z "$GOLF_WORKBENCH" ]; then
-  echo "golf-hint needs the embedded workbench. Exit the exercise to get the next hint." >&2
-  exit 1
-fi
-printf '\033]9270;golf=hint\007'
