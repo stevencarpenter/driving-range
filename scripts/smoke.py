@@ -182,6 +182,9 @@ def main():
             assert any(a["exercise_id"] == "vim.change-value" and a["status"] == "solved" for a in results["attempts"])
             zsh_config = state / "zsh"
             zsh_config.mkdir()
+            # Host global zshrc may run compinit and consume scripted input.
+            # Keep user rc loading enabled so the alias below is still tested.
+            (zsh_config / ".zshenv").write_text("unsetopt GLOBAL_RCS\n")
             (zsh_config / ".zshrc").write_text(
                 "alias golf-zsh-config='print -r -- GOLF_ZSH_CONFIG_LOADED'\n"
             )
