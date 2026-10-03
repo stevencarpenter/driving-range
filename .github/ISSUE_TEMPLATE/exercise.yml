@@ -24,4 +24,4 @@ body:
     id: evidence
     attributes:
       label: Validation evidence
-      description: Include synthetic inputs, expected outputs, representative wrong answers, and any executed audit results. State whether another person reviewed the teaching objective.
+      description: Include synthetic inputs, expected outputs, representative wrong answers, and any executed audit results. Include reported problems with the teaching objective or instructions; human review of the whole bank is not required.

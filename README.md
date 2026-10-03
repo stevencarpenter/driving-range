@@ -12,7 +12,7 @@ This is an independent application; it neither imports nor modifies `vim-golf` o
 
 ## Quick start
 
-From this checkout, with Go 1.26.8 or newer, `just`, your practice tools (including `nvim`, Bash, and zsh), and a running Docker-compatible Linux engine:
+From this checkout, with Go 1.27 or newer, `just`, your practice tools (including `nvim`, Bash, and zsh), and a running Docker-compatible Linux engine:
 
 ```sh
 just build
@@ -71,7 +71,7 @@ Vim search/editing, regex, Bash/core CLI, and awk are the priorities. The added 
 
 The fixed ten-day preview runs **14 September through 23 September 2026, UTC**. An attempt keeps its assignment when a session crosses midnight. Outside those dates, the TUI labels its selection as practice, and `golf today` reports that no daily is published. The entire catalog remains playable. There is no rolling daily content service or automatic content download.
 
-Exercises are original curriculum drafts. Executable audits check failing starter fixtures and passing reference solutions; they do not establish human editorial review or learning effectiveness. zsh and fzf samples validate command behavior. The application does not measure Readline/ZLE key sequences, physical keystrokes, or personal skill retention. tmux is in the runtime, but has no dedicated exercise track.
+Exercises are original curriculum drafts. Executable audits check failing starter fixtures and passing reference solutions; they do not establish human editorial review or learning effectiveness. Players review the material as they practice and report unclear or unhelpful exercises. Human review of the whole bank is not a publication gate. zsh and fzf samples validate command behavior. The application does not measure Readline/ZLE key sequences, physical keystrokes, or personal skill retention. tmux is in the runtime, but has no dedicated exercise track.
 
 ### Plain commands
 

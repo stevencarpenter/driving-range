@@ -1,5 +1,19 @@
 # Open-source launch audit
 
+## Current validation and editorial policy, 2 October 2026
+
+The 600-exercise catalog remains at SHA-256 `c7b8320f44f6d8c5438e16764148f0fd6ce2c7a121290baef878cf102fd7bc3b`, based on source commit `5293267fa956ed5c25eba8e767f240bf30d6817e`. Fresh macOS arm64 checks with Go 1.27.1 passed `just check`, build, runtime readiness, `go test -race ./...`, `go mod verify`, workflow lint, shell syntax, whitespace checks, and `govulncheck` v1.1.4. Gitleaks scanned 31 commits with redaction and reported no findings. These checks do not establish Docker exercise execution.
+
+A fresh `hello-world` container exited successfully in 31.88 seconds. The ancillary integration retry then reproduced repeated `docker start: signal: killed` failures and was stopped. A basic cached-runtime `/bin/true` probe and an equally isolated probe both exited successfully only after 30.192 and 30.116 seconds respectively. OrbStack logged `container prestart timed out, proceeding with start; old rootfs mount may be stale` for both exact container IDs. This establishes that the engine's prestart stall consumes the runner's 30-second Docker deadline. Its underlying cause remains unconfirmed. The probes and their owned volume were removed. Runner isolation, individual deadlines, fixture contracts, and validators are unchanged.
+
+GitHub CI and vulnerability runs for that commit failed before executing checks because the workflows pinned Go 1.26.8 while `go.mod` requires Go 1.27 and the jobs use `GOTOOLCHAIN=local`. CI, security, and release workflows now pin the locally verified Go 1.27.1. Native Linux amd64 and arm64 execution of this correction remains to be verified.
+
+The owner revised the editorial policy on 2 October 2026: players review exercises as they practice and report unclear or unhelpful material. Human review of every exercise is not a validation, launch, or publication gate. No completed human review is claimed. Earlier statements requiring bank-wide human review record the prior policy. Source rights, immutable published revisions, and executable validation requirements remain in force.
+
+Local logs and structured command results are retained under `.lavish/validation-2026-10-02/`. The earlier all-600 reference and priority-track integration evidence below remains scoped to its recorded image and unchanged catalog. A stopped local retry is not counted as passed.
+
+## Historical launch-preparation record
+
 Recorded 30 September 2026 UTC for the uncommitted launch-preparation changes based on source commit `71967f41a6e6a1135a4d28d4bc6fa2852f435f8c`. **Not ready for public launch.** The latest completed executable checkpoint covers all 367 authored exercises, including starter/reference audits, full integration, regression checks, and terminal smoke. At the completed 367-exercise checkpoint, Vim and regex were the two largest tracks at 46 each. The current authored catalog contains 600, with 100 each in Vim/Neovim, regex/search, Bash/core CLI, and awk; verification of that expansion is pending. Human editorial review, a year-long mixed-tool schedule, a recorded terminal demonstration, and repository administrator configuration are not established.
 
 ## Focused 600-exercise expansion

@@ -1,6 +1,6 @@
 # Contributing
 
-Build and test with Go 1.26.8 or newer and `just`. CI and release builds pin Go 1.26.8. Docker is required for fixture setup and execution checks. Interactive practice uses installed host tools and their normal configuration.
+Build and test with Go 1.27 or newer and `just`. CI and release builds pin Go 1.27.1. Docker is required for fixture setup and execution checks. Interactive practice uses installed host tools and their normal configuration.
 
 ## Implementation defaults
 
@@ -40,7 +40,7 @@ Edit `internal/catalog/data/catalog.json`. Each challenge has an immutable ID/re
 2. Choose `tree` for exact file contents, `stdout` for replayable submissions, or `commands` for repository-state checks. Current packs require exact output, including trailing newlines and ordering.
 3. For `stdout`, declare the submission filename and interpreter arguments. Include at least two fixtures that exercise different inputs. The checker replays only the declared submission file against each fresh fixture.
 4. Run `just check` and the affected track's `audit --solutions`. An unchanged starter must fail; the reference must pass. Add a wrong-answer regression when it protects a meaningful validation boundary.
-5. Attribute source material and record review evidence. Follow [the source and adaptation policy](docs/SOURCES.md), including revision-specific rights for Stack Overflow material. Passing code checks does not mean a human reviewed the brief or teaching objective. The agreed bank contains [at least 365 practice challenges across all tools](docs/CURRICULUM.md), with Vim/Neovim, regex/search, Bash/core CLI, and awk as the expanded grinding priorities. Fundamentals and deliberate repetition are included. Give each authored exercise a stable ID and a useful practice contract; retries and schedule repetitions do not add exercises.
+5. Attribute source material and record validation evidence. Follow [the source and adaptation policy](docs/SOURCES.md), including revision-specific rights for Stack Overflow material. Editorial feedback is collected as players practice and report problems; a human review of every exercise is not a publication gate. Passing code checks does not establish teaching quality. The agreed bank contains [at least 365 practice challenges across all tools](docs/CURRICULUM.md), with Vim/Neovim, regex/search, Bash/core CLI, and awk as the expanded grinding priorities. Fundamentals and deliberate repetition are included. Give each authored exercise a stable ID and a useful practice contract; retries and schedule repetitions do not add exercises.
 
 Fixture paths must be relative regular files with no traversal, symlinks, hard links, devices, or file/directory collisions. Setup and reference scripts execute trusted code inside the sandbox. Never add network dependencies, secrets, personal shell history, or host paths to an exercise.
 

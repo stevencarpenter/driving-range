@@ -16,7 +16,7 @@ List commands and observed results. Distinguish skipped checks from passes.
 - [ ] Documented behavior matches the implementation
 - [ ] Exercise starters fail, references pass, and meaningful wrong answers fail (if applicable)
 - [ ] Source URLs, author/revision/license, and modifications recorded for adaptations (if applicable)
-- [ ] Human editorial review is identified separately from executable checks (if applicable)
+- [ ] Reported editorial problems are addressed; any actual human review is distinguished from executable checks (if applicable)
 - [ ] Released exercise IDs/revisions and existing daily assignments retain their meaning
 
 Contributions use the licenses described in [CONTRIBUTING.md](../CONTRIBUTING.md#licensing). Do not include credentials, personal history, or private workspaces.
