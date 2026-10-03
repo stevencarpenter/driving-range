@@ -1,0 +1,18 @@
+#!/usr/bin/env zsh
+
+{
+  -z4h-cursor-hide
+  local f
+  for f in chpwd "${chpwd_functions[@]}" precmd "${(@)precmd_functions:#-z4h-direnv-hook}"; do
+    [[ "${+functions[$f]}" == 0 ]] || "$f" &>/dev/null || true
+  done
+  if (( _z4h_use[zsh-syntax-highlighting] )); then
+    typeset -g _ZSH_HIGHLIGHT_PRIOR_BUFFER=
+    typeset -gi _ZSH_HIGHLIGHT_PRIOR_CURSOR=0
+  fi
+  zle .reset-prompt
+  (( ${1:-0} )) || zle -R
+} always {
+  (( ${1:-0} )) || -z4h-cursor-show
+  -z4h-update-dir-history
+}

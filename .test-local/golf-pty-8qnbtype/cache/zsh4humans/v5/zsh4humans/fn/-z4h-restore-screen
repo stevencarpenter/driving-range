@@ -1,0 +1,14 @@
+#!/usr/bin/env zsh
+
+eval "$_z4h_opt"
+
+[[ -v _z4h_tty_fd ]] || return
+
+if [[ -n $_Z4H_TMUX ]]; then
+  (( ${+_z4h_saved_screen} )) || return
+  print -rnu $_z4h_tty_fd -- "$_z4h_saved_screen"
+elif [[ -n $Z4H_SSH && -n $_Z4H_SSH_MARKER ]]; then
+  printf '\001z4h.%s%s' "$_Z4H_SSH_MARKER" 'restore-screen  ' >&$_z4h_tty_fd
+else
+  return 1
+fi

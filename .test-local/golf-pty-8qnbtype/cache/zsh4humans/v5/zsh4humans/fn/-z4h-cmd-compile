@@ -1,0 +1,9 @@
+#!/usr/bin/env zsh
+
+local file
+zparseopts -D -F -- 2>/dev/null || zparseopts -D -F -- '' || return '_z4h_err()'
+emulate zsh -o extended_glob -c 'local files=(${^@}(N))'
+builtin set --
+for file in "${files[@]}"; do
+  -z4h-compile "$file"
+done

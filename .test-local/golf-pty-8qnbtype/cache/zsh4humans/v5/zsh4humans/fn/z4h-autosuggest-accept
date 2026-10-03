@@ -1,0 +1,9 @@
+#!/usr/bin/env zsh
+
+local -i cursor=CURSOR
+{
+  typeset -gi CURSOR='_z4h_cursor_max()'
+  zle autosuggest-accept
+} always {
+  CURSOR=cursor
+}

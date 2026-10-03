@@ -1,0 +1,12 @@
+() {
+  local deps=(/usr/libexec/path_helper /etc/paths\(N\) /etc/paths.d/\*\(N\) /etc/manpaths\(N\) /etc/manpaths.d/\*\(N\))
+  local -a stat files=($~deps)
+  [[ ${(j: :)${(@q)files}} == /usr/libexec/path_helper\ /etc/paths\ /etc/paths.d/10-cryptex\ /etc/paths.d/10-pmk-global\ /etc/paths.d/100-rvictl\ /etc/paths.d/go\ /etc/paths.d/homebrew\ /etc/manpaths ]] &&
+  zstat -A stat +mtime -- $files 2>/dev/null                   &&
+  [[ ${(j: :)stat} == 1789801172\ 1789801172\ 1789801172\ 1789801172\ 1781757538\ 1777928899\ 1785645191\ 1789801172                 ]] && {
+    local path_dirs=(/usr/local/bin /System/Cryptexes/App/usr/bin /usr/bin /bin /usr/sbin /sbin /var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin /var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin /var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin /pkg/env/global/bin /Library/Apple/usr/bin /usr/local/go/bin /opt/homebrew/bin)
+    local manpath_dirs=(/usr/share/man /usr/local/share/man '')
+    path=(${path_dirs:|path} $path)
+    manpath=(${manpath_dirs:|manpath} $manpath)
+  }
+}

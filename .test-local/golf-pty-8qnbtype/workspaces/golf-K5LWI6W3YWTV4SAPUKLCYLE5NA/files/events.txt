@@ -1,0 +1,3 @@
+event=click id=1
+event=view
+event=click id=2

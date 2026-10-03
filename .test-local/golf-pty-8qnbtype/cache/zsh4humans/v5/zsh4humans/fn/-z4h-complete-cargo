@@ -1,0 +1,13 @@
+#!/usr/bin/env zsh
+
+(( $+commands[rustup] && $+commands[rustc] )) || {
+  unset '_comps[cargo]'
+  _default "$@"
+  return
+}
+
+{
+  builtin source <(rustup completions zsh cargo)
+} always {
+  (( $+functions[_cargo] )) && _comps[cargo]=_cargo || unset '_comps[cargo]'
+}

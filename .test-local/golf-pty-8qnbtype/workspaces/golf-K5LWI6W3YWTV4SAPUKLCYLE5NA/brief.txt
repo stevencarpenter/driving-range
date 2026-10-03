@@ -1,0 +1,7 @@
+Practice summarizing matching records and handling an empty result. Command output and command exit status both matter when a search becomes part of a script.
+
+Print the number of lines in events.txt containing the literal token event=click, followed by a newline.
+
+Edit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.
+
+Key reference: grep --help; rg --help.

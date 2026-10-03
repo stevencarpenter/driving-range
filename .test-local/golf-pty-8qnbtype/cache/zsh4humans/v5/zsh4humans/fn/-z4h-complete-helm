@@ -1,0 +1,32 @@
+#!/usr/bin/env zsh
+
+local helm="${commands[helm]-}"
+local orig_cmd="${_comps[helm]-}"
+local comp="$Z4H"/cache/helm-completion-$EUID.zsh
+local cmd
+
+() {
+  [[ -n "$helm" ]] || return
+
+  [[ "$comp" -nt "$helm" ]] || {
+    local tmp="$comp".tmp."${sysparams[pid]}"
+    "$helm" completion zsh >"$tmp" || return
+    zf_mv -f -- "$tmp" "$comp" || return
+    -z4h-compile "$comp" || return
+  }
+
+  () {
+    emulate -L zsh
+    builtin source -- "$comp"
+    unset LWORD RWORD
+  } || true
+
+  cmd="${_comps[helm]-}"
+  [[ "$cmd" != "$orig_cmd" ]] || return
+} || {
+  builtin unset '_comps[helm]'
+  _default "$@"
+  return
+}
+
+builtin eval "$cmd"
