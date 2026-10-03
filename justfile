@@ -27,7 +27,7 @@ install: build
     fi
 
 test:
-    "{{ GO }}" test ./...
+    "{{ GO }}" test -count=1 ./...
 
 test-install:
     sh scripts/test-install.sh
