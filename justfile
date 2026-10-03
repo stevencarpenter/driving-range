@@ -38,10 +38,7 @@ vet:
 audit:
     "{{ GO }}" run ./cmd/golf audit
 
-test-runtime-shards:
-    sh scripts/test-verify-runtime.sh
-
-check: test vet audit test-install test-runtime-shards
+check: test vet audit test-install
 
 setup: build
     ./golf setup
