@@ -156,7 +156,8 @@ def main():
                 terminal.resize(24, 80)
                 terminal.output = b""
                 terminal.send(b"/")
-                terminal.wait_text(b"Search [/]: _")
+                # The search cursor may be emitted separately from its label.
+                terminal.wait_text(b"Type to filter   Ctrl-U clear   Enter / Esc finish")
                 terminal.output = b""
                 terminal.send(b"vim.change-value\r")
                 # Query text may arrive as several cursor-positioned updates.
