@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"regexp"
 	"slices"
 	"strings"
@@ -14,17 +16,37 @@ import (
 )
 
 func TestRuntimeShardsPartitionEveryExercise(t *testing.T) {
-	data, err := os.ReadFile("../../scripts/verify-runtime.sh")
+	work := t.TempDir()
+	calls := filepath.Join(work, "calls")
+	fakeGo := filepath.Join(work, "fake go")
+	if err := os.WriteFile(fakeGo, []byte("#!/bin/sh\nfor arg do printf '%s\\n' \"$arg\"; done >> \"$CALLS\"\nprintf '\\n' >> \"$CALLS\"\n"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("GO", fakeGo)
+	t.Setenv("CALLS", calls)
+	cmd := exec.Command("sh", "../../scripts/verify-runtime.sh", "all", "integration")
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("dispatch: %v\n%s", err, output)
+	}
+	data, err := os.ReadFile(calls)
 	if err != nil {
 		t.Fatal(err)
 	}
-	groups := regexp.MustCompile(`tracks='([^']+)'`).FindAllSubmatch(data, -1)
-	if len(groups) != 5 {
-		t.Fatalf("got %d curriculum shard selectors, want 5", len(groups))
+	var selectors []*regexp.Regexp
+	for _, call := range strings.Split(strings.TrimSpace(string(data)), "\n\n") {
+		args := strings.Split(call, "\n")
+		for i, arg := range args {
+			if arg == "-run" && i+1 < len(args) {
+				_, selector, ok := strings.Cut(args[i+1], "/")
+				if !ok {
+					t.Fatalf("missing exercise selector: %q", args[i+1])
+				}
+				selectors = append(selectors, regexp.MustCompile(selector))
+			}
+		}
 	}
-	selectors := make([]*regexp.Regexp, 0, len(groups))
-	for _, group := range groups {
-		selectors = append(selectors, regexp.MustCompile("^("+string(group[1])+")[.]"))
+	if len(selectors) != 5 {
+		t.Fatalf("got %d curriculum shard selectors, want 5", len(selectors))
 	}
 	c, err := Load()
 	if err != nil {

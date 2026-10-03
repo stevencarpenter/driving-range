@@ -4201,7 +4201,7 @@
       "fixtures": [{"name": "example", "files": {"api.txt": "old api\n", "notes.txt": "notes\n", "draft.tmp": "private\n"}, "setup": "git init -q -b main\ngit config user.name 'Range Player'\ngit config user.email player@example.invalid\ngit config commit.gpgsign false\nexport GIT_AUTHOR_DATE=2020-01-01T00:00:00Z GIT_COMMITTER_DATE=2020-01-01T00:00:00Z\ngit add api.txt notes.txt\ngit commit -qm Initial\nprintf 'uncommitted api\\n' > api.txt\nprintf 'draft notes\\n' > notes.txt\n"}]
     },
     {
-      "id": "git.unstage-preserve", "revision": 1, "track": "git",
+      "id": "git.unstage-preserve", "revision": 2, "track": "git",
       "title": "Unstage without losing edits",
       "objective": "Unstage the api.txt change without changing its working-tree content. Keep the one initial commit unchanged and leave notes.txt unchanged. Do not commit.",
       "brief": "Separate the index from the working tree. Unstage the api.txt change without changing its working-tree content. Keep the one initial commit unchanged and leave notes.txt unchanged. Do not commit. The fixture is a synthetic repository; the checker examines index, files, and history.\n\nKey reference: git help restore describes --staged and its default source.",
@@ -4213,12 +4213,12 @@
       "author": "Original Driving Range draft. Tool references and research provenance: docs/SOURCES.md. No human editorial review claimed.",
       "profile": "standard", "entrypoint": "api.txt", "editor": "bash",
       "validator": {"kind": "commands", "version": "1", "checks": [
-        {"name": "preserved-work-and-history", "argv": ["bash", "--noprofile", "--norc", "-c", "set -eu; test \"$(cat api.txt)\" = new; test \"$(cat notes.txt)\" = notes; test \"$(git show HEAD:api.txt)\" = old; test \"$(git rev-list --count HEAD)\" = 1; test \"$(git log -1 --format=%s)\" = Initial; git diff --cached --quiet; test \"$(git diff --name-only)\" = api.txt; test -z \"$(git ls-files --others --exclude-standard)\""], "expected_stdout": "", "exit_code": 0}
+        {"name": "preserved-work-and-history", "argv": ["bash", "--noprofile", "--norc", "-c", "set -euo pipefail; printf 'new\\n' | cmp - api.txt; printf 'notes\\n' | cmp - notes.txt; git show HEAD:api.txt | cmp - <(printf 'old\\n'); test \"$(git rev-list --count HEAD)\" = 1; test \"$(git log -1 --format=%s)\" = Initial; git diff --cached --quiet; test \"$(git diff --name-only)\" = api.txt; test -z \"$(git ls-files --others --exclude-standard)\""], "expected_stdout": "", "exit_code": 0}
       ]},
       "fixtures": [{"name": "example", "files": {"api.txt": "old\n", "notes.txt": "notes\n"}, "setup": "git init -q\ngit add .\ngit commit -qm Initial\nprintf 'new\\n' > api.txt\ngit add api.txt\n"}]
     },
     {
-      "id": "git.restore-one", "revision": 1, "track": "git",
+      "id": "git.restore-one", "revision": 2, "track": "git",
       "title": "Discard one edit and keep another",
       "objective": "Restore notes.txt to its committed text original notes. Keep the unstaged api.txt edit new api. Leave the index clean and preserve the one initial commit. Do not commit.",
       "brief": "Apply a destructive restore only to the intended path. Restore notes.txt to its committed text original notes. Keep the unstaged api.txt edit new api. Leave the index clean and preserve the one initial commit. Do not commit. These are disposable synthetic files.\n\nKey reference: git help restore describes path-limited working-tree restoration.",
@@ -4230,7 +4230,7 @@
       "author": "Original Driving Range draft. Tool references and research provenance: docs/SOURCES.md. No human editorial review claimed.",
       "profile": "standard", "entrypoint": "notes.txt", "editor": "bash",
       "validator": {"kind": "commands", "version": "1", "checks": [
-        {"name": "selective-restore", "argv": ["bash", "--noprofile", "--norc", "-c", "set -eu; test \"$(cat api.txt)\" = 'new api'; test \"$(cat notes.txt)\" = 'original notes'; test \"$(git show HEAD:api.txt)\" = 'old api'; test \"$(git rev-list --count HEAD)\" = 1; test \"$(git log -1 --format=%s)\" = Initial; git diff --cached --quiet; test \"$(git diff --name-only)\" = api.txt; test -z \"$(git ls-files --others --exclude-standard)\""], "expected_stdout": "", "exit_code": 0}
+        {"name": "selective-restore", "argv": ["bash", "--noprofile", "--norc", "-c", "set -euo pipefail; printf 'new api\\n' | cmp - api.txt; printf 'original notes\\n' | cmp - notes.txt; git show HEAD:api.txt | cmp - <(printf 'old api\\n'); test \"$(git rev-list --count HEAD)\" = 1; test \"$(git log -1 --format=%s)\" = Initial; git diff --cached --quiet; test \"$(git diff --name-only)\" = api.txt; test -z \"$(git ls-files --others --exclude-standard)\""], "expected_stdout": "", "exit_code": 0}
       ]},
       "fixtures": [{"name": "example", "files": {"api.txt": "old api\n", "notes.txt": "original notes\n"}, "setup": "git init -q\ngit add .\ngit commit -qm Initial\nprintf 'new api\\n' > api.txt\nprintf 'temporary notes\\n' > notes.txt\n"}]
     },

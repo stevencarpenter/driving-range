@@ -171,6 +171,10 @@ func TestIntegrationCurriculumRejectsWrongAnswers(t *testing.T) {
 		{"fzf.prefix-query", "fzf +i --filter='^git' < commands.txt | LC_ALL=C sort\n"},
 		{"git.unstage-preserve", "git restore --staged -- api.txt; git restore -- api.txt\n"},
 		{"git.restore-one", "git restore -- .\n"},
+		{"git.unstage-preserve", "git restore --staged -- api.txt; printf new > api.txt\n"},
+		{"git.unstage-preserve", "git restore --staged -- api.txt; printf notes > notes.txt\n"},
+		{"git.restore-one", "git restore -- notes.txt; printf 'new api' > api.txt\n"},
+		{"git.restore-one", "git restore -- notes.txt; printf 'original notes' > notes.txt\n"},
 		{"jj.delete-bookmark", "jj bookmark delete scratch; jj describe -m Wrong\n"},
 		{"jj.edit-parent", "jj new base\n"},
 		{"jj.new-parallel-change", "jj new -m Experiment\n"},
@@ -365,7 +369,7 @@ func TestIntegrationCurriculumRejectsWrongAnswers(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.id, func(t *testing.T) {
 			r, a := integrationRunner(t)
-			ch, err := cat.Find(tc.id, 1)
+			ch, err := cat.Find(tc.id, 0)
 			if err != nil {
 				t.Fatal(err)
 			}

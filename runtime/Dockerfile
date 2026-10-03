@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     bash ca-certificates curl neovim ripgrep fd-find findutils grep sed mawk git python3 zsh fzf tmux \
     gzip=1.13-1+deb13u1 libc6=2.41-12+deb13u4 libc-bin=2.41-12+deb13u4 \
     libpcre2-8-0=10.46-1~deb13u3 libsqlite3-0=3.46.1-7+deb13u2 \
+    libssl3t64=3.5.7-1~deb13u3 openssl=3.5.7-1~deb13u3 openssl-provider-legacy=3.5.7-1~deb13u3 \
     && rm -rf /var/lib/apt/lists/* \
     && ln -s /usr/bin/fdfind /usr/local/bin/fd
 RUN case "$TARGETARCH" in \
