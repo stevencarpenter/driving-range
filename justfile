@@ -38,16 +38,19 @@ vet:
 audit:
     "{{ GO }}" run ./cmd/golf audit
 
-check: test vet audit test-install
+test-runtime-shards:
+    sh scripts/test-verify-runtime.sh
+
+check: test vet audit test-install test-runtime-shards
 
 setup: build
     ./golf setup
 
-integration:
-    GOLF_INTEGRATION=1 GOLF_TEST_IMAGE="${GOLF_IMAGE:-${GOLF_TEST_IMAGE:-}}" "{{ GO }}" test -count=1 -timeout=10m ./...
+integration shard="all":
+    GO="{{ GO }}" sh scripts/verify-runtime.sh "{{ shard }}" integration
 
-audit-solutions: build
-    ./golf audit --solutions
+audit-solutions shard="all": build
+    sh scripts/verify-runtime.sh "{{ shard }}" references
 
 smoke: build
     python3 scripts/smoke.py

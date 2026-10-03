@@ -22,8 +22,10 @@ for target in darwin/arm64 linux/amd64 linux/arm64; do
     arch=${target#*/}
     CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" "${GO:-go}" build \
         -trimpath -ldflags "-s -w -X main.version=$version" -o "$stage/golf" ./cmd/golf
-    cp README.md CONTRIBUTING.md SECURITY.md PRODUCT_PLAN.md LICENSE CONTENT_LICENSE.md THIRD_PARTY_NOTICES.md "$stage/"
-    COPYFILE_DISABLE=1 tar --no-xattrs -czf "$output/golf_${version}_${os}_${arch}.tar.gz" -C "$stage" golf README.md CONTRIBUTING.md SECURITY.md PRODUCT_PLAN.md LICENSE CONTENT_LICENSE.md THIRD_PARTY_NOTICES.md
+    cp README.md CONTRIBUTING.md SECURITY.md LICENSE CONTENT_LICENSE.md THIRD_PARTY_NOTICES.md "$stage/"
+    mkdir -p "$stage/docs"
+    cp docs/AUTHORING.md docs/CURRICULUM.md docs/SOURCES.md docs/LAUNCH_AUDIT.md "$stage/docs/"
+    COPYFILE_DISABLE=1 tar --no-xattrs -czf "$output/golf_${version}_${os}_${arch}.tar.gz" -C "$stage" golf README.md CONTRIBUTING.md SECURITY.md LICENSE CONTENT_LICENSE.md THIRD_PARTY_NOTICES.md docs
 done
 
 cd "$output"

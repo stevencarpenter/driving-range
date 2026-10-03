@@ -1,8 +1,14 @@
 # Driving Range
 
-Daily terminal practice with real tools, a TUI named `golf`, and local performance history.
+Sharpen your terminal skills with short, practical challenges in your real editor and shell.
 
-Solve practical editing, search, shell, and repository tasks. Correctness comes first. Hints, explanations, retries, and export are available without an account. This is an independent application; it neither imports nor modifies `vim-golf` or its state.
+**Driving Range** is a local-first TUI named `golf`. Practice Vim, search, shell scripting, text processing, Git, jj, and Python. Correctness comes first; hints, explanations, retries, and history export require no account. Your tools and dotfiles stay yours.
+
+**Current status: pre-release, 600 exercise drafts across 12 tracks.** The minimum is 365 practice challenges across the tools, not 365 per track. The authored bank is 600, with 100 each for Vim/Neovim, regex/search, Bash/core CLI, and awk. These are the priorities for repeated multi-exercise practice. Fundamentals and deliberate repetition are part of that bank. The year-long curriculum and daily schedule are not published yet. See [the curriculum requirements](docs/CURRICULUM.md) and [launch audit evidence](docs/LAUNCH_AUDIT.md).
+
+[Install](#quick-start) · [Practice](#practice) · [Contribute](CONTRIBUTING.md) · [Author exercises](docs/AUTHORING.md) · [Security](SECURITY.md) · [Licenses](#contributing)
+
+This is an independent application; it neither imports nor modifies `vim-golf` or its state.
 
 ## Quick start
 
@@ -23,6 +29,8 @@ Docker prepares fixtures and checks results with Debian Linux tools. The base im
 
 ## Practice
 
+One exercise is a useful daily session. Stop after it, or continue in Practice for as long as you want; there are no daily locks or streak penalties. Completing catalog content early means a later recommendation may be review rather than an unseen challenge.
+
 Choose a starting track on first launch. `Today`, `Practice`, `Progress`, and `Settings` are the main destinations. Use `Tab` or `1` through `4` to navigate, `j/k` or arrows to select, `Enter` to open, and `?` for help. Search the practice catalog with `/`, including tools, concepts, `difficulty:1`, `solved`, `missed`, or `untried`.
 
 1. Open an exercise and read its success conditions.
@@ -42,14 +50,24 @@ In shell exercises, `golf-brief` prints the active brief. Output exercises requi
 
 ### Included exercises
 
-The embedded catalog contains **48 exercises across 12 tracks**:
+The embedded catalog contains **600 exercises across 12 tracks**:
 
 | Tracks | Exercises | Daily assignments |
 | --- | --- | --- |
-| Vim, search (`rg`, regex, `grep`), Bash shell | 10 each | One per track per day |
-| `sed`, `awk`, `fd`, `find` | 2 each | Practice samples |
-| Python, zsh, fzf | 2 each | Practice samples |
-| Git, jj | 2 each | Practice samples |
+| Vim | 100 | Ten-day preview assignments; additional practice |
+| Search (`rg`, regex, `grep`) | 100 | Ten-day preview assignments; additional practice |
+| Bash/core CLI | 100 | Ten-day preview assignments; additional practice |
+| `awk` | 100 | Practice |
+| `sed` | 25 | Practice |
+| `fd` | 20 | Practice |
+| `find` | 25 | Practice |
+| Python | 35 | Practice |
+| zsh | 20 | Practice |
+| fzf | 10 | Practice |
+| Git | 35 | Practice |
+| jj | 30 | Practice |
+
+Vim search/editing, regex, Bash/core CLI, and awk are the priorities. The added drills repeat forward/backward and word search, next-match editing, scoped substitution, captures, global deletion, regex boundaries and extraction, head/tail/cut/paste/sort/uniq/tr/comm/join/wc/tee, and awk fields, records, filters, grouped reports, ranges, and numbering. Repetition is intentional; Practice remains open for sessions of two to ten exercises or more. [Source research and rights](docs/SOURCES.md) are recorded separately from executable and editorial review.
 
 The fixed ten-day preview runs **14 September through 23 September 2026, UTC**. An attempt keeps its assignment when a session crosses midnight. Outside those dates, the TUI labels its selection as practice, and `golf today` reports that no daily is published. The entire catalog remains playable. There is no rolling daily content service or automatic content download.
 
@@ -145,6 +163,6 @@ just audit-solutions
 
 `check` runs unit tests, `go vet`, catalog metadata validation, and installation regression checks without Docker. `integration` and `audit-solutions` require the locally built image and explicitly execute exercises in Docker. See [CONTRIBUTING.md](CONTRIBUTING.md) for content contracts and release checks.
 
-The product remains open source with local history, replay, hints, and export. Accounts, billing, hosted execution, and paid infrastructure are not implemented. Subscription work depends on evidence of repeat use and willingness to pay, as described in [PRODUCT_PLAN.md](PRODUCT_PLAN.md).
+Local history, replay, hints, and export are core features. Accounts, billing, hosted execution, and paid infrastructure are not implemented. See [the current launch requirements](docs/CURRICULUM.md) and [source policy](docs/SOURCES.md) before contributing exercises.
 
 Application code, fixtures, and solution code use the [MIT license](LICENSE). Exercise prose uses [CC BY-SA 4.0](CONTENT_LICENSE.md). Bundled dependencies retain their [third-party notices](THIRD_PARTY_NOTICES.md).

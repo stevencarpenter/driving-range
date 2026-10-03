@@ -33,11 +33,12 @@ jobs:
       - run: sh -n scripts/release.sh
 
   docker:
-    if: github.event_name == 'workflow_dispatch' && inputs.docker_checks
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.docker_checks)
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, ubuntu-24.04-arm]
+        shard: [base, vim, search, shell, awk, ancillary]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     steps:
@@ -53,6 +54,7 @@ jobs:
       - name: Install native practice tools
         run: sudo apt-get update && sudo apt-get install -y neovim zsh
       - run: just setup
-      - run: just integration
-      - run: just audit-solutions
-      - run: just smoke
+      - run: just integration "${{ matrix.shard }}"
+      - run: just audit-solutions "${{ matrix.shard }}"
+      - if: matrix.shard == 'base'
+        run: just smoke

@@ -24,9 +24,9 @@ Resource limits in this table apply to Docker execution, except the one-hour nat
 
 ## Dependency scan
 
-The 14 September 2026 Trivy scan of runtime image `sha256:db877ef07ae1b0792159fd370373139124d3cbb4eade88300f7941bbc654cdcf` reports **128 distinct advisory IDs** across 330 package/advisory matches: 16 high, 52 medium, 56 low, and 4 unknown. No critical finding or Debian fixed version for the remaining findings is recorded in that scan. These are package-presence findings; reachability and exploitability have not been established.
+The 30 September 2026 UTC Trivy 0.72.0 scan of rebuilt Linux arm64 runtime image `sha256:d28b2375d71ed9dd8692609ec57c326853622f2e4969e142df34dbb3c55aa72f` reports **148 distinct advisory IDs** across 386 package/advisory matches: 20 high, 49 medium, 72 low, and 7 unknown. No critical finding or Debian fixed version for the remaining findings is recorded in that scan. These are package-presence findings; reachability and exploitability have not been established. The image was built under the development tag `driving-range-runtime:oss-prep`; it is not a published release.
 
-The rebuilt image removes the 13 fixable advisory IDs identified in the prior scan by installing updated gzip, libc, PCRE2, and SQLite packages. Debian's trackers record the applicable [gzip](https://security-tracker.debian.org/tracker/CVE-2026-41992), [PCRE2](https://security-tracker.debian.org/tracker/CVE-2026-86145), and [SQLite](https://security-tracker.debian.org/tracker/CVE-2026-11822) fixes. The application requires Go 1.26.8 or newer, with CI and release builds pinned to 1.26.8.
+The rebuild updates PCRE2 from `10.46-1~deb13u2` to `10.46-1~deb13u3`, removing the two fixable advisory IDs reported for that package by the preceding scan. Debian's [PCRE2 tracker](https://security-tracker.debian.org/tracker/source-package/pcre2) identifies the security update for the JIT out-of-bounds write advisory. Go 1.26.8 source vulnerability scans found no vulnerabilities for macOS arm64 and Linux amd64/arm64 on the same date. The application requires Go 1.26.8 or newer, with CI and release builds pinned to 1.26.8. These results are not a claim that the application or runtime is vulnerability-free.
 
 Reproduce a current image scan with an installed Trivy binary:
 
@@ -34,7 +34,7 @@ Reproduce a current image scan with an installed Trivy binary:
 trivy image --scanners vuln --format json --output trivy-runtime.json --timeout 5m driving-range-runtime:1
 ```
 
-The tag can identify a different image after rebuilding, and advisory data changes over time. Compare the report's image ID and scan timestamp before comparing counts. This preview does not claim a vulnerability-free image.
+To scan the audited development image, replace `driving-range-runtime:1` with `driving-range-runtime:oss-prep`. The tag can identify a different image after rebuilding, and advisory data changes over time. Compare the report's image ID and scan timestamp before comparing counts. This preview does not claim a vulnerability-free image.
 
 ## Runtime recovery
 
@@ -59,4 +59,4 @@ JSON exports include attempt identity, environment IDs, sessions, and check deta
 
 ## Reporting
 
-Include the source revision or `golf version`, host architecture, Docker version, exercise ID/revision, and a minimal synthetic reproduction. Do not include credentials, private workspaces, or personal history. For suspected host access, preserve logs and stop using the affected build. Contact the repository owner privately through an available established channel before posting exploit details. No response-time or supported-release guarantee is established for this preview.
+Include the source revision or `golf version`, host architecture, Docker version, exercise ID/revision, and a minimal synthetic reproduction. Do not include credentials, private workspaces, or personal history. For suspected host access, preserve logs and stop using the affected build. For a public release, use [GitHub private vulnerability reporting](https://github.com/stevencarpenter/driving-range/security/advisories/new) when the repository's Security tab exposes the Report a vulnerability button. This repository is currently private; GitHub documents that reporting feature for public repositories. The maintainer must enable it and verify receipt before public launch. If that channel is unavailable, contact the repository owner privately through an established channel; do not open a public issue with exploit details. No response-time or supported-release guarantee is established for this preview.
