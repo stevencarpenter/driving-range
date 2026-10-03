@@ -1,0 +1,1 @@
+grep '^ERROR' app.log

@@ -1,0 +1,40 @@
+#!/usr/bin/env zsh
+
+local -i ret
+
+if (( ${+widgets[-z4h-orig-zle-line-pre-redraw]} )); then
+  zle -- -z4h-orig-zle-line-pre-redraw "$@" || ret=$?
+fi
+
+if (( ${+_z4h_substring_search_highlight} )) &&
+   [[ ${_history_substring_search_cursor-} != $CURSOR ||
+      ${_history_substring_search_result-} != $BUFFER ]]; then
+  typeset -g _history_substring_search_result=
+  typeset -g _history_substring_search_query_highlight=
+  unset _z4h_substring_search_highlight _history_substring_search_cursor
+fi
+
+if (( PENDING || KEYS_QUEUED_COUNT )); then
+  if (( ! ${+_z4h_redraw_fd} )); then
+    typeset -gi _z4h_redraw_fd
+    if sysopen -o cloexec -ru _z4h_redraw_fd /dev/null; then
+      zle -F $_z4h_redraw_fd -z4h-redraw-buffer
+    else
+      unset _z4h_redraw_fd
+    fi
+  fi
+  if [[ -n "${POSTDISPLAY-}" &&
+        "${#BUFFER}" -ne "${#_z4h_autosuggest_buffer}" &&
+        -v region_highlight ]]; then
+    POSTDISPLAY=${_z4h_autosuggestion:${#BUFFER}}
+    if [[ -n "$POSTDISPLAY" ]]; then
+      region_highlight[-1]="${#BUFFER} $((${#BUFFER} + ${#POSTDISPLAY})) $ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE"
+    else
+      unset POSTDISPLAY _z4h_autosuggest_buffer _z4h_autosuggestion
+    fi
+  fi
+else
+  -z4h-redraw-buffer
+fi
+
+return ret

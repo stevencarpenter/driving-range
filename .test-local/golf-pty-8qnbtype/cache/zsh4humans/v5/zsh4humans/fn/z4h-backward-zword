@@ -1,0 +1,14 @@
+#!/usr/bin/env zsh
+
+eval "$_z4h_opt"
+local word buf tail
+repeat ${NUMERIC:-1}; do
+  buf=$PREBUFFER$BUFFER
+  for word in '' ${(Z:n:)buf}; do
+    tail=${${buf:$#word}##[[:space:]]#}
+    (( $#tail <= $#RBUFFER )) && break
+    buf=$tail
+  done
+  CURSOR=$(($#buf <= $#BUFFER ? $#BUFFER - $#buf : 0))
+done
+return 0

@@ -1,0 +1,8 @@
+#!/bin/bash
+# Ask golf to check your work without leaving the exercise. The workbench consumes this
+# sequence, so it never reaches the terminal.
+if [ -z "$GOLF_WORKBENCH" ]; then
+  echo "golf-check needs the embedded workbench. Exit the exercise to check your work." >&2
+  exit 1
+fi
+printf '\033]9270;golf=check\007'

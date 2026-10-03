@@ -1,0 +1,16 @@
+#!/usr/bin/env zsh
+
+eval "$_z4h_opt"
+local word buf
+repeat ${NUMERIC:-1}; do
+  buf=$PREBUFFER$BUFFER
+  for word in ${(Z:n:)buf} ''; do
+    (( $#buf < $#RBUFFER )) && break
+    buf=${${buf##[[:space:]]#}:$#word}
+  done
+  CURSOR=$(($#BUFFER - $#buf))
+  if (( CURSOR > _z4h_cursor_max() )); then
+    (( --CURSOR ))
+  fi
+done
+return 0

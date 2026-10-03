@@ -1,0 +1,7 @@
+Practice selecting log records by their level. A reliable search distinguishes a record label from the same word appearing later in a message.
+
+Print records in app.log that begin with ERROR, in input order.
+
+Edit solution.sh. Checking runs it against each fixture. Read the input files relative to the workspace; do not hardcode example output. Output must match exactly, including the final newline. Diagnostics belong on stderr.
+
+Key reference: grep --help; rg --help.

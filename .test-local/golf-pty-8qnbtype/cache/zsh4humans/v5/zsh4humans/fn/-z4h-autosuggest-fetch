@@ -1,0 +1,34 @@
+#!/usr/bin/env zsh
+
+if [[ -z $BUFFER || $CONTEXT != start ]]; then
+  unset POSTDISPLAY _z4h_autosuggest_buffer _z4h_autosuggestion
+else
+  () {
+    if [[ "$BUFFER" == "${_z4h_autosuggest_buffer-}"* ]]; then
+      if (( ${#BUFFER} == ${#_z4h_autosuggest_buffer} )); then
+        return
+      elif [[ -v _z4h_autosuggestion ]]; then
+        if [[ -z "$_z4h_autosuggestion" ]]; then
+          return
+        elif [[ $POSTDISPLAY == ${BUFFER:${#_z4h_autosuggest_buffer}}* ]]; then
+          POSTDISPLAY="${POSTDISPLAY:$((${#BUFFER} - ${#_z4h_autosuggest_buffer}))}"
+          typeset -g _z4h_autosuggest_buffer="$BUFFER"
+          return
+        fi
+      fi
+    fi
+    local suggestion
+    if [[ ${+_ZSH_AUTOSUGGEST_DISABLED} == 0 &&
+          ${#BUFFER} -le ${ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE:-${#BUFFER}} ]]; then
+      _zsh_autosuggest_fetch_suggestion "$BUFFER"
+    fi
+    POSTDISPLAY=${suggestion:${#BUFFER}}
+    typeset -g _z4h_autosuggest_buffer="$BUFFER"
+    typeset -g _z4h_autosuggestion="$suggestion"
+  }
+fi
+
+if [[ -n $POSTDISPLAY ]]; then
+  region_highlight+=(
+    "${#BUFFER} $((${#BUFFER} + ${#POSTDISPLAY})) $ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE")
+fi

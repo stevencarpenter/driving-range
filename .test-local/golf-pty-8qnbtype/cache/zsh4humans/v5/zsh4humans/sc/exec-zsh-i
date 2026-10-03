@@ -1,0 +1,115 @@
+#!/bin/sh
+#
+# This file gets sourced. Does not return on success.
+
+_z4h_try_exec_zsh_i() {
+  >'/dev/null' 2>&1 command -v "$1" || 'return' '0'
+  <'/dev/null' >'/dev/null' 2>&1 'command' "$1" '-fc' '
+    [[ $ZSH_VERSION == (5.<8->*|<6->.*) ]] || return
+    exe=${${(M)0:#/*}:-$commands[$0]}
+    zmodload -s zsh/terminfo zsh/zselect ||
+      [[ $ZSH_PATCHLEVEL == zsh-5.8-0-g77d203f && $exe == */bin/zsh &&
+         -e ${exe:h:h}/share/zsh/5.8/scripts/relocate ]]' || 'return' '0'
+  # >&2 'printf' '\033[33mz4h\033[0m: starting \033[32mzsh\033[0m\n'
+  'exec' "$@" || 'return'
+}
+
+_z4h_exec_zsh_i() {
+  '_z4h_try_exec_zsh_i' 'zsh'                      "$@" || 'return'
+  '_z4h_try_exec_zsh_i' '/usr/local/bin/zsh'       "$@" || 'return'
+  '_z4h_try_exec_zsh_i' ~/'.local/bin/zsh'         "$@" || 'return'
+  '_z4h_try_exec_zsh_i' ~/'.zsh-bin/bin/zsh'       "$@" || 'return'
+  '_z4h_try_exec_zsh_i' "${PREFIX-}"/local/bin/zsh "$@" || 'return'
+
+  if '[' '-r' "$Z4H"/stickycache/zshdir ]; then
+    'local' 'dir'
+    IFS='' 'read' '-r' 'dir' <"$Z4H"/stickycache/zshdir || 'return'
+    '_z4h_try_exec_zsh_i' "$dir"/bin/zsh           "$@" || 'return'
+  fi
+
+  # There is no suitable Zsh. Need to install.
+  >&2 'printf' '\033[33mz4h\033[0m: cannot find usable \033[32mzsh\033[0m\n'
+  >&2 'printf' '\033[33mz4h\033[0m: fetching \033[1mzsh 5.8\033[0m installer\n'
+
+  'local' 'install'
+  if command -v 'mktemp' >'/dev/null' 2>&1; then
+    install="$('command' 'mktemp' "$Z4H"/tmp/install-zsh.XXXXXXXXXX)" || 'return'
+  else
+    install="$Z4H"/tmp/install-zsh.tmp."$$"
+    '[' '!' '-e' "$install" ']' || 'command' 'rm' '-rf' '--' "$install" || 'return'
+  fi
+
+  'local' zsh_url='https://raw.githubusercontent.com/romkatv/zsh-bin/master/install'
+
+  (
+    'local' 'err'
+    if command -v 'curl' >'/dev/null' 2>&1; then
+      err="$(command curl -fsSL -- "$zsh_url" 2>&1 >"$install")"
+    elif command -v 'wget' >'/dev/null' 2>&1; then
+      err="$(command wget -O-   -- "$zsh_url" 2>&1 >"$install")"
+    else
+      >&2 'printf' '\033[33mz4h\033[0m: please install \033[32mcurl\033[0m or \033[32mwget\033[0m\n'
+      'exit' '1'
+    fi
+    if '[' "$?" '!=' '0' ']'; then
+      >&2 'printf' "%s\n" "$err"
+      >&2 'printf' '\033[33mz4h\033[0m: failed to download \033[31m%s\033[0m\n' "$zsh_url"
+      'command' 'rm' '-f' '--' "$install"
+      'exit' '1'
+    fi
+  ) || 'return'
+
+  if '[' '-n' "${Z4H_SSH-}" '-o' "${USER-}" '=' 'cloudshell-user' ']'; then
+    >&2 'printf' '\033[33mz4h\033[0m: installing \033[1mzsh 5.8\033[0m to \033[4m~/.local\033[0m\n'
+    'command' 'sh' '--' "$install" '-d' ~/'.local' '-e' 'no' '-q' || 'return'
+    'local' 'dir'="$HOME"/.local
+  else
+    'local' 'zshdir' 'dir'
+    if command -v 'mktemp' >'/dev/null' 2>&1; then
+      zshdir="$('command' 'mktemp' "$Z4H"/tmp/zshdir.XXXXXXXXXX)" || 'return'
+    else
+      zshdir="$Z4H"/tmp/zshdir.tmp."$$"
+      '[' '!' '-e' "$zshdir" ']' || 'command' 'rm' '-rf' '--' "$zshdir" || 'return'
+    fi
+    while 'true'; do
+      >&2 'echo'
+      if 'command' 'sh' '--' "$install" '-s' '3' 3>"$zshdir"; then
+        IFS='' 'read' '-r' 'dir' <"$zshdir"                          || 'return'
+        'command' 'rm' '-f' '--' "$Z4H"/stickycache/zshdir           || 'return'
+        'command' 'mv' '-f' '--' "$zshdir" "$Z4H"/stickycache/zshdir || 'return'
+        'break'
+      fi
+      >&2 'echo'
+      >&2 'printf' '\033[33mz4h\033[0m: \033[32mZsh 5.8\033[0m installation \033[31mfailed\033[0m\n'
+      >&2 'echo'
+      while 'true'; do
+        >&2 'printf' 'Try again? [y/N] '
+        'local' yn=''
+        IFS='' 'read' '-r' 'yn' || yn='n'
+        case "$yn" in
+          'y'|'Y'|'yes'|'YES'|'Yes') 'break';;
+          'n'|'N'|'no'|'NO'|'No')    'return' '1';;
+        esac
+      done
+    done
+  fi
+
+  if ! '_z4h_try_exec_zsh_i' "$dir"/bin/zsh "$@"; then
+    >&2 'printf' '\033[33mz4h\033[0m: \033[31minternal error\033[0m\n'
+    'return' '1'
+  fi
+}
+
+if '[' '-n' "${ZSH_VERSION-}" ']'; then
+  # TODO: propagate original options here. Will need to save them similarly
+  # to _z4h_script_argv.
+  if '[' "${+ZSH_EXECUTION_STRING}" '=' '1' ']'; then
+    '_z4h_exec_zsh_i' '-i' '-c' "$ZSH_EXECUTION_STRING"
+  elif '[' "${+ZSH_SCRIPT}" '=' '1' ']'; then
+    '_z4h_exec_zsh_i' '-i' '--' "$ZSH_SCRIPT" "${_z4h_script_argv[@]}"
+  fi
+fi
+'_z4h_exec_zsh_i' '-i'
+
+'unset' '-f' '_z4h_try_exec_zsh_i' '_z4h_exec_zsh_i'
+'return' '1'

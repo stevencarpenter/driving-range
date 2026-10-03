@@ -1,0 +1,147 @@
+#!/usr/bin/env zsh
+
+local url postinstall command
+
+if [[ $1 == */* ]]; then
+  if [[ $1 == *@* ]]; then
+    url=https://github.com/${1%%@*}/archive/${1#*@}.tar.gz
+    1=${1%%@*}
+  else
+    url=https://github.com/$1/archive/master.tar.gz
+  fi
+  if ! zstyle -s :z4h:$1 postinstall postinstall; then
+    case $1 in
+      ohmyzsh/ohmyzsh)
+        postinstall=-z4h-postinstall-ohmyzsh
+      ;;
+      MichaelAquilina/zsh-you-should-use)
+        postinstall=-z4h-postinstall-zsh-you-should-use
+      ;;
+      wfxr/forgit)
+        postinstall=-z4h-postinstall-forgit
+      ;;
+      changyuheng/fz)
+        postinstall=-z4h-postinstall-fz
+      ;;
+      zsh-users/(zsh-syntax-highlighting|zsh-autosuggestions|zsh-history-substring-search))
+        postinstall=-z4h-postinstall-zsh-users
+      ;;
+      *)
+        postinstall=
+      ;;
+    esac
+  fi
+else
+  local -a channel
+  zstyle -a :z4h:$1 channel channel || channel=(stable)
+  local tmux_cmd='sh -- '${(q)Z4H}/zsh4humans/sc/install-tmux' -d "${Z4H_PACKAGE_DIR}" -q'
+  tmux_cmd+=' && print -r -- "$EPOCHREALTIME" >"${Z4H_PACKAGE_DIR}"/stamp'
+  case $#channel-$channel[1] in
+    2-command) command=$channel[2];;
+    1-stable|1-testing)
+      case $1 in
+        tmux)                       command=$tmux_cmd;;
+        terminfo)                   url=https://github.com/romkatv/terminfo/archive/v1.4.0.tar.gz;;
+        *)                          url=https://github.com/zsh4humans/$1/archive/z4h-$channel[1].tar.gz;;
+      esac
+    ;;
+    1-dev)
+      case $1 in
+        fzf)                          url=https://github.com/junegunn/$1/archive/master.tar.gz;;
+        powerlevel10k)                url=https://github.com/romkatv/$1/archive/master.tar.gz;;
+        systemd)                      url=https://github.com/systemd/$1/archive/master.tar.gz;;
+        zsh-completions)              url=https://github.com/zsh-users/$1/archive/master.tar.gz;;
+        zsh-autosuggestions)          url=https://github.com/zsh-users/$1/archive/master.tar.gz;;
+        zsh-syntax-highlighting)      url=https://github.com/zsh-users/$1/archive/master.tar.gz;;
+        zsh-history-substring-search) url=https://github.com/zsh-users/$1/archive/master.tar.gz;;
+        terminfo)                     url=https://github.com/romkatv/terminfo/archive/v1.3.0.tar.gz;;
+        tmux)                         command=$tmux_cmd;;
+        *)
+          print -Pru2 -- "%F{3}z4h%f: %F{1}internal error%f: unknown package: ${1//\%/%%}"
+          return 1
+        ;;
+      esac
+    ;;
+    1-none)
+      zf_mkdir -p -- $Z4H/$1 || return
+      return
+    ;;
+    *)
+      print -Pru2 -- '%F{3}z4h%f: invalid zstyle'
+      print -Pru2 -- ''
+      print -Pru2 -- "  %F{2}zstyle%f :z4h:${(q)1//\%/%%} channel %F{1}${(j: :)${(@q)channel//\%/%%}}%f"
+      print -Pru2 -- ''
+      print -Pru2 -- 'Supported values: %Bstable%b, %Btesting%b and %Bdev%b.'
+      return 1
+    ;;
+  esac
+  (( $+functions[-z4h-postinstall-$1] )) && postinstall=-z4h-postinstall-$1
+fi
+
+local suf
+[[ $1 == systemd ]] && suf=' completions'
+
+if [[ -e $Z4H/.updating ]]; then
+  print -Pru2 -- "%F{3}z4h%f: updating %B${1//\%/%%}%b$suf"
+else
+  print -Pru2 -- "%F{3}z4h%f: installing %B${1//\%/%%}%b$suf"
+fi
+
+local dst=$Z4H/$1
+
+zf_mkdir -p -- ${dst:h} 2>/dev/null || zf_mkdir -p -- ${dst:h} || return
+
+local old new
+
+{
+  if (( $+commands[mktemp] )); then
+    old="$(command mktemp -d -- $dst.old.XXXXXXXXXX)" || return
+    new="$(command mktemp -d -- $dst.new.XXXXXXXXXX)" || return
+  else
+    old=$dst.old.$$
+    new=$dst.new.$$
+    zf_rm -rf -- $old $new   || return
+    zf_mkdir -p -- $old $new || return
+  fi
+
+  local Z4H_PACKAGE_NAME=$1 Z4H_PACKAGE_DIR=$new/${1:t}
+
+  if [[ -n $command ]]; then
+    () { eval $command } || return 1
+    if [[ ! -d $Z4H_PACKAGE_DIR ]]; then
+      print -Pru2 -- "%F{3}z4h%f: custom command failed to install: %F{1}${Z4H_PACKAGE_DIR//\%/%%}%f"
+      return 1
+    fi
+  else
+    local err
+    if (( $+commands[curl] )); then
+      err="$(command curl -fsSL -- $url 2>&1 >$new/snapshot.tar.gz)"
+    elif (( $+commands[wget] )); then
+      err="$(command wget -O-   -- $url 2>&1 >$new/snapshot.tar.gz)"
+    else
+      print -Pru2 -- "%F{3}z4h%f: please install %F{1}curl%f or %F{1}wget%f"
+      return 1
+    fi
+    if (( $? )); then
+      print -ru2 -- $err
+      print -Pru2 -- "%F{3}z4h%f: failed to download %F{1}${url//\%/%%}%f"
+      return 1
+    fi
+    command tar -C $new -xzf $new/snapshot.tar.gz || return
+    local dirs=($new/*-*(N/))
+    if (( $#dirs != 1 )); then
+      print -Pru2 -- "%F{3}z4h%f: invalid content: %F{1}${url//\%/%%}%f"
+      return 1
+    fi
+    if [[ $dirs[1] != $new/${1:t} ]]; then
+      -z4h-mv $dirs[1] $new/${1:t} || return
+    fi
+  fi
+
+  eval $postinstall || return
+
+  [[ ! -e $dst ]] || -z4h-mv $dst $old/${1:t} 2>/dev/null || zf_rm -rf -- $dst || return
+  -z4h-mv $new/${1:t} $dst || return
+} always {
+  [[ -z $old && -z $new ]] || zf_rm -rf -- $old $new
+}
