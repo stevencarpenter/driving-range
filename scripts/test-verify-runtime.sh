@@ -27,6 +27,7 @@ curriculum='^TestIntegration(CurriculumRejectsWrongAnswers|NewCurriculumRejectsH
     done
 } > "$work/expected"
 cmp "$CALLS" "$work/expected"
+cat "$CALLS"
 : > "$CALLS"
 sh "$root/scripts/verify-runtime.sh" all references > /dev/null
 cat > "$work/expected" <<'EXPECTED'

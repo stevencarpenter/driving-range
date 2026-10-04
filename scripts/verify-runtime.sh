@@ -16,10 +16,7 @@ case "$shard" in
         exit 0
         ;;
     base) tracks='' ;;
-    vim) tracks='vim' ;;
-    search) tracks='search' ;;
-    shell) tracks='shell' ;;
-    awk) tracks='awk' ;;
+    vim|search|shell|awk) tracks=$shard ;;
     ancillary) tracks='sed|fd|find|python|zsh|fzf|git|jj' ;;
     *) printf 'Unknown runtime shard: %s\n' "$shard" >&2; exit 2 ;;
 esac
