@@ -53,7 +53,7 @@ Fixture paths must be relative regular files with no traversal, symlinks, hard l
 
 Daily entries fix a UTC date, track, exercise revision, and seed. Do not silently replace an existing assignment or change a released revision's meaning. A corrected exercise gets a new revision. The embedded preview ends on 23 September 2026; extending it requires explicit new schedule entries.
 
-Submit focused changes with the relevant validation command and observed result. Keep performance metrics comparable across revisions and environments. Do not change the sibling `vim-golf` repository as part of this project.
+Submit focused changes with the relevant validation command and observed result. Keep performance metrics comparable across revisions and environments.
 
 ## Release packaging
 
@@ -86,6 +86,6 @@ A checksum detects altered bytes. An attestation additionally binds an artifact 
 
 ## Licensing
 
-Contributions to application code, fixtures, setup scripts, validators, and solution code use [MIT](LICENSE). Instructional prose uses [CC BY-SA 4.0](CONTENT_LICENSE.md). Include attribution and modification notices for permitted adaptations. Do not copy content from `vim-golf` or an external challenge site without confirmed rights and provenance.
+Contributions to application code, fixtures, setup scripts, validators, and solution code use [MIT](LICENSE). Instructional prose uses [CC BY-SA 4.0](CONTENT_LICENSE.md). Include attribution and modification notices for permitted adaptations. Do not copy external content without confirmed rights and provenance.
 
 When changing dependencies, update [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) from the module cache's license files for modules returned by `go list -deps` on each release target. Retain additional upstream license notices. Release archives include this notice file and the Go runtime license.

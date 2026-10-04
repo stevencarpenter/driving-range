@@ -12,7 +12,7 @@ Short practical exercises for developers who want better command-line fluency. U
 
 The local product includes 600 exercises across 12 tracks, native practice, isolated checks, and durable history. Only the ten-day September 2026 preview has published daily assignments. A year-long mixed-tool schedule remains a [release requirement](docs/CURRICULUM.md), not shipped behavior. [PRODUCT_PLAN.md](PRODUCT_PLAN.md) records the historical proposal.
 
-Preserve `vim-golf` as an independent project. Do not claim market validation, payment demand, completed human editorial review, or measured learning effectiveness.
+Do not claim market validation, payment demand, completed human editorial review, or measured learning effectiveness.
 
 ## Stack
 

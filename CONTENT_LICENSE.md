@@ -10,4 +10,4 @@ Suggested attribution: “Driving Range curriculum, Steven Carpenter, CC BY-SA 4
 
 Application code, fixture files and expected data, setup scripts, validator code, and reference solution code are covered by the repository's [MIT license](LICENSE), including when those code/data fields appear inside the catalog JSON. Other project documentation is MIT unless it carries a separate notice. Third-party runtime tools retain their respective licenses.
 
-The initial catalog contains original exercises written for Driving Range. It does not copy or relicense the separate `vim-golf` repository or external game content. An executable validation result does not represent human editorial review.
+The initial catalog contains original exercises written for Driving Range. It does not copy or relicense external game content. An executable validation result does not represent human editorial review.
