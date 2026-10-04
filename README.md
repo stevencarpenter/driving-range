@@ -4,15 +4,15 @@ Sharpen your terminal skills with short, practical challenges in your real edito
 
 **Driving Range** is a local-first TUI named `golf`. Practice Vim, search, shell scripting, text processing, Git, jj, and Python. Correctness comes first; hints, explanations, retries, and history export require no account. Your tools and dotfiles stay yours.
 
-**Current status: pre-release, 600 exercise drafts across 12 tracks.** The minimum is 365 practice challenges across the tools, not 365 per track. The authored bank is 600, with 100 each for Vim/Neovim, regex/search, Bash/core CLI, and awk. These are the priorities for repeated multi-exercise practice. Fundamentals and deliberate repetition are part of that bank. The year-long curriculum and daily schedule are not published yet. See [the curriculum requirements](docs/CURRICULUM.md) and [launch audit evidence](docs/LAUNCH_AUDIT.md).
+**Current status: pre-release, 600 exercises across 12 tracks.** Vim/Neovim, search/regex, Bash/core CLI, and awk each have 100 exercises, including fundamentals and deliberate repetition. The bank exceeds the 365-exercise minimum across all tools, but the year-long mixed-tool schedule is not published. Exercise count is not evidence of completed execution checks or editorial review. See [the curriculum requirements](docs/CURRICULUM.md) and [recorded launch audit evidence](docs/LAUNCH_AUDIT.md).
 
-[Install](#quick-start) · [Practice](#practice) · [Contribute](CONTRIBUTING.md) · [Author exercises](docs/AUTHORING.md) · [Security](SECURITY.md) · [Licenses](#contributing)
+[Get started](#quick-start) · [Install or upgrade](#installation-and-upgrades) · [Practice](#practice) · [Contribute](CONTRIBUTING.md) · [Author exercises](docs/AUTHORING.md) · [Security](SECURITY.md) · [Licenses](#contributing)
 
 This is an independent application; it neither imports nor modifies `vim-golf` or its state.
 
 ## Quick start
 
-From this checkout, with Go 1.27 or newer, `just`, your practice tools (including `nvim`, Bash, and zsh), and a running Docker-compatible Linux engine:
+From a source checkout on macOS or Linux, install Go 1.27 or newer, `just`, the Docker CLI, and the native tools for your chosen exercises. Vim exercises launch `nvim`; Bash and zsh exercises need their respective shells. Start a Docker-compatible Linux engine, then run:
 
 ```sh
 just build
@@ -21,11 +21,11 @@ just build
 ./golf
 ```
 
-`setup` explicitly downloads the runtime's build inputs. Install and start your Docker engine first; on macOS it needs a Linux VM. `doctor` checks the daemon and the locally built image. The exercise catalog and Docker build context are embedded in the binary, so an installed binary also supports `setup`. Practice works offline after the image is built.
+`setup` explicitly downloads the runtime's build inputs. Install and start your Docker engine first; on macOS it needs a Linux VM. `doctor` checks daemon access and image presence, not container startup or native tool availability. The exercise catalog and Docker build context are embedded in the binary, so an installed binary also supports `setup`. Fixture preparation and checking work offline after the image is built. Native tools or plugins may still use the network.
 
 Practice launches your installed Neovim or an interactive shell with your normal environment. Exercises that teach the shell itself use that shell; otherwise your `SHELL` is preferred. Your dotfiles, Neovim plugins and keybindings, shell aliases, and tool configuration load normally. `HOME`, `XDG_*`, `NVIM_APPNAME`, and `ZDOTDIR` are inherited. Native practice has your normal host permissions and network access.
 
-Docker prepares fixtures and checks results with Debian Linux tools. The base image digest and jj archive hashes are pinned; Debian packages resolve at build time. Each attempt records the checker image ID. Native tool versions and configuration are not pinned; host utilities can differ from the Linux checker, particularly on macOS.
+Docker prepares fixtures and checks results with Debian Linux tools. The base image digest, jj archive hashes, and selected security-fix package versions are pinned; other Debian package versions resolve at build time. Each attempt records the checker image ID. Native tool versions and configuration are not pinned; host utilities can differ from the Linux checker, particularly on macOS.
 
 ## Practice
 
@@ -33,32 +33,32 @@ One exercise is a useful daily session. Stop after it, or continue in Practice f
 
 Choose a starting track on first launch. `Today`, `Practice`, `Progress`, and `Settings` are the main destinations. Use `Tab` or `1` through `4` to navigate, `j/k` or arrows to select, `Enter` to open, and `?` for help. Search the practice catalog with `/`, including tools, concepts, `difficulty:1`, `solved`, `missed`, or `untried`.
 
-1. Open an exercise and read its success conditions.
+1. Open an exercise and read its success conditions. The pane shows the objective and at most the brief's opening line, not the full instructions.
 2. Press `Enter` to launch its real editor or shell. It runs in a pane with the objective on a band above it, and keeps its normal keybindings.
 3. Save and exit Neovim with `:wq`, or exit the exercise shell with `exit`. Golf checks the result and saves it.
-4. Resume after a failed check, request a hint with `h`, or create a separate attempt with `r`.
+4. Resume after a failed check, request a hint with `h`, or create a separate attempt with `r`. After passing, `n` opens the next unsolved exercise in the same track.
 
-`F12` is the only key golf takes while an exercise runs. It opens a palette: `c` check, `h` hint, `v` reveal, `b` collapse or expand the brief band, `q` quit, `Esc` back to the exercise. Every other keystroke reaches the child, including all Ctrl and Alt chords and the tmux prefix.
+While the embedded exercise pane has focus, golf reserves `F12` to open a palette: `c` check, `h` hint, `v` request reveal, `b` collapse or expand the brief band, `q` quit golf, `Esc` return to the exercise. Other key presses are forwarded to the child; while the palette is open, its next key is handled by golf. Your terminal or tmux may intercept keys before golf receives them.
 
-`golf-check` and `golf-hint` do the same from the exercise prompt, taking no keys at all. A check run this way reports on the status line and leaves the attempt open, so you can keep working; the attempt is finished by the check that runs when you exit.
+`golf-check` and `golf-hint` request the same actions from the embedded exercise prompt. An interim check records a result without finishing the attempt; exiting the child runs the final check. Save editor changes before checking. The pane displays only the first line of hint text, and its reveal request cannot currently complete confirmation. Exit the child, then use `h` or `v` on the exercise detail screen for complete hints or the solution.
 
-`golf --classic` gives the exercise the whole terminal instead, which is the behaviour before the pane existed. Golf also falls back to it, and says so, if it cannot allocate a pseudo-terminal.
+`golf --classic` opens the TUI with full-terminal exercise handoff instead of the embedded pane. `golf play EXERCISE_OR_ATTEMPT` always uses full-terminal handoff. In either case, `golf-check` and `golf-hint` are unavailable; exit the child to check. The TUI also attempts full-terminal handoff if pane startup fails.
 
-In shell exercises, `golf-brief` prints the active brief. Output exercises require a reusable submission in `solution.sh`, or `solution.py` for Python. Edit that file inside the exercise workspace, then exit. The checker replays the submission against multiple fixtures; commands typed only at the prompt are not an output submission. File-editing exercises check the resulting tree. Git and jj exercises check repository state.
+In shell exercises, `golf-brief` prints the complete active brief. Output exercises require a reusable submission in `solution.sh`, or `solution.py` for Python. The checker runs that file with the declared interpreter: Bash, zsh, or Python. Follow the brief even when your interactive shell differs. The checker replays only the submitted file against fresh fixtures; commands typed only at the prompt and auxiliary files you create are not replayed. File-editing exercises check exact file contents and reject extra files. Repository-state exercises check Git or jj state; some jj exercises instead submit reusable report scripts.
 
-`v` reveals the explanation and reference solution. Revealing an active attempt records assistance. External assistance can also be recorded with `x`; assistance remains recorded for that attempt. Finished attempts are immutable. Retrying creates a new attempt and preserves the prior result and workspace.
+On the exercise detail screen, `v` requests the explanation and reference solution with confirmation. Revealing an active attempt records assistance. External assistance can also be recorded with `x`; assistance remains recorded for that attempt. Finished attempts are immutable. Retrying creates a new attempt and preserves the prior result and workspace.
 
 New practice and `golf list` offer the latest revision of each exercise. Saved attempts and published daily assignments retain their exact revision. See the [revision contract](docs/AUTHORING.md#content-contract) for authoring details.
 
 ### Included exercises
 
-The embedded catalog contains **600 exercises across 12 tracks**:
+The embedded catalog contains **600 unique exercises across 12 tracks**, stored as 602 revision definitions. Reference audits include retained revisions; practice counts each exercise once.
 
 | Tracks | Exercises | Daily assignments |
 | --- | --- | --- |
-| Vim | 100 | Ten-day preview assignments; additional practice |
-| Search (`rg`, regex, `grep`) | 100 | Ten-day preview assignments; additional practice |
-| Bash/core CLI | 100 | Ten-day preview assignments; additional practice |
+| Vim | 100 | 10 fixed preview assignments; additional practice |
+| Search (`rg`, regex, `grep`) | 100 | 10 fixed preview assignments; additional practice |
+| Bash/core CLI | 100 | 10 fixed preview assignments; additional practice |
 | `awk` | 100 | Practice |
 | `sed` | 25 | Practice |
 | `fd` | 20 | Practice |
@@ -71,24 +71,26 @@ The embedded catalog contains **600 exercises across 12 tracks**:
 
 Vim search/editing, regex, Bash/core CLI, and awk are the priorities. The added drills repeat forward/backward and word search, next-match editing, scoped substitution, captures, global deletion, regex boundaries and extraction, head/tail/cut/paste/sort/uniq/tr/comm/join/wc/tee, and awk fields, records, filters, grouped reports, ranges, and numbering. Repetition is intentional; Practice remains open for sessions of two to ten exercises or more. [Source research and rights](docs/SOURCES.md) are recorded separately from executable and editorial review.
 
-The fixed ten-day preview runs **14 September through 23 September 2026, UTC**. An attempt keeps its assignment when a session crosses midnight. Outside those dates, the TUI labels its selection as practice, and `golf today` reports that no daily is published. The entire catalog remains playable. There is no rolling daily content service or automatic content download.
+The fixed ten-day preview runs **14 September through 23 September 2026, UTC**. An attempt keeps its assignment when a session crosses midnight. Outside those dates, Today offers the first current exercise in your selected track, labeled as practice. It does not rotate exercises or select the next unsolved one. `golf today` reports that no daily is published. The entire catalog remains playable. There is no rolling daily content service or automatic content download.
 
 Exercises are original curriculum drafts. Executable audits check failing starter fixtures and passing reference solutions; they do not establish human editorial review or learning effectiveness. Players review the material as they practice and report unclear or unhelpful exercises. Human review of the whole bank is not a publication gate. zsh and fzf samples validate command behavior. The application does not measure Readline/ZLE key sequences, physical keystrokes, or personal skill retention. tmux is in the runtime, but has no dedicated exercise track.
 
-### Plain commands
+### CLI commands
 
-Run `golf help` for the complete command reference. Global flags precede the command.
+The examples below use an installed `golf`; from the checkout, substitute `./golf` after `just build`. Run `golf help` for the command reference. Global flags precede the command.
 
 ```sh
 golf --plain
 golf --classic
-golf list rg
+golf list search
 golf show vim.change-value
 golf today search 2026-09-14
 golf play vim.change-value
 ```
 
-`play` requires an interactive terminal. `list`, `show`, `today`, and the plain overview work without Docker or stored history. For the following commands, replace `ATTEMPT` with an ID from `golf history`:
+`list` uses one case-insensitive substring filter across IDs, tracks, titles, tools, and concepts. `golf list search` includes the search track and matching exercises in other tracks. `golf list rg` is also a substring query, not an exact tool or track selector. Unlike TUI search, CLI `list` does not support history-status or difficulty filters.
+
+`play` and `retry` require an interactive terminal. `list`, `show`, `today`, and the plain overview work without Docker or stored history. For the following commands, replace `ATTEMPT` with an ID from `golf history`:
 
 ```sh
 golf history
@@ -96,7 +98,10 @@ golf play ATTEMPT
 golf retry ATTEMPT
 golf check ATTEMPT
 golf hint ATTEMPT
+golf reveal ATTEMPT --yes
 ```
+
+`play ATTEMPT` resumes unfinished work. For a solved or abandoned attempt, it starts a new attempt at the latest exercise revision. `retry ATTEMPT` preserves the original revision, assignment, seed, and checker image in a separate attempt.
 
 Share text contains the exercise ID, assignment date, outcome, and assistance status, without the solution. Export JSON for attempts, sessions, and check events, or CSV for one summary row per attempt:
 
@@ -135,9 +140,9 @@ golf config theme plain
 golf config
 ```
 
-Themes are `auto`, `dark`, `light`, and `plain`. `NO_COLOR` disables accent colors. The TUI uses ASCII controls and supports an 80×24 terminal. `--plain` emits a linear overview; use the plain commands for redirected output or assistive technology.
+Themes are `auto`, `dark`, `light`, and `plain`. The `plain` theme or `NO_COLOR` removes application styling, not just accent colors. The TUI uses ASCII controls and supports an 80×24 terminal. `golf config theme plain` keeps the interactive TUI; `golf --plain` prints a linear overview without opening it. Use plain commands for redirected output or assistive technology. Native child output in full-terminal mode is not stripped of styling.
 
-`GOLF_IMAGE` selects a trusted local runtime image for development. It changes new attempts and runtime setup, not the image ID already recorded on an attempt. Docker is required for fixture setup and checking. Native practice uses the tools already installed on your host; missing tools produce an installation error.
+`GOLF_IMAGE` selects a trusted local runtime image for development. It changes new attempts and runtime setup, not the image ID already recorded on an attempt. Docker is required for fixture setup and checking. Native practice uses the tools already installed on your host; a missing editor or shell produces an installation error when launching. Other missing host utilities report errors from the exercise shell.
 
 ## Installation and upgrades
 

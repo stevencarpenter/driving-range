@@ -1,6 +1,6 @@
 # Terminal interface
 
-The approved product plan supplies the interface hierarchy. The HTML review is a planning artifact, not a web product to reproduce.
+The implemented interface has four top-level destinations: Today, Practice, Progress, and Settings. Exercise and attempt details are subordinate screens. [PRODUCT_PLAN.md](PRODUCT_PLAN.md) and the HTML review are historical planning artifacts, not current interface specifications.
 
 Charm Lip Gloss fills the terminal with a themed canvas and framed content surfaces. Today, Practice, Progress, Settings, exercise and attempt details, track selection, help, confirmations, results, and errors share these visual roles. Keep exact theme colors in [styles.go](internal/tui/styles.go).
 
@@ -23,8 +23,10 @@ All controls remain keyboard accessible without special fonts or a mouse. Tab an
 
 An exercise runs inside a pane in the TUI. A brief band sits above it and a status line below, so the objective stays visible while the solution is worked. The band collapses to one line. Its height is measured after rendering, because a long objective wraps; the band, the pane, and the status line always sum to the terminal height. The band omits the brief's opening line when it repeats the objective.
 
-The child owns every key except `F12`, which opens a palette offering check, hint, reveal, brief, and quit. One intercepted key keeps the child's own bindings, and the tmux prefix, intact. The `golf-check` and `golf-hint` commands reach the same actions from the exercise prompt without intercepting any key. Check results appear on the status line, which is the only surface the pane leaves free. A check taken mid-session records history but never finishes the attempt.
+With the pane focused, the child receives key presses except `F12`, which opens a palette offering check, hint, a reveal request, brief-band toggling, and quit. The palette consumes its next key. Key presses are forwarded as terminal sequences, not guaranteed byte-identical input; the host terminal or tmux can also intercept them. Golf does not reserve common editor or shell shortcuts. The `golf-check` and `golf-hint` commands reach the same actions from the exercise prompt without intercepting any key.
 
-Classic mode restores the previous behaviour, where the child owns the entire terminal and the TUI is restored after it exits. Golf also falls back to it when no pseudo-terminal is available, stating why.
+Action results appear on the status line, which currently displays only their first line. Multi-line hints therefore require the exercise detail screen after child exit. The pane's reveal request sets a confirmation that cannot currently be completed while the pane is active; reveal on the exercise detail screen instead. A check taken mid-session records history but never finishes the attempt.
+
+`golf --classic` opens the TUI with full-terminal handoff, restoring the TUI after child exit. The CLI `golf play` path always uses full-terminal handoff, independently of that flag. The helper check/hint commands require the embedded pane and do not operate in full-terminal mode. The TUI attempts classic handoff when pane startup fails; its notice records the fallback reason.
 
 Today, Practice, Progress, and Settings are top-level destinations. Exercise details contain start/resume, check, hints, explanation, retry, and abandon. Destructive data removal needs explicit confirmation. Show errors with the operation and recovery action. Never claim a result was saved if persistence failed.

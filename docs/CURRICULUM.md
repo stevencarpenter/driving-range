@@ -1,6 +1,12 @@
-# One year of terminal practice
+# Curriculum and year-long release requirements
 
-The launch requirement is **at least 365 useful practice challenges across all tools**, available in the installed application without daily downloads. Coverage includes fundamentals and deliberate repetition, particularly Vim motions and text objects. Different learning objectives are not required for every exercise. Publication happens in executable-audited batches, not one new release every day. The grinding priorities are Vim/Neovim search and editing, regex, Bash/core CLI, and awk. The catalog contains 600 authored drafts, with 100 in each priority track and the other 200 unchanged. The 233 additions provide repeated short practice rather than adding ancillary tools: 54 Vim search/edit drills, 54 regex drills, 55 core CLI drills, and 70 awk drills. All 367 prior exercises and the 30 preview assignments are preserved. The minimum count is 365. Reference, replay, regression, and full integration evidence is recorded separately from the authored count. Editorial feedback is collected during practice; human review of every exercise is not a launch or publication gate.
+The launch requirement is **at least 365 useful practice challenges across all tools**, available in the installed application without daily downloads. This is a product-wide minimum, not a per-track quota or a guarantee of a year of unseen exercises at every practice pace. Fundamentals and deliberate repetition count; different learning objectives are not required for every exercise. Publication requires executable-audited batches, not a new application release every day.
+
+## Current catalog
+
+The embedded catalog contains 600 unique exercises and 602 revision definitions. Vim/Neovim, search/regex, Bash/core CLI, and awk each have 100 exercises; the other eight tracks contain 200 total. Retained revisions preserve saved attempts and do not increase the exercise count. The 30 fixed preview assignments remain unchanged; a year-long schedule is not implemented or published. [LAUNCH_AUDIT.md](LAUNCH_AUDIT.md) records execution checkpoints and outstanding verification separately from authored counts.
+
+Players provide editorial feedback as they practice. Human review of every exercise is not a launch or publication gate, and no completed bank-wide review or measured learning effectiveness is claimed.
 
 ## Content allocation
 
@@ -30,7 +36,7 @@ One recommended challenge should be sufficient for a day's practice. Practice re
 
 A 365-exercise bank provides one unseen exercise per day only at one completion per day. Multiple-exercise sessions consume that bank faster. Do not advertise a year of unseen content for every usage pattern.
 
-The existing schedule is still the immutable ten-day preview ending 23 September 2026. It has not been extended by repeating drafts to fill 365 dates. The current implementation selects Today by track; the agreed year-long release needs one mixed-tool recommendation per UTC day across the product, not 365 assignments per track. Preserve existing date/track/revision/seed assignments and saved attempts when adding that behavior. The release date and the corresponding 365 consecutive UTC dates must be fixed before publishing the year schedule. Outside published dates, label selections as practice.
+The existing schedule is still the immutable ten-day preview ending 23 September 2026. It has not been extended by repeating drafts to fill 365 dates. The current implementation selects Today by track. Outside the preview dates, it offers that track's first current exercise as practice, not a rotating or progress-aware recommendation. The agreed year-long release needs one mixed-tool recommendation per UTC day across the product, not 365 assignments per track. Preserve existing date/track/revision/seed assignments and saved attempts when adding that behavior. The release date and the corresponding 365 consecutive UTC dates must be fixed before publishing the year schedule. Outside published dates, label selections as practice.
 
 ## Source and publication requirements
 
