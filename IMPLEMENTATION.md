@@ -1,6 +1,6 @@
 # Implementation status
 
-> **Historical snapshot (branch state 14 September 2026; marked historical 27 September 2026).** This file records pre-launch status and is not current. The GitHub repository now exists, CI runs green on `main`, and the product is implemented. See [README.md](README.md), [CONTRIBUTING.md](CONTRIBUTING.md), and [DESIGN.md](DESIGN.md) for current documentation.
+> **Historical snapshot (branch state 14 September 2026; marked historical 27 September 2026).** This file records pre-launch status and is not current. The GitHub repository and implementation have since changed. This snapshot does not establish current CI status or release readiness. See [README.md](README.md), [CONTRIBUTING.md](CONTRIBUTING.md), and [DESIGN.md](DESIGN.md) for current documentation.
 
 Branch: `feat/driving-range`. Source project `vim-golf` is protected and remains independent.
 

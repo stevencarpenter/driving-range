@@ -1,6 +1,6 @@
 # Embedded practice workbench
 
-> **Historical document (design dated 16 September 2026; marked historical 27 September 2026).** This design predates the shipped implementation and is retained as a record of the workbench migration, not a current specification. Parts have since changed: `Session.AltScreen` does not exist, and classic mode is selected by `--classic` and the stored `classic` config field, not a Settings toggle. See [README.md](../../../README.md) and [DESIGN.md](../../../DESIGN.md) for current documentation.
+> **Historical document (design dated 16 September 2026; marked historical 27 September 2026).** This design predates the shipped implementation and is retained as a record of the workbench migration, not a current specification. Dependency and Go version pins below are historical. Parts have since changed: `Session.AltScreen` does not exist, mid-session checks are `Runner.CheckNow` and `Service.CheckNow` rather than `Session.CheckNow`, and classic mode is selected by `--classic` and the stored `classic` config field, not a Settings toggle. Proposed tests and APIs below are not evidence that every behavior shipped; current pane hint/reveal behavior is described in the README. See [README.md](../../../README.md) and [DESIGN.md](../../../DESIGN.md) for current documentation.
 
 ## Decision
 

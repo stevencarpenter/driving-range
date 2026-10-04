@@ -1,6 +1,6 @@
 # Embedded Practice Workbench Implementation Plan
 
-> **Historical document (plan dated 16 September 2026; marked historical 27 September 2026).** This plan records the workbench implementation as it was built and is not a current specification. Parts have since changed: `Session.AltScreen` and `Session.Output` do not exist, and classic mode has no Settings toggle. See [README.md](../../../README.md) and [DESIGN.md](../../../DESIGN.md) for current documentation.
+> **Historical document (plan dated 16 September 2026; marked historical 27 September 2026).** This plan records the workbench implementation as it was built and is not a current specification. Dependency and Go version pins below are historical. Parts have since changed: `Session.AltScreen`, `Session.Output`, and `Session.OnTrigger` do not exist; the trigger callback is supplied to `pane.Start`. Mid-session checks are `Runner.CheckNow` and `Service.CheckNow`, not `Session.CheckNow`. Classic mode has no Settings toggle. Checked-off steps record work at the time, not a guarantee that every proposed API or interaction matches the current code. See [README.md](../../../README.md) and [DESIGN.md](../../../DESIGN.md) for current documentation.
 
 > **Status: complete.** All ten tasks are implemented on `feat/tui-workbench`.
 
