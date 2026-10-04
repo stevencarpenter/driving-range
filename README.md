@@ -18,6 +18,15 @@ GOBIN="$HOME/.local/bin" go install -trimpath github.com/stevencarpenter/driving
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
+While this repository is private, authenticated Git access to it is required. Replace the install command above and `golf update` below with these per-process commands:
+
+```sh
+GOPRIVATE="$(go env GOPRIVATE),github.com/stevencarpenter/driving-range" GOBIN="$HOME/.local/bin" go install -trimpath github.com/stevencarpenter/driving-range/cmd/golf@main
+GOPRIVATE="$(go env GOPRIVATE),github.com/stevencarpenter/driving-range" golf update
+```
+
+These preserve the existing `GOPRIVATE` value without changing global Go configuration. The private-module setting is unnecessary once the repository is public.
+
 Add `export PATH="$HOME/.local/bin:$PATH"` to your shell configuration to keep `golf` available in new terminals. This installs the latest upstream `main`, including the embedded exercise catalog. No checkout or `just` is needed to run the application.
 
 Install the Docker CLI and start a Docker-compatible Linux engine. Install the native tools for your chosen exercises: Vim exercises launch `nvim`; Bash and zsh exercises need their respective shells. Prepare the checker runtime once, then launch:
@@ -159,7 +168,7 @@ Themes are `auto`, `dark`, `light`, and `plain`. The `plain` theme or `NO_COLOR`
 
 ## Installation and upgrades
 
-The [Quick start](#quick-start) installs a native executable in `~/.local/bin`. To update that installation from any directory:
+The [Quick start](#quick-start) installs a native executable in `~/.local/bin`. While the repository is private, updates require authenticated Git access and the per-process `GOPRIVATE` command shown there, regardless of installation method. To update that installation from any directory:
 
 ```sh
 golf update
