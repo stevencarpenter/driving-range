@@ -26,9 +26,10 @@ const clipboardOSC = 52
 // emulator. The emulator parses child output into cells, so escape sequences
 // from the child never reach the host terminal.
 type Session struct {
-	cmd  *exec.Cmd
-	ptmx *os.File
-	emu  *vt.SafeEmulator
+	cmd   *exec.Cmd
+	ptmx  *os.File
+	emu   *vt.SafeEmulator
+	input io.Closer
 
 	closeOnce sync.Once
 	closeErr  error
@@ -52,6 +53,9 @@ func Start(cmd *exec.Cmd, width, height int, onTrigger func(string)) (*Session, 
 		ptmx: ptmx,
 		emu:  vt.NewSafeEmulator(width, height),
 	}
+	// The emulator exposes its io.PipeWriter through InputPipe. Closing that
+	// pipe releases input without racing SafeEmulator's unsynchronized Close.
+	s.input = s.emu.InputPipe().(io.Closer)
 	// Register handlers before any goroutine can write to the emulator.
 	// SafeEmulator.RegisterOscHandler has a value receiver, so it is not
 	// covered by the emulator's mutex and races the parser otherwise.
@@ -86,7 +90,10 @@ func Start(cmd *exec.Cmd, width, height int, onTrigger func(string)) (*Session, 
 	// emulator answers the child's own mode queries by writing into this pipe,
 	// and a child that queries modes at startup will deadlock the parser if
 	// nobody is reading.
-	go func() { io.Copy(ptmx, s.emu) }()
+	go func() {
+		defer s.input.Close()
+		io.Copy(ptmx, s.emu)
+	}()
 
 	return s, nil
 }
@@ -108,6 +115,9 @@ func (s *Session) SendKey(k tea.KeyPressMsg) {
 	}
 	s.emu.SendKey(uv.KeyEvent(uv.KeyPressEvent(uv.Key(send))))
 }
+
+// Paste preserves the child's bracketed-paste mode and input ordering.
+func (s *Session) Paste(text string) { s.emu.Paste(text) }
 
 // Resize updates the emulator and the pseudo-terminal. Resizing the
 // pseudo-terminal makes the kernel raise SIGWINCH in the child.
@@ -142,7 +152,7 @@ func (s *Session) Wait() error {
 // never reads from the terminal, which would leave the process orphaned.
 func (s *Session) Close() error {
 	s.closeOnce.Do(func() {
-		s.closeErr = s.ptmx.Close()
+		s.closeErr = errors.Join(s.ptmx.Close(), s.input.Close())
 		if p := s.cmd.Process; p != nil {
 			p.Kill()
 		}

@@ -2,6 +2,28 @@
 
 This is a dated evidence record, not a live CI or Docker-health report. Results apply only to the recorded source, catalog, image, host, and command. Later passes do not erase earlier failures, and historical passes do not verify changed revisions.
 
+## Release versioning configuration, 4 October 2026
+
+The working tree based on `f260cd77a36863bf4a3a3ba189dc680fe7a9e852` configures a pinned Release Please action for the root Go module. Its first proposed release is `v0.1.0`. Conventional Commits select later version bumps and generate the changelog through a release PR. Merging that PR creates the tag and release, then explicitly dispatches archive verification at the selected tag using the built-in GitHub token. The archive workflow requires matching dispatch ref and tag input, checks out that tag, and retains all six Linux amd64 integration/reference shards and base terminal smoke before packaging. Installation and `golf update` now use Go's `@latest` query. Archives include the changelog and existing notices.
+
+`just check`, `actionlint`, shell syntax, ShellCheck for `scripts/release.sh`, and whitespace checks passed on macOS arm64 with Go 1.27.1. Local `v0.1.0` archives built for all three targets and passed checksum verification. Archive inspection confirmed the changelog and license notices; the macOS executable reported `golf v0.1.0` through both `version` and `--version`. Linux binaries were crossbuilt but not executed in this checkpoint.
+
+GitHub's Actions-created PR setting was enabled and read back as true. Default workflow token permissions remain read-only; the versioning job requests only its required write scopes. These files remain uncommitted, so the new GitHub versioning/dispatch flow has not executed. No release tag or GitHub Release was created by this preparation.
+
+## MIT preparation, 4 October 2026
+
+The working tree based on source commit `f260cd77a36863bf4a3a3ba189dc680fe7a9e852` applies MIT to application code, documentation, and original exercise prose, fixtures, and reference solutions. The owner selected MIT for original prose on this date. All 602 catalog definitions identify original Driving Range material. A parsed comparison against the base commit confirms that only their license fields changed; all exercise contracts, definition order, and 30 daily assignments remain identical. The resulting catalog SHA-256 is `7726f92ff376b2e7d813ea67cd8f5f3bbf42026d9e007ca966d9a1a129f6e26a`. External source-license metadata and third-party dependency notices remain unchanged.
+
+The combined TUI fixes and MIT preparation passed `just check` and `go mod verify` on macOS arm64 with Go 1.27.1. Earlier in this session, `go test -race ./internal/tui ./internal/pane -count=1` passed for the pane and lifecycle fixes. Settings now labels its action Check Docker runtime and identifies daemon access and image presence as its scope. Native launch errors retain their specific cause.
+
+The session's initial `just smoke` run did not pass: the CLI practice launch stalled before the updated embedded-pane checks. An independent cached-runtime `/bin/true` container also stalled during startup. Docker-backed execution was unverified at that checkpoint. No runner deadline, isolation setting, fixture, or validator was changed to bypass the engine failure.
+
+After the owner restarted OrbStack, `just smoke` passed on 4 October 2026 against the same working-tree implementation. The command rebuilt `golf` and verified shell failure/resume/retry, SIGTERM persistence, TUI resize, workbench hints/result reopening/reveal confirmation, native Neovim custom keybindings, zsh challenges with a `.zshrc` alias, and terminal restoration. The container-start stall did not recur in this smoke run. This result covers the terminal smoke scenarios, not the full integration or reference-solution audits.
+
+Read-only GitHub metadata still reports the repository private. This preparation does not publish a release or change visibility. The existing release script includes `LICENSE`, `CONTENT_LICENSE.md`, `THIRD_PARTY_NOTICES.md`, and offline source provenance in each archive.
+
+Preview packaging with `VERSION=v0.1.0-preview` passed for macOS arm64, Linux amd64, and Linux arm64. All archive checksums passed. Archive inspection matched the bundled documentation and notices against the working tree; the macOS executable reported its preview version and passed the 600-exercise, 602-revision metadata audit. The Linux executables were crossbuilt but not executed. Module inventories confirm notices for all 31 linked dependency modules on macOS and all 29 on each Linux target. This verifies packaging and notice coverage, not Docker execution.
+
 ## Latest recorded validation and editorial policy, 2 October 2026
 
 The corrected catalog has 600 unique challenge IDs and 602 revision definitions at SHA-256 `845b6ec2a025999a3ef109511cd41cc5e0f3af6e4f2ab7d744d19d40c46da704`. New practice selects revision 2 of `git.unstage-preserve` and `git.restore-one`, whose validators require byte-exact file content. Their original revision 1 definitions remain available for saved attempts. All 30 released assignments are unchanged. Metadata reports distinguish current exercises from retained revisions; reference audits execute all 602 definitions.

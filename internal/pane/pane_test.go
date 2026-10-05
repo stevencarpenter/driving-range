@@ -2,6 +2,8 @@ package pane
 
 import (
 	"errors"
+	"fmt"
+	"io"
 	"os/exec"
 	"strings"
 	"testing"
@@ -73,6 +75,30 @@ func TestSessionForwardsModifiedSpecialKeys(t *testing.T) {
 	}
 }
 
+func TestSessionPastePreservesUnicodeAndBracketedPasteMode(t *testing.T) {
+	text := "日本語\nx"
+	for _, bracketed := range []bool{false, true} {
+		t.Run(fmt.Sprintf("bracketed=%v", bracketed), func(t *testing.T) {
+			want, mode := text, ""
+			if bracketed {
+				want = "\x1b[200~" + text + "\x1b[201~"
+				mode = `printf '\033[?2004h'; `
+			}
+			command := fmt.Sprintf("stty raw -echo; %sprintf 'READY\\n'; dd bs=1 count=%d 2>/dev/null | od -An -tx1; printf '\\nDONE\\n'", mode, len(want))
+			s := start(t, exec.Command("/bin/sh", "-c", command), 100, 8, nil)
+			t.Cleanup(func() { s.Close(); s.Wait() })
+			if out := waitFor(t, s, "READY"); !strings.Contains(out, "READY") {
+				t.Fatal("child did not enter raw input mode")
+			}
+			s.Paste(text)
+			out := waitFor(t, s, "DONE")
+			if !strings.Contains(strings.Join(strings.Fields(out), " "), fmt.Sprintf("% x", []byte(want))) {
+				t.Fatalf("paste bytes were changed or bracketed incorrectly: %q", out)
+			}
+		})
+	}
+}
+
 func TestSessionResizePropagatesToChild(t *testing.T) {
 	// The child polls its own terminal size rather than trapping SIGWINCH,
 	// because a POSIX shell defers trap handlers until the foreground command
@@ -101,6 +127,44 @@ func TestSessionWaitReturnsAfterChildExits(t *testing.T) {
 		}
 	case <-time.After(5 * time.Second):
 		t.Fatal("Wait did not return")
+	}
+}
+
+func TestSessionCloseUnblocksEmulatorInput(t *testing.T) {
+	s := start(t, exec.Command("/bin/cat"), 40, 6, nil)
+	// Release the test reader even when Close is broken.
+	t.Cleanup(func() { s.emu.InputPipe().(io.Closer).Close(); s.Wait() })
+	done := make(chan error, 1)
+	go func() { _, err := s.emu.Read(make([]byte, 1)); done <- err }()
+	if err := s.Close(); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case err := <-done:
+		if !errors.Is(err, io.EOF) {
+			t.Fatalf("closed emulator input returned %v", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("Close left the emulator input reader blocked")
+	}
+}
+
+func TestSessionInputCannotBlockAfterChildExit(t *testing.T) {
+	s := start(t, exec.Command("/bin/sh", "-c", "exit 0"), 40, 6, nil)
+	if err := s.Wait(); err != nil {
+		t.Fatal(err)
+	}
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		for range 10 {
+			s.SendKey(tea.KeyPressMsg{Code: 'x', Text: "x"})
+		}
+	}()
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("input blocked after the child exited, before the event loop could close the session")
 	}
 }
 

@@ -213,7 +213,7 @@ Ship signed/checksummed release binaries and documented manual installation; add
 
 **Recommended launch model: a complete OSS local product with optional sponsorship.** This matches the initial audience and keeps the main loop viable if a hosted business does not develop.
 
-Propose MIT for application code and CC BY-SA 4.0 for public instructional content, with code fixtures/examples licensed explicitly as code. MIT permits commercial reuse with its notice requirements. CC BY-SA permits commercial reuse and requires attribution/share-alike for adaptations. This supports an open curriculum; it does not create exclusive paid content rights. Review inherited and third-party rights before release. [MIT terms](https://opensource.org/license/mit), [CC BY-SA terms](https://creativecommons.org/licenses/by-sa/4.0/)
+Application code, original instructional content, fixtures, and examples use MIT. The owner selected MIT for original exercise prose on 4 October 2026, replacing the earlier split-license proposal. MIT permits commercial reuse subject to its notice requirements. Third-party rights remain separate; source research does not grant permission to relicense external material. See [MIT terms](https://opensource.org/license/mit), [the content notice](CONTENT_LICENSE.md), and [source provenance](docs/SOURCES.md).
 
 | Model | What remains available locally | Paid value | Assessment |
 | --- | --- | --- | --- |

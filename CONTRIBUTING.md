@@ -10,13 +10,25 @@ Build and test with Go 1.27 or newer and `just`. CI and release builds pin Go 1.
 4. Preserve validation, Docker isolation for setup and checks, native workspace ownership checks, durable writes, crash recovery, terminal restoration, and accessibility. Reducing line count does not justify weakening these contracts.
 5. Before merging to `main`, run `just check` and retain a focused regression check for changed nontrivial behavior. Run Docker integration and affected solution audits for runner or validator changes, `just smoke` for terminal handoff changes, and race tests for concurrency changes. Report commands and observed results; distinguish skipped checks from passes.
 
+## Git hooks
+
+Install [Lefthook](https://lefthook.dev/install/) and enable the repository hooks after cloning:
+
+```sh
+just hooks
+```
+
+The `commit-msg` hook rejects titles that do not follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). Use `type: description`, optionally adding a scope and `!`, such as `fix(tui): restore terminal` or `feat(cli)!: change command syntax`. Types may include custom names; scopes contain no whitespace, and descriptions must be nonempty. Commit bodies and footers are preserved. Git makes the message available at `commit-msg`, after `pre-commit` runs. The installed hook fails if Lefthook is unavailable.
+
+Use the same convention for pull request titles, since squash merges supply the release commit title. Git hooks are local to each checkout and do not validate GitHub squash messages. Run `just test-commit-msg` to check the validator without installing Lefthook.
+
 ## Checks
 
 ```sh
 just check
 ```
 
-This runs unit tests, `go vet ./...`, `golf audit` for catalog metadata, installation regression checks, and runtime-shard dispatch regression checks without Docker. The terminal smoke check requires native Neovim, Bash, and zsh as well as Docker. Runtime tests skip unless `GOLF_INTEGRATION=1`. A passing ordinary test run does not verify Docker isolation or reference solutions.
+This runs unit tests, `go vet ./...`, `golf audit` for catalog metadata, installation regression checks, commit-title regression checks, and runtime-shard dispatch regression checks without Docker. The terminal smoke check requires native Neovim, Bash, and zsh as well as Docker. Runtime tests skip unless `GOLF_INTEGRATION=1`. A passing ordinary test run does not verify Docker isolation or reference solutions.
 
 Run the execution checks against a trusted local Docker engine:
 
@@ -55,6 +67,18 @@ Daily entries fix a UTC date, track, exercise revision, and seed. Do not silentl
 
 Submit focused changes with the relevant validation command and observed result. Keep performance metrics comparable across revisions and environments.
 
+## Release versioning
+
+Release Please maintains a release PR on pushes to `main`. It generates `CHANGELOG.md` and updates `.release-please-manifest.json`; no application version file is needed. The first release is `v0.1.0`. Use Conventional Commit titles for squash merges: `fix:` increments patch, `feat:` increments minor, and `!` or a `BREAKING CHANGE:` footer marks an incompatible change. While the version is below 1.0.0, incompatible changes increment minor. Other commit types do not independently trigger a release. Tags follow [Go's semantic version convention](https://go.dev/doc/modules/version-numbers) and must not be moved or reused.
+
+1. Merge normal changes with Conventional Commit titles.
+2. Review the generated release PR's version and changelog. Approve its workflow runs if GitHub requires it, and wait for the required checks before merging.
+3. Merge the release PR. Automation creates its tag and GitHub Release, then dispatches the existing archive workflow at that exact tag.
+
+The workflow uses the built-in `GITHUB_TOKEN`; no personal access token is required. In repository Settings, Actions, General, enable **Allow GitHub Actions to create and approve pull requests**. [GitHub documents](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow) that token-created release events do not trigger another workflow, while explicit workflow dispatch does. Packaging is dispatched with the release tag as both the workflow ref and its input, so build provenance identifies the source being packaged. Token-created pull requests can require a maintainer to approve their workflow runs. Release Please's [action documentation](https://github.com/googleapis/release-please-action) describes its versioning and release PR behavior.
+
+If packaging fails, rerun its failed jobs. For a separate retry, dispatch Release archives with the same existing tag as the workflow ref and `tag_name` input. Packaging uploads to an existing release and refuses to replace existing assets. `golf version` reads the injected tag in release archives or Go's module build information in `go install` builds. Local checkout builds remain `dev` unless `VERSION` is supplied. Installation and `golf update` use `@latest`; before any version is tagged, Go selects the default branch's untagged build.
+
 ## Release packaging
 
 ```sh
@@ -74,7 +98,7 @@ tar -tzf golf_v0.1.0_darwin_arm64.tar.gz
 
 Linux also supports `sha256sum -c SHA256SUMS`. Preserve the source commit, Go version, native runtime audit logs, and actual terminal test results when reviewing a release. Do not describe crossbuilt targets as runtime-tested without execution evidence.
 
-The release workflow runs when a GitHub Release is published. Linux amd64 verification jobs run every integration/reference shard and base terminal smoke. Packaging waits for all of them, runs ordinary checks, then crossbuilds the archives and attaches them to that existing release. Native Linux arm64 and macOS verification remain separate evidence; the release packaging job does not execute those archives. It does not create releases or push tags. Set the repository Actions variable `GOLF_ATTEST_RELEASES=true` to generate signed GitHub provenance attestations before upload. Attestation availability depends on the repository's GitHub plan and visibility; see [the official action documentation](https://github.com/actions/attest). No signing key needs to be stored in this repository.
+The archive workflow is dispatched by release versioning, runs when a GitHub Release is published manually, or accepts an existing tag through `workflow_dispatch`. Every job checks out the selected release tag. Linux amd64 verification jobs run every integration/reference shard and base terminal smoke. Packaging waits for all of them, runs ordinary checks, then crossbuilds the archives and attaches them to that existing release. Native Linux arm64 and macOS verification remain separate evidence; the release packaging job does not execute those archives. The archive workflow does not create releases or push tags. Set the repository Actions variable `GOLF_ATTEST_RELEASES=true` to generate signed GitHub provenance attestations before upload. Attestation availability depends on the repository's GitHub plan and visibility; see [the official action documentation](https://github.com/actions/attest). No signing key needs to be stored in this repository.
 
 For a release that actually contains an attestation, verify its downloaded archive with GitHub CLI:
 
@@ -86,6 +110,6 @@ A checksum detects altered bytes. An attestation additionally binds an artifact 
 
 ## Licensing
 
-Contributions to application code, fixtures, setup scripts, validators, and solution code use [MIT](LICENSE). Instructional prose uses [CC BY-SA 4.0](CONTENT_LICENSE.md). Include attribution and modification notices for permitted adaptations. Do not copy external content without confirmed rights and provenance.
+Contributions to application code, original instructional prose, fixtures, setup scripts, validators, solution code, and documentation use [MIT](LICENSE). See [CONTENT_LICENSE.md](CONTENT_LICENSE.md) for the exercise content scope. Include required attribution and modification notices for permitted third-party material. Do not copy external content without confirmed rights and provenance compatible with this license.
 
 When changing dependencies, update [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) from the module cache's license files for modules returned by `go list -deps` on each release target. Retain additional upstream license notices. Release archives include this notice file and the Go runtime license.

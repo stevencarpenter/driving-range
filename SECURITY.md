@@ -22,7 +22,7 @@ Resource limits in this table apply to Docker execution, except the one-hour nat
 
 `golf setup` performs networked image construction and runs package installation. It pins the Debian base digest, jj archive hashes, and selected security-fix package versions. Other Debian package versions are resolved at build time. Runtime rebuilds can produce different image IDs. `GOLF_IMAGE` may select arbitrary trusted local code; it is not an image signature verifier. No external pack installation is provided. Native practice is the default; Docker remains required for setup and validation.
 
-`golf update` explicitly downloads and builds application source from upstream `main` using the installed Go toolchain and its module download configuration. The build runs on the host with normal permissions and requires network access. It stages the executable in the installation directory and atomically replaces the running installation after a successful build. It does not open application history or modify workspaces. Only run updates from an upstream you trust.
+`golf update` explicitly downloads and builds the latest released application source using Go's `@latest` query. It uses the installed Go toolchain and its module download configuration. The build runs on the host with normal permissions and requires network access. It stages the executable in the installation directory and atomically replaces the running installation after a successful build. It does not open application history or modify workspaces. Only run updates from an upstream you trust.
 
 ## Dependency scan
 

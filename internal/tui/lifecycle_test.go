@@ -83,3 +83,18 @@ func TestUnconsumedFinishFailureSurvivesShutdown(t *testing.T) {
 		t.Fatalf("lost persistence failure: %v", err)
 	}
 }
+
+func TestInterimResultDoesNotAcknowledgeFinalSaveFailure(t *testing.T) {
+	m := testModel(t)
+	failure := errors.New("save session: disk full")
+	m.lifecycle.finished(failure)
+	updated, _ := m.Update(operationMsg{text: "interim check"})
+	m = updated.(Model)
+	if !errors.Is(m.lifecycle.finishErr, failure) {
+		t.Error("interim result cleared an unconsumed final save failure")
+	}
+	m.Update(operationMsg{err: failure, finished: true})
+	if m.lifecycle.finishErr != nil {
+		t.Fatal("final result did not acknowledge its displayed failure")
+	}
+}

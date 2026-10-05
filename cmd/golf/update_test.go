@@ -66,7 +66,7 @@ func TestUpdateExecutable(t *testing.T) {
 				t.Fatalf("running binary changed: %q, %v", old, err)
 			}
 			args, err := os.ReadFile(record)
-			wantArgs := strings.Join([]string{"install", "-trimpath", upstreamPackage, runtime.GOOS, runtime.GOARCH, "0", "", "off", ""}, "\n")
+			wantArgs := strings.Join([]string{"install", "-trimpath", "github.com/stevencarpenter/driving-range/cmd/golf@latest", runtime.GOOS, runtime.GOARCH, "0", "", "off", ""}, "\n")
 			if err != nil || string(args) != wantArgs {
 				t.Fatalf("build arguments = %q, want %q, error = %v", args, wantArgs, err)
 			}
