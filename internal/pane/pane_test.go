@@ -1,6 +1,7 @@
 package pane
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -165,6 +166,29 @@ func TestSessionInputCannotBlockAfterChildExit(t *testing.T) {
 	case <-done:
 	case <-time.After(time.Second):
 		t.Fatal("input blocked after the child exited, before the event loop could close the session")
+	}
+}
+
+func TestSessionInputBacklogStopsWithExplicitError(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	s := start(t, exec.CommandContext(ctx, "/bin/sh", "-c", "stty raw -echo; printf READY; exec sleep 30"), 80, 18, nil)
+	t.Cleanup(func() { cancel(); s.Wait(); s.Close() })
+	if out := waitFor(t, s, "READY"); !strings.Contains(out, "READY") {
+		t.Fatal("child did not enter raw input mode")
+	}
+	done := make(chan error, 1)
+	go func() {
+		s.Paste(strings.Repeat("x", 4<<20))
+		done <- s.Wait()
+	}()
+	select {
+	case err := <-done:
+		if !errors.Is(err, errInputBacklog) {
+			t.Fatalf("input overflow was not reported: %v", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("input overflow blocked instead of stopping the session")
 	}
 }
 

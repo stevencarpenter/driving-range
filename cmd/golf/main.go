@@ -522,7 +522,7 @@ func usage(w io.Writer) {
   config [track|theme VALUE]         Inspect or change settings
   doctor                            Check Docker and cached image
   setup                             Explicitly build the isolated runtime
-  update                            Build and install the latest release
+  update                            Build and install upstream @latest
   audit [--solutions] [--track NAME] Check metadata or real reference solutions
   forget ATTEMPT --yes               Permanently delete one finished attempt
   version                           Print the build version

@@ -105,7 +105,7 @@ The migration is one unit because the package does not compile between the depen
 - [x] **Step 1: Record the current test baseline**
 
 ```bash
-cd /Users/carpenter/projects/driving-range
+cd /path/to/driving-range
 go test ./... 2>&1 | tee /tmp/golf-baseline.txt
 ```
 

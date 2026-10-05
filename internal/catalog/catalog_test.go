@@ -55,7 +55,7 @@ func TestBundledCatalogAndFrozenSchedule(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(c.Current()) != 600 || len(c.All()) != 602 {
+	if len(c.Current()) != 600 || len(c.All()) != 611 {
 		t.Fatalf("got %d exercises, %d revisions", len(c.Current()), len(c.All()))
 	}
 	counts := map[string]int{}

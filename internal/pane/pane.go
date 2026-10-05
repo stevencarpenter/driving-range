@@ -1,12 +1,14 @@
 package pane
 
 import (
+	"bytes"
 	"errors"
 	"io"
 	"os"
 	"os/exec"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	tea "charm.land/bubbletea/v2"
 	uv "github.com/charmbracelet/ultraviolet"
@@ -22,14 +24,30 @@ const TriggerOSC = 9270
 // clipboardOSC is OSC 52. The child must not write the host clipboard.
 const clipboardOSC = 52
 
+// io.Copy reads at most 32 KiB per chunk, bounding queued input to 2 MiB.
+type inputQueue chan []byte
+
+var errInputBacklog = errors.New("terminal input backlog full; session stopped to avoid truncating input")
+
+func (q inputQueue) Write(p []byte) (int, error) {
+	select {
+	case q <- bytes.Clone(p):
+		return len(p), nil
+	default:
+		return 0, errInputBacklog
+	}
+}
+
 // Session couples a child process on a pseudo-terminal to a virtual terminal
 // emulator. The emulator parses child output into cells, so escape sequences
 // from the child never reach the host terminal.
 type Session struct {
-	cmd   *exec.Cmd
-	ptmx  *os.File
-	emu   *vt.SafeEmulator
-	input io.Closer
+	cmd           *exec.Cmd
+	ptmx          *os.File
+	emu           *vt.SafeEmulator
+	input         io.Closer
+	inputFailure  chan error
+	cursorVisible atomic.Bool
 
 	closeOnce sync.Once
 	closeErr  error
@@ -49,10 +67,13 @@ func Start(cmd *exec.Cmd, width, height int, onTrigger func(string)) (*Session, 
 		return nil, err
 	}
 	s := &Session{
-		cmd:  cmd,
-		ptmx: ptmx,
-		emu:  vt.NewSafeEmulator(width, height),
+		cmd:          cmd,
+		ptmx:         ptmx,
+		emu:          vt.NewSafeEmulator(width, height),
+		inputFailure: make(chan error, 1),
 	}
+	s.cursorVisible.Store(true)
+	s.emu.SetCallbacks(vt.Callbacks{CursorVisibility: s.cursorVisible.Store})
 	// The emulator exposes its io.PipeWriter through InputPipe. Closing that
 	// pipe releases input without racing SafeEmulator's unsynchronized Close.
 	s.input = s.emu.InputPipe().(io.Closer)
@@ -85,14 +106,31 @@ func Start(cmd *exec.Cmd, width, height int, onTrigger func(string)) (*Session, 
 			}
 		}
 	}()
-	// Emulator output back to the child, over a single goroutine so ordering
-	// holds. This drain is not optional and not only for keys we send: the
+	// Drain encoded input promptly before writing it to the child. A live child
+	// may stop reading its PTY, but Paste and Render share the emulator mutex,
+	// so PTY backpressure must not block this drain or the UI event loop.
+	// This drain is not optional and not only for keys we send: the
 	// emulator answers the child's own mode queries by writing into this pipe,
 	// and a child that queries modes at startup will deadlock the parser if
 	// nobody is reading.
+	// ponytail: cap at 64 chunks (at most 2 MiB); use byte accounting if small writes fill it.
+	queue := make(inputQueue, 64)
 	go func() {
 		defer s.input.Close()
-		io.Copy(ptmx, s.emu)
+		defer close(queue)
+		if _, err := io.Copy(queue, s.emu); errors.Is(err, errInputBacklog) {
+			s.inputFailure <- err
+			s.Close()
+		}
+	}()
+	// One PTY writer preserves the order of keys, pastes and emulator replies.
+	go func() {
+		defer s.input.Close()
+		for data := range queue {
+			if _, err := ptmx.Write(data); err != nil {
+				return
+			}
+		}
 	}()
 
 	return s, nil
@@ -134,15 +172,23 @@ func (s *Session) Resize(width, height int) error {
 // on the containing style rather than trusting the string's own dimensions.
 func (s *Session) Render() string { return s.emu.Render() }
 
-// Cursor reports the child's cursor position in cells.
-func (s *Session) Cursor() (int, int) {
+// Cursor reports the child's cursor position in cells and visibility.
+func (s *Session) Cursor() (int, int, bool) {
 	p := s.emu.CursorPosition()
-	return p.X, p.Y
+	return p.X, p.Y, s.cursorVisible.Load()
 }
 
 // Wait blocks until the child exits and returns its error.
 func (s *Session) Wait() error {
-	s.waitOnce.Do(func() { s.waitErr = s.cmd.Wait() })
+	s.waitOnce.Do(func() {
+		s.waitErr = s.cmd.Wait()
+		select {
+		case err := <-s.inputFailure:
+			// The forced process exit is a consequence of the input failure.
+			s.waitErr = err
+		default:
+		}
+	})
 	return s.waitErr
 }
 
@@ -152,10 +198,11 @@ func (s *Session) Wait() error {
 // never reads from the terminal, which would leave the process orphaned.
 func (s *Session) Close() error {
 	s.closeOnce.Do(func() {
-		s.closeErr = errors.Join(s.ptmx.Close(), s.input.Close())
+		inputErr := s.input.Close()
 		if p := s.cmd.Process; p != nil {
 			p.Kill()
 		}
+		s.closeErr = errors.Join(inputErr, s.ptmx.Close())
 	})
 	return s.closeErr
 }

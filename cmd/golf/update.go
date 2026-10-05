@@ -34,7 +34,7 @@ func updateExecutable(ctx context.Context, executable string, out io.Writer) err
 		return fmt.Errorf("cannot stage update beside %s; install golf in a writable directory: %w", executable, err)
 	}
 	defer os.RemoveAll(stage)
-	fmt.Fprintln(out, "Fetching and building the latest Driving Range release...")
+	fmt.Fprintln(out, "Fetching and building Driving Range using Go's @latest query...")
 	cmd := exec.CommandContext(ctx, goTool, "install", "-trimpath", upstreamPackage)
 	cmd.Dir = stage
 	cmd.Env = append(cmd.Environ(), "GOBIN="+stage, "GOOS="+runtime.GOOS, "GOARCH="+runtime.GOARCH, "CGO_ENABLED=0", "GOFLAGS=", "GOWORK=off")

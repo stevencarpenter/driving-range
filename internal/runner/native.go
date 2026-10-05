@@ -34,37 +34,53 @@ func NewNative(image, workspaceRoot string) *Runner {
 }
 
 func (r *Runner) nativeDirectory(a model.Attempt) (string, error) {
+	root, err := r.openNativeDirectory(a)
+	if err != nil || root == nil {
+		return "", err
+	}
+	defer root.Close()
+	return root.Name(), nil
+}
+
+// Keep the verified directory open when a snapshot will read its contents.
+func (r *Runner) openNativeDirectory(a model.Attempt) (*os.Root, error) {
 	if r.nativeRoot == "" {
-		return "", nil
+		return nil, nil
 	}
 	if err := identity(a); err != nil {
-		return "", err
+		return nil, err
 	}
 	dir := filepath.Join(r.nativeRoot, a.Workspace)
 	info, err := os.Lstat(dir)
 	if errors.Is(err, os.ErrNotExist) {
-		return "", nil
+		return nil, nil
 	}
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if !info.IsDir() {
-		return "", errors.New("native workspace must be an owned directory, not a link")
+		return nil, errors.New("native workspace must be an owned directory, not a link")
 	}
 	root, err := os.OpenRoot(dir)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	defer root.Close()
+	opened, err := root.Stat(".")
+	if err != nil || !os.SameFile(info, opened) {
+		root.Close()
+		return nil, errors.New("native workspace changed while opening")
+	}
 	owner, err := root.ReadFile("owner")
 	if err != nil || string(owner) != a.ID {
-		return "", errors.New("native workspace belongs to another owner")
+		root.Close()
+		return nil, errors.New("native workspace belongs to another owner")
 	}
 	info, err = root.Lstat("files")
 	if err != nil || !info.IsDir() {
-		return "", errors.New("native workspace files must be a directory, not a link")
+		root.Close()
+		return nil, errors.New("native workspace files must be a directory, not a link")
 	}
-	return dir, nil
+	return root, nil
 }
 
 // nativeShell reports the interactive shell for native practice. When the
@@ -181,12 +197,20 @@ func (r *Runner) prepareNative(ctx context.Context, c model.Challenge, a model.A
 }
 
 // nativeSnapshot confines reads to the owned tree and applies the Docker snapshot limits.
-func nativeSnapshot(dir string) (map[string]string, error) {
-	root, err := os.OpenRoot(filepath.Join(dir, "files"))
+func nativeSnapshot(workspace *os.Root) (map[string]string, error) {
+	info, err := workspace.Lstat("files")
+	if err != nil || !info.IsDir() {
+		return nil, errors.New("native workspace files must be a directory, not a link")
+	}
+	root, err := workspace.OpenRoot("files")
 	if err != nil {
 		return nil, err
 	}
 	defer root.Close()
+	opened, err := root.Stat(".")
+	if err != nil || !os.SameFile(info, opened) {
+		return nil, errors.New("native workspace files changed while opening")
+	}
 	files := map[string]string{}
 	count, total := 0, 0
 	err = fs.WalkDir(root.FS(), ".", func(name string, entry fs.DirEntry, walkErr error) error {

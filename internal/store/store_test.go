@@ -353,8 +353,109 @@ func TestReadOnlyAndLock(t *testing.T) {
 	}
 }
 
+func TestDatabaseFilesPrivateInExistingDirectory(t *testing.T) {
+	dir := t.TempDir()
+	must(t, os.Chmod(dir, 0755))
+	s, err := Open(dir)
+	must(t, err)
+	defer s.Close()
+	must(t, s.CreateAttempt(testAttempt("private-history")))
+	for _, suffix := range []string{"", "-wal", "-shm"} {
+		info, err := os.Stat(filepath.Join(dir, DatabaseName+suffix))
+		must(t, err)
+		if info.Mode().Perm() != 0600 {
+			t.Errorf("database%s permissions = %04o, want 0600", suffix, info.Mode().Perm())
+		}
+	}
+	info, err := os.Stat(dir)
+	must(t, err)
+	if info.Mode().Perm() != 0755 {
+		t.Fatalf("state directory permissions changed to %04o", info.Mode().Perm())
+	}
+}
+
+func TestExistingDatabasePermissionsReadOnlyAndWriter(t *testing.T) {
+	s, dir := newStore(t)
+	must(t, s.CreateAttempt(testAttempt("retained-history")))
+	for _, suffix := range []string{"", "-wal", "-shm"} {
+		must(t, os.Chmod(filepath.Join(dir, DatabaseName+suffix), 0644))
+	}
+	checkPermissions := func(want os.FileMode) {
+		t.Helper()
+		for _, suffix := range []string{"", "-wal", "-shm"} {
+			info, err := os.Stat(filepath.Join(dir, DatabaseName+suffix))
+			must(t, err)
+			if info.Mode().Perm() != want {
+				t.Errorf("database%s permissions = %04o, want %04o", suffix, info.Mode().Perm(), want)
+			}
+		}
+	}
+	ro, err := OpenReadOnly(dir)
+	must(t, err)
+	checkPermissions(0644)
+	_, err = ro.Attempt("retained-history")
+	must(t, err)
+	must(t, ro.Close())
+	writer, err := Open(dir)
+	must(t, err)
+	defer writer.Close()
+	checkPermissions(0600)
+	_, err = writer.Attempt("retained-history")
+	must(t, err)
+}
+
+func TestExistingSidecarPermissionsThroughDatabaseSymlink(t *testing.T) {
+	s, dir := newStore(t)
+	must(t, s.CreateAttempt(testAttempt("symlink-history")))
+	for _, suffix := range []string{"-wal", "-shm"} {
+		must(t, os.Chmod(filepath.Join(dir, DatabaseName+suffix), 0644))
+	}
+	linkedDir := t.TempDir()
+	must(t, os.Symlink(filepath.Join(dir, DatabaseName), filepath.Join(linkedDir, DatabaseName)))
+	writer, err := Open(linkedDir)
+	must(t, err)
+	defer writer.Close()
+	for _, suffix := range []string{"-wal", "-shm"} {
+		info, err := os.Stat(filepath.Join(dir, DatabaseName+suffix))
+		must(t, err)
+		if info.Mode().Perm() != 0600 {
+			t.Errorf("symlinked database%s permissions = %04o, want 0600", suffix, info.Mode().Perm())
+		}
+	}
+	_, err = writer.Attempt("symlink-history")
+	must(t, err)
+}
+
+func TestRejectsNonregularDatabaseSidecar(t *testing.T) {
+	for _, kind := range []string{"directory", "symlink"} {
+		t.Run(kind, func(t *testing.T) {
+			s, dir := newStore(t)
+			must(t, s.Close())
+			sidecar := filepath.Join(dir, DatabaseName+"-wal")
+			target := sidecar
+			if kind == "symlink" {
+				target = filepath.Join(t.TempDir(), "keep")
+			}
+			must(t, os.Mkdir(target, 0755))
+			if kind == "symlink" {
+				must(t, os.Symlink(target, sidecar))
+			}
+			if db, err := Open(dir); err == nil {
+				db.Close()
+				t.Fatal("accepted nonregular database sidecar")
+			}
+			info, err := os.Stat(target)
+			must(t, err)
+			if info.Mode().Perm() != 0755 {
+				t.Fatalf("sidecar repair changed directory permissions to %04o", info.Mode().Perm())
+			}
+		})
+	}
+}
+
 func TestMigrationBackupAndNewerSchema(t *testing.T) {
 	dir := t.TempDir()
+	must(t, os.Chmod(dir, 0755))
 	path := filepath.Join(dir, DatabaseName)
 	db, err := sql.Open("sqlite", path)
 	must(t, err)
@@ -372,6 +473,11 @@ func TestMigrationBackupAndNewerSchema(t *testing.T) {
 	must(t, err)
 	if len(backups) != 1 {
 		t.Fatalf("missing migration backup: %v", backups)
+	}
+	info, err := os.Stat(backups[0])
+	must(t, err)
+	if info.Mode().Perm() != 0600 {
+		t.Fatalf("migration backup permissions = %04o, want 0600", info.Mode().Perm())
 	}
 	backup, err := sql.Open("sqlite", backups[0])
 	must(t, err)

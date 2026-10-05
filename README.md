@@ -32,7 +32,7 @@ These preserve the existing `GOPRIVATE` value without changing global Go configu
 
 </details>
 
-Add `export PATH="$HOME/.local/bin:$PATH"` to your shell configuration to keep `golf` available in new terminals. This installs the latest tagged release, including the embedded exercise catalog. Before the first version tag exists, Go selects an untagged upstream build. No checkout or `just` is needed to run the application.
+Add `export PATH="$HOME/.local/bin:$PATH"` to your shell configuration to keep `golf` available in new terminals. Go's [@latest query](https://go.dev/ref/mod#version-queries) prefers the highest stable release, falls back to the highest prerelease if no stable release exists, and selects an untagged build from the default branch if neither exists. The executable includes the exercise catalog. No checkout or `just` is needed to run the application.
 
 Install the Docker CLI and start a Docker-compatible Linux engine. Install the native tools for your chosen exercises, such as `nvim`, `rg`, or `fzf`. Vim exercises launch `nvim`; Bash and zsh exercises need their respective shells. Prepare the checker runtime once, then launch:
 
@@ -81,7 +81,7 @@ New practice and `golf list` offer the latest revision of each exercise. Saved a
 
 ### Included exercises
 
-The embedded catalog contains **600 unique exercises across 12 tracks**, stored as 602 revision definitions. Reference audits include retained revisions; practice counts each exercise once.
+The embedded catalog contains **600 unique exercises across 12 tracks**, stored as 611 revision definitions. Reference audits include retained revisions; practice counts each exercise once.
 
 | Tracks | Exercises | Daily assignments |
 | --- | --- | --- |
@@ -182,7 +182,7 @@ golf update
 golf version
 ```
 
-`golf update` requires Go 1.27 or newer on PATH, network access, and write access to the installed executable's directory. It fetches and builds the latest tagged release with Go's `@latest` query, stages the new executable beside the installed one, and atomically replaces it after a successful build. Build failures leave the installed binary intact. Settings, attempts, and workspaces are preserved. A symlink launch updates its resolved executable. The command updates the executable being run; use `command -v golf` to check which installation your shell selects.
+`golf update` requires Go 1.27 or newer on PATH, network access, and write access to the installed executable's directory. It fetches and builds the version selected by Go's `@latest` query, stages the new executable beside the installed one, and atomically replaces it after a successful build. Build failures leave the installed binary intact. Settings, attempts, and workspaces are preserved. A symlink launch updates its resolved executable. The command updates the executable being run; use `command -v golf` to check which installation your shell selects.
 
 Updates include the embedded catalog and runtime build context. Run `golf setup` after an update when the checker runtime changes. Existing attempts keep their recorded revisions and checker image IDs. Go-installed builds report the upstream module version with `golf version`.
 
@@ -195,7 +195,7 @@ just install
 golf
 ```
 
-`just install` builds the current checkout, creates `~/.local/bin` if needed, and atomically replaces `golf` there. It replaces any installed version without an uninstall step and preserves settings, attempts, and workspaces. Build or copy failures leave the installed binary intact. Set `GOLF_INSTALL_DIR` to select another installation directory. `just VERSION=v0.1.0 install` sets the binary's version label; it does not download or select that source version. `golf update` replaces this build with the latest release without modifying the checkout.
+`just install` builds the current checkout, creates `~/.local/bin` if needed, and atomically replaces `golf` there. It replaces any installed version without an uninstall step and preserves settings, attempts, and workspaces. Build or copy failures leave the installed binary intact. Set `GOLF_INSTALL_DIR` to select another installation directory. `just VERSION=v0.1.0 install` sets the binary's version label; it does not download or select that source version. `golf update` replaces this build with the upstream version selected by Go's `@latest` query without modifying the checkout.
 
 The installer reports when the destination is missing from PATH or another `golf` takes precedence. For the default destination, add `export PATH="$HOME/.local/bin:$PATH"` to your shell configuration if needed. Runtime preparation remains `golf setup` as described in Quick start.
 

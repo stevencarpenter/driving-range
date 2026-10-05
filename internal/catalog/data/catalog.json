@@ -2385,6 +2385,62 @@
       ]
     },
     {
+      "id": "git.selective-stage",
+      "revision": 2,
+      "track": "git",
+      "title": "Stage only the intended file",
+      "objective": "Stage the existing api.txt change. Leave notes.txt modified but unstaged. Do not commit.",
+      "brief": "Practice separating one intended change from unrelated work. Git's index lets the next snapshot differ from the complete working tree.\n\nStage the existing api.txt change. Leave notes.txt modified but unstaged. Do not commit.\n\nWork only in this synthetic repository. Checks inspect repository semantics, not commit hashes.\n\nKey reference: git help; this repository has no remotes, credentials, or signing keys.\n\nThe starter repository is initialized before the shell opens. Preserve its synthetic history and unrelated files.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "git"
+      ],
+      "concepts": [
+        "index",
+        "selective-staging"
+      ],
+      "hints": [
+        "Inspect staged and unstaged differences as two separate views.",
+        "Choose a staging scope narrow enough to include only the intended path. Verify what remains outside the index before considering the task complete."
+      ],
+      "explanation": "Selective staging separates an intended change from unrelated work. The check inspects both index and working tree.",
+      "reference_solution": "git add -- api.txt\n",
+      "license": "MIT",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "api.txt",
+      "editor": "bash",
+      "validator": {
+        "kind": "commands",
+        "version": "1",
+        "checks": [
+          {
+            "name": "index and working tree",
+            "argv": [
+              "bash",
+              "--noprofile",
+              "--norc",
+              "-c",
+              "set -euo pipefail; test \"$(git diff --cached --name-only)\" = api.txt; test \"$(git diff --name-only)\" = notes.txt; git show :api.txt | cmp - <(printf 'port=8080\\n'); printf 'port=8080\\n' | cmp - api.txt; printf 'draft updated\\n' | cmp - notes.txt; test \"$(git rev-list --count HEAD)\" = 1; test \"$(git log -1 --format='%an <%ae>|%cn <%ce>|%B')\" = 'Golf Player <player@example.invalid>|Golf Player <player@example.invalid>|Initial files'; test \"$(git rev-parse 'HEAD^{tree}')\" = da556615e04ac574c91f5e8fc7afff2c8507eec8; test -z \"$(git ls-files --others --exclude-standard)\"; printf 'ok\\n'"
+            ],
+            "expected_stdout": "ok\n",
+            "exit_code": 0
+          }
+        ]
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "api.txt": "port=3000\n",
+            "notes.txt": "draft\n"
+          },
+          "setup": "git init -q -b main\ngit config user.name 'Golf Player'\ngit config user.email player@example.invalid\ngit add .\ngit commit -qm 'Initial files'\nprintf 'port=8080\\n' > api.txt\nprintf 'draft updated\\n' > notes.txt\n"
+        }
+      ]
+    },
+    {
       "id": "git.amend-message",
       "revision": 1,
       "track": "git",
@@ -2423,6 +2479,61 @@
               "--norc",
               "-c",
               "test \"$(git log -1 --format=%B)\" = 'Document launch checklist' && test \"$(git rev-list --count HEAD)\" = 1 && test \"$(git show HEAD:checklist.txt)\" = $'build\\ntest\\nship' && test -z \"$(git status --porcelain)\" && printf 'ok\\n'"
+            ],
+            "expected_stdout": "ok\n",
+            "exit_code": 0
+          }
+        ]
+      },
+      "fixtures": [
+        {
+          "name": "example",
+          "files": {
+            "checklist.txt": "build\ntest\nship\n"
+          },
+          "setup": "git init -q -b main\ngit config user.name 'Golf Player'\ngit config user.email player@example.invalid\ngit add .\ngit commit -qm 'Initial files'\ngit commit --amend -qm WIP\n"
+        }
+      ]
+    },
+    {
+      "id": "git.amend-message",
+      "revision": 2,
+      "track": "git",
+      "title": "Repair the last commit message",
+      "objective": "Change the current commit message from WIP to Document launch checklist. Preserve the committed file tree and one-commit history.",
+      "brief": "Practice correcting commit metadata without changing the recorded content. This exercise uses disposable local history to distinguish replacing a commit from adding another one.\n\nChange the current commit message from WIP to Document launch checklist. Preserve the committed file tree and one-commit history.\n\nWork only in this synthetic repository. Checks inspect repository semantics, not commit hashes.\n\nKey reference: git help; this repository has no remotes, credentials, or signing keys.\n\nThe starter repository is initialized before the shell opens. Preserve its synthetic history and unrelated files.",
+      "difficulty": 2,
+      "minutes": 5,
+      "tools": [
+        "git"
+      ],
+      "concepts": [
+        "amend",
+        "commit-messages"
+      ],
+      "hints": [
+        "A new ordinary commit would change the length of the history.",
+        "Review the option for replacing the current commit. Check the staged tree before using it so a message correction does not also change content."
+      ],
+      "explanation": "Amending rewrites a commit identity. This is a disposable unpublished repository, so no shared history is affected.",
+      "reference_solution": "git commit --amend -qm 'Document launch checklist'\n",
+      "license": "MIT",
+      "author": "Original Driving Range curriculum draft, created for this repository. Executable audit required; no human editorial review claimed.",
+      "profile": "standard",
+      "entrypoint": "checklist.txt",
+      "editor": "bash",
+      "validator": {
+        "kind": "commands",
+        "version": "1",
+        "checks": [
+          {
+            "name": "message tree and ancestry",
+            "argv": [
+              "bash",
+              "--noprofile",
+              "--norc",
+              "-c",
+              "set -euo pipefail; test \"$(git log -1 --format=%B)\" = 'Document launch checklist'; test \"$(git rev-list --count HEAD)\" = 1; test \"$(git rev-parse 'HEAD^{tree}')\" = 532ebb83a8b266be37ce7423ca51541b2471064a; test -z \"$(git status --porcelain)\"; printf 'ok\\n'"
             ],
             "expected_stdout": "ok\n",
             "exit_code": 0
@@ -5818,6 +5929,21 @@
       ]
     },
     {
+      "id": "awk.run-lengths", "revision": 2, "track": "awk", "title": "Count adjacent runs and flush the final run",
+      "objective": "For each adjacent run of identical complete lines in runs.txt, print [line]|run-length in order. Separate nonadjacent appearances of the same text into different runs. Preserve blank lines as records and report the final run at EOF. The file is nonempty.",
+      "brief": "Summarize consecutive state without turning it into a global frequency count. For each adjacent run of identical complete lines in runs.txt, print [line]|run-length in order. Separate nonadjacent appearances of the same text into different runs. Preserve blank lines as records and report the final run at EOF. The file is nonempty. Edit solution.sh; checking includes repeated labels, leading blank records, and an EOF run.\n\nKey reference: man awk documents rule order, next, and END.",
+      "difficulty": 4, "minutes": 7, "tools": ["awk"], "concepts": ["adjacent-runs", "state-transitions", "eof-flush"],
+      "hints": ["Sorting or grouping by the whole label merges runs that must stay separate.", "Initialize from the first record, flush when the label changes, and flush the remaining run in END."],
+      "explanation": "A run ends at a transition, not at the last occurrence of a value in the file. END emits the final pending run because no later transition exists to trigger it. Concatenating an empty string makes equality compare exact text, so numeric spellings such as 01 and 1 remain distinct.",
+      "reference_solution": "cat > solution.sh <<'GOLF_SOLUTION'\nawk 'NR==1 {previous=$0; count=1; next} ($0 \"\")== (previous \"\") {count++; next} {printf \"[%s]|%d\\n\", previous, count; previous=$0; count=1} END {if (NR>0) printf \"[%s]|%d\\n\", previous, count}' runs.txt\nGOLF_SOLUTION\n",
+      "license": "MIT", "author": "Original Driving Range curriculum. Adjacent versus global duplicate research: Stack Overflow 1444406; docs/SOURCES.md. No human editorial review claimed.", "profile": "standard", "entrypoint": "solution.sh", "editor": "bash", "validator": {"kind": "stdout", "version": "1"}, "submission_file": "solution.sh", "submission_argv": ["bash", "solution.sh"],
+      "fixtures": [
+        {"name": "example", "files": {"runs.txt": "red\nred\nblue\nred\n\n\n", "solution.sh": "# Write your reusable solution here.\n"}, "expected_stdout": "[red]|2\n[blue]|1\n[red]|1\n[]|2\n"},
+        {"name": "variant-1", "files": {"runs.txt": "\n\nalpha\nalpha\nbeta\n", "solution.sh": "# Write your reusable solution here.\n"}, "expected_stdout": "[]|2\n[alpha]|2\n[beta]|1\n"},
+        {"name": "numeric-spellings", "files": {"runs.txt": "01\n1\n1\n001\n0\n00\n00\n0.0\nword\nword\n\n", "solution.sh": "# Write your reusable solution here.\n"}, "expected_stdout": "[01]|1\n[1]|2\n[001]|1\n[0]|1\n[00]|2\n[0.0]|1\n[word]|2\n[]|1\n"}
+      ]
+    },
+    {
       "id": "awk.lookup-join", "revision": 1, "track": "awk", "title": "Join a lookup table even when its first file is empty",
       "objective": "registry.txt contains unique key|value records; values may be empty or zero. queries.txt contains one key per line. Print key|value for known keys and key|unknown for absent keys, preserving query order and repetitions. An empty registry makes every query unknown.",
       "brief": "Separate file roles from record counts and value truthiness. registry.txt contains unique key|value records; values may be empty or zero. queries.txt contains one key per line. Print key|value for known keys and key|unknown for absent keys, preserving query order and repetitions. An empty registry makes every query unknown. Keys contain lowercase ASCII letters, and values contain no pipes or newlines. Edit solution.sh; checking covers an empty first file and mapped empty values.\n\nKey reference: man awk documents FILENAME, FNR, NR, associative-array membership, and next.",
@@ -6757,6 +6883,19 @@
       ]
     },
     {
+      "id": "python.nfc-frequency", "revision": 2, "track": "python", "title": "Count canonically equivalent Unicode labels together",
+      "objective": "Read one nonempty label per LF-terminated line from labels.txt. Normalize each to Unicode NFC before counting. Print compact JSON arrays [normalized_label,count], sorted by normalized label's Unicode code points. Preserve case and compatibility distinctions; do not use NFKC. Treat CR as record data; only LF terminates a record.",
+      "brief": "Define text equivalence before building a frequency map. Read one nonempty label per LF-terminated line from labels.txt. Normalize each to Unicode NFC before counting. Print compact JSON arrays [normalized_label,count], sorted by normalized label's Unicode code points. Preserve case and compatibility distinctions; do not use NFKC. Treat CR as record data; only LF terminates a record. Edit solution.py; checking combines precomposed and decomposed accents without collapsing a fullwidth label.\n\nKey reference: Python unicodedata.normalize distinguishes canonical NFC from compatibility NFKC.",
+      "difficulty": 3, "minutes": 6, "tools": ["python3"], "concepts": ["canonical-unicode-equivalence", "normalization-before-counting", "compatibility-distinction"], "hints": ["Visually identical accented text may use different code-point sequences and count as different dictionary keys.", "Normalize each label to the specified canonical form before counting, but do not apply compatibility conversion or case folding."], "explanation": "NFC combines canonical equivalents while retaining compatibility distinctions such as fullwidth letters. Counting after normalization produces one entry for equivalent accent sequences. Opening with newline='\\n' preserves CR as data and uses only LF record boundaries.",
+      "reference_solution": "cat > solution.py <<'GOLF_SOLUTION'\nimport json\nimport unicodedata\nfrom collections import Counter\nwith open('labels.txt', encoding='utf-8', newline='\\n') as source:\n    counts = Counter(unicodedata.normalize('NFC', line.removesuffix('\\n')) for line in source)\nfor label in sorted(counts):\n    print(json.dumps([label, counts[label]], ensure_ascii=False, separators=(',', ':')))\nGOLF_SOLUTION\n",
+      "license": "MIT", "author": "Original Driving Range curriculum; Python Unicode normalization documentation in docs/SOURCES.md. No human editorial review claimed.", "profile": "standard", "entrypoint": "solution.py", "editor": "bash", "validator": {"kind": "stdout", "version": "1"}, "submission_file": "solution.py", "submission_argv": ["python3", "solution.py"],
+      "fixtures": [
+        {"name": "example", "files": {"labels.txt": "café\ncafé\nA\nＡ\n", "solution.py": "# Write your reusable solution here.\n"}, "expected_stdout": "[\"A\",1]\n[\"café\",2]\n[\"Ａ\",1]\n"},
+        {"name": "variant-1", "files": {"labels.txt": "Å\nÅ\na\n", "solution.py": "# Write your reusable solution here.\n"}, "expected_stdout": "[\"a\",1]\n[\"Å\",2]\n"},
+        {"name": "cr-is-data", "files": {"labels.txt": "café\r\ncafé\r\ncafé\nA\rB\nA\rB\n", "solution.py": "# Write your reusable solution here.\n"}, "expected_stdout": "[\"A\\rB\",2]\n[\"café\",1]\n[\"café\\r\",2]\n"}
+      ]
+    },
+    {
       "id": "python.casefold-first-spelling", "revision": 1, "track": "python", "title": "Deduplicate Unicode case variants while preserving the first spelling",
       "objective": "Read one nonempty label per LF-terminated line from labels.txt. Keep only the first label for each Python str.casefold result and print that original spelling in first-occurrence order. Do not normalize Unicode accents or sort the result.",
       "brief": "Separate the comparison key from the text presented to the user. Read one nonempty label per LF-terminated line from labels.txt. Keep only the first label for each Python str.casefold result and print that original spelling in first-occurrence order. Do not normalize Unicode accents or sort the result. Edit solution.py; checking includes German sharp-s and Greek sigma variants.\n\nKey reference: Python str.casefold is more aggressive than lower and is intended for caseless comparisons.",
@@ -6766,6 +6905,19 @@
       "fixtures": [
         {"name": "example", "files": {"labels.txt": "Straße\nSTRASSE\nBeta\nbeta\n", "solution.py": "# Write your reusable solution here.\n"}, "expected_stdout": "Straße\nBeta\n"},
         {"name": "variant-1", "files": {"labels.txt": "ς\nΣ\nσ\nAlpha\nALPHA\n", "solution.py": "# Write your reusable solution here.\n"}, "expected_stdout": "ς\nAlpha\n"}
+      ]
+    },
+    {
+      "id": "python.casefold-first-spelling", "revision": 2, "track": "python", "title": "Deduplicate Unicode case variants while preserving the first spelling",
+      "objective": "Read one nonempty label per LF-terminated line from labels.txt. Keep only the first label for each Python str.casefold result and print that original spelling in first-occurrence order. Do not normalize Unicode accents or sort the result. Treat CR as record data; only LF terminates a record.",
+      "brief": "Separate the comparison key from the text presented to the user. Read one nonempty label per LF-terminated line from labels.txt. Keep only the first label for each Python str.casefold result and print that original spelling in first-occurrence order. Do not normalize Unicode accents or sort the result. Treat CR as record data; only LF terminates a record. Edit solution.py; checking includes German sharp-s and Greek sigma variants.\n\nKey reference: Python str.casefold is more aggressive than lower and is intended for caseless comparisons.",
+      "difficulty": 3, "minutes": 6, "tools": ["python3"], "concepts": ["unicode-casefold", "first-representative", "comparison-versus-presentation"], "hints": ["lower does not equate every Unicode caseless form, and printing the folded key loses the original spelling.", "Track folded keys in a set but emit the original line only when its key is first encountered."], "explanation": "Casefolding defines comparison equivalence independently of presentation. First-seen representatives retain their source spelling and order. Opening with newline='\\n' preserves CR as data and uses only LF record boundaries.",
+      "reference_solution": "cat > solution.py <<'GOLF_SOLUTION'\nseen = set()\nwith open('labels.txt', encoding='utf-8', newline='\\n') as source:\n    for line in source:\n        label = line.removesuffix('\\n')\n        key = label.casefold()\n        if key not in seen:\n            seen.add(key)\n            print(label)\nGOLF_SOLUTION\n",
+      "license": "MIT", "author": "Original Driving Range curriculum; Python casefold documentation in docs/SOURCES.md. No human editorial review claimed.", "profile": "standard", "entrypoint": "solution.py", "editor": "bash", "validator": {"kind": "stdout", "version": "1"}, "submission_file": "solution.py", "submission_argv": ["python3", "solution.py"],
+      "fixtures": [
+        {"name": "example", "files": {"labels.txt": "Straße\nSTRASSE\nBeta\nbeta\n", "solution.py": "# Write your reusable solution here.\n"}, "expected_stdout": "Straße\nBeta\n"},
+        {"name": "variant-1", "files": {"labels.txt": "ς\nΣ\nσ\nAlpha\nALPHA\n", "solution.py": "# Write your reusable solution here.\n"}, "expected_stdout": "ς\nAlpha\n"},
+        {"name": "cr-is-data", "files": {"labels.txt": "Straße\r\nSTRASSE\nstrasse\r\nOne\rTwo\nONE\rTWO\n", "solution.py": "# Write your reusable solution here.\n"}, "expected_stdout": "Straße\r\nSTRASSE\nOne\rTwo\n"}
       ]
     },
     {
@@ -6828,6 +6980,19 @@
         {"name": "example", "files": {"stock.txt": "a\nb\na\nc\na\n", "remove.txt": "a\na\nx\n", "solution.py": "# Write your reusable solution here.\n"}, "expected_stdout": "b\nc\na\n"},
         {"name": "variant-1", "files": {"stock.txt": "x\ny\nx\nz\n", "remove.txt": "y\ny\nx\n", "solution.py": "# Write your reusable solution here.\n"}, "expected_stdout": "x\nz\n"}
       ]
+    },
+    {
+      "id": "python.ordered-multiset-subtraction", "revision": 2, "track": "python", "title": "Subtract only the requested number of label occurrences",
+      "objective": "Read nonempty LF-terminated labels from stock.txt and remove.txt. Each remove occurrence consumes the earliest still-available equal stock occurrence. Print surviving stock labels in original order, retaining excess repeats. Unavailable removals have no effect; matching is case sensitive. Treat CR as record data; only LF terminates a record.",
+      "brief": "Track multiplicity rather than applying a set difference. Read nonempty LF-terminated labels from stock.txt and remove.txt. Each remove occurrence consumes the earliest still-available equal stock occurrence. Print surviving stock labels in original order, retaining excess repeats. Unavailable removals have no effect; matching is case sensitive. Treat CR as record data; only LF terminates a record. Edit solution.py; checking includes more stock occurrences than requested removals and absent labels.\n\nKey reference: collections.Counter records multiplicity; stream iteration retains stock ordering.",
+      "difficulty": 3, "minutes": 6, "tools": ["python3"], "concepts": ["multiset-consumption", "ordered-survivors", "excess-occurrences"], "hints": ["Removing every label present in a set would discard excess stock occurrences that must survive.", "Count removal requests, consume one count when a stock label matches, and emit each unconsumed stock record in place."], "explanation": "A removal counter limits consumption per label. Scanning stock in order consumes the earliest occurrences and preserves the relative order of all survivors. Opening with newline='\\n' preserves CR as data and uses only LF record boundaries.",
+      "reference_solution": "cat > solution.py <<'GOLF_SOLUTION'\nfrom collections import Counter\nwith open('remove.txt', encoding='utf-8', newline='\\n') as source:\n    pending = Counter(line.removesuffix('\\n') for line in source)\nwith open('stock.txt', encoding='utf-8', newline='\\n') as source:\n    for line in source:\n        label = line.removesuffix('\\n')\n        if pending[label] > 0:\n            pending[label] -= 1\n        else:\n            print(label)\nGOLF_SOLUTION\n",
+      "license": "MIT", "author": "Original Driving Range curriculum; Python Counter documentation in docs/SOURCES.md. No human editorial review claimed.", "profile": "standard", "entrypoint": "solution.py", "editor": "bash", "validator": {"kind": "stdout", "version": "1"}, "submission_file": "solution.py", "submission_argv": ["python3", "solution.py"],
+      "fixtures": [
+        {"name": "example", "files": {"stock.txt": "a\nb\na\nc\na\n", "remove.txt": "a\na\nx\n", "solution.py": "# Write your reusable solution here.\n"}, "expected_stdout": "b\nc\na\n"},
+        {"name": "variant-1", "files": {"stock.txt": "x\ny\nx\nz\n", "remove.txt": "y\ny\nx\n", "solution.py": "# Write your reusable solution here.\n"}, "expected_stdout": "x\nz\n"},
+        {"name": "cr-is-data", "files": {"stock.txt": "a\r\na\nx\ry\nx\ry\nkeep\n", "remove.txt": "a\nx\ry\nmissing\r\n", "solution.py": "# Write your reusable solution here.\n"}, "expected_stdout": "a\r\nx\ry\nkeep\n"}
+      ]
     }
     ,
     {
@@ -6840,6 +7005,19 @@
       "fixtures": [
         {"name": "example", "files": {"slugs.txt": "abc\nab\nabc!\na12345678\n", "solution.py": "# Write your reusable solution here.\n"}, "expected_stdout": "valid\ninvalid\ninvalid\ninvalid\n"},
         {"name": "variant-1", "files": {"slugs.txt": "a_b9\naéx\nAbc\n1abc\na1234567\n", "solution.py": "# Write your reusable solution here.\n"}, "expected_stdout": "valid\ninvalid\ninvalid\ninvalid\nvalid\n"}
+      ]
+    },
+    {
+      "id": "python.fullmatch-ascii-slug", "revision": 2, "track": "python", "title": "Validate the complete ASCII slug rather than a matching prefix",
+      "objective": "For each LF-terminated candidate in slugs.txt print valid or invalid. A valid slug is 3 through 8 characters, starts with an ASCII lowercase letter, and then contains only ASCII lowercase letters, digits, or underscores. No trailing text, uppercase, or non-ASCII character is allowed. Treat CR as record data; only LF terminates a record.",
+      "brief": "Separate whole-value validation from finding a matching substring. For each LF-terminated candidate in slugs.txt print valid or invalid. A valid slug is 3 through 8 characters, starts with an ASCII lowercase letter, and then contains only ASCII lowercase letters, digits, or underscores. No trailing text, uppercase, or non-ASCII character is allowed. Treat CR as record data; only LF terminates a record. Edit solution.py; checking includes overlong candidates and Unicode word characters.\n\nKey reference: Python re.fullmatch requires the entire string to match; Unicode word classes are broader than the specified ASCII alphabet.",
+      "difficulty": 3, "minutes": 5, "tools": ["python3"], "concepts": ["whole-string-validation", "ascii-alphabet", "length-bounds"], "hints": ["A prefix match can accept trailing punctuation, while a general word class also accepts Unicode letters.", "Use an explicit ASCII character range with the declared length and a whole-string matching operation."], "explanation": "Full matching rejects extra suffix text. Explicit ranges implement the exact alphabet instead of inheriting Unicode category membership. Opening with newline='\\n' preserves CR as data and uses only LF record boundaries.",
+      "reference_solution": "cat > solution.py <<'GOLF_SOLUTION'\nimport re\nwith open('slugs.txt', encoding='utf-8', newline='\\n') as source:\n    for line in source:\n        value = line.removesuffix('\\n')\n        print('valid' if re.fullmatch(r'[a-z][a-z0-9_]{2,7}', value) else 'invalid')\nGOLF_SOLUTION\n",
+      "license": "MIT", "author": "Original Driving Range curriculum; Python re documentation in docs/SOURCES.md. No human editorial review claimed.", "profile": "standard", "entrypoint": "solution.py", "editor": "bash", "validator": {"kind": "stdout", "version": "1"}, "submission_file": "solution.py", "submission_argv": ["python3", "solution.py"],
+      "fixtures": [
+        {"name": "example", "files": {"slugs.txt": "abc\nab\nabc!\na12345678\n", "solution.py": "# Write your reusable solution here.\n"}, "expected_stdout": "valid\ninvalid\ninvalid\ninvalid\n"},
+        {"name": "variant-1", "files": {"slugs.txt": "a_b9\naéx\nAbc\n1abc\na1234567\n", "solution.py": "# Write your reusable solution here.\n"}, "expected_stdout": "valid\ninvalid\ninvalid\ninvalid\nvalid\n"},
+        {"name": "cr-is-data", "files": {"slugs.txt": "abc\r\nabc\rdef\nabc\na_b9\r\n", "solution.py": "# Write your reusable solution here.\n"}, "expected_stdout": "invalid\ninvalid\nvalid\ninvalid\n"}
       ]
     },
     {
@@ -6931,6 +7109,19 @@
       ]
     },
     {
+      "id": "python.adjacent-run-lengths", "revision": 2, "track": "python", "title": "Count adjacent runs without merging later occurrences",
+      "objective": "Read LF-terminated labels from labels.txt, including empty labels. Emit compact JSON [label,run_length] for each maximal adjacent run, in run order. Equal labels separated by another label remain separate runs. Retain non-ASCII characters literally. Treat CR as record data; only LF terminates a record.",
+      "brief": "Use adjacency rather than global frequency as the grouping criterion. Read LF-terminated labels from labels.txt, including empty labels. Emit compact JSON [label,run_length] for each maximal adjacent run, in run order. Equal labels separated by another label remain separate runs. Retain non-ASCII characters literally. Treat CR as record data; only LF terminates a record. Edit solution.py; checking includes a repeated label after another run and two blank records.\n\nKey reference: itertools.groupby groups consecutive equal keys, unlike a global count or SQL grouping.",
+      "difficulty": 3, "minutes": 6, "tools": ["python3"], "concepts": ["adjacent-grouping", "run-length-encoding", "blank-records"], "hints": ["A global Counter merges separated runs, while stripping all whitespace loses blank records.", "Remove only the LF terminator and consume each consecutive group before advancing to the next group."], "explanation": "Groupby preserves consecutive runs in stream order. Consuming each group's iterator yields its run length without combining later occurrences. Opening with newline='\\n' preserves CR as data and uses only LF record boundaries.",
+      "reference_solution": "cat > solution.py <<'GOLF_SOLUTION'\nimport json\nfrom itertools import groupby\nwith open('labels.txt', encoding='utf-8', newline='\\n') as source:\n    labels = (line.removesuffix('\\n') for line in source)\n    for label, group in groupby(labels):\n        print(json.dumps([label, sum(1 for _ in group)], ensure_ascii=False, separators=(',', ':')))\nGOLF_SOLUTION\n",
+      "license": "MIT", "author": "Original Driving Range curriculum; Python itertools documentation in docs/SOURCES.md. No human editorial review claimed.", "profile": "standard", "entrypoint": "solution.py", "editor": "bash", "validator": {"kind": "stdout", "version": "1"}, "submission_file": "solution.py", "submission_argv": ["python3", "solution.py"],
+      "fixtures": [
+        {"name": "example", "files": {"labels.txt": "a\na\nb\na\n", "solution.py": "# Write your reusable solution here.\n"}, "expected_stdout": "[\"a\",2]\n[\"b\",1]\n[\"a\",1]\n"},
+        {"name": "variant-1", "files": {"labels.txt": "x\n\n\nz\n", "solution.py": "# Write your reusable solution here.\n"}, "expected_stdout": "[\"x\",1]\n[\"\",2]\n[\"z\",1]\n"},
+        {"name": "cr-is-data", "files": {"labels.txt": "a\r\na\r\na\na\ra\n\nb\r\nb\n", "solution.py": "# Write your reusable solution here.\n"}, "expected_stdout": "[\"a\\r\",2]\n[\"a\",1]\n[\"a\\ra\",1]\n[\"\",1]\n[\"b\\r\",1]\n[\"b\",1]\n"}
+      ]
+    },
+    {
       "id": "python.rolling-three-maximum", "revision": 1, "track": "python", "title": "Report maxima for complete rolling windows rather than all-history maxima",
       "objective": "Read an integer array from values.json. Print the maximum of each consecutive three-value window, one integer per line, in window order. Omit incomplete windows at the beginning and retain repeated maxima. Fewer than three values yield no output.",
       "brief": "Bound the state to the current window rather than the whole prefix. Read an integer array from values.json. Print the maximum of each consecutive three-value window, one integer per line, in window order. Omit incomplete windows at the beginning and retain repeated maxima. Fewer than three values yield no output. Edit solution.py; checking includes an early maximum that later expires and negative values.\n\nKey reference: collections.deque with maxlen evicts the oldest item when a new one is appended.",
@@ -7002,6 +7193,19 @@
       "fixtures": [
         {"name": "example", "files": {"encoded.txt": "YQ==\nY!Q==\nYQ\n\n", "solution.py": "# Write your reusable solution here.\n"}, "expected_stdout": "hex:61\ninvalid\ninvalid\nhex:\n"},
         {"name": "variant-1", "files": {"encoded.txt": "AP8=\nYQ== \nw6k=\n", "solution.py": "# Write your reusable solution here.\n"}, "expected_stdout": "hex:00ff\ninvalid\nhex:c3a9\n"}
+      ]
+    },
+    {
+      "id": "python.strict-base64-lines", "revision": 2, "track": "python", "title": "Reject nonalphabet Base64 data instead of silently discarding it",
+      "objective": "For each LF-terminated Base64 candidate in encoded.txt, print hex: followed by the decoded lowercase byte hex if strict standard Base64 decoding succeeds, otherwise invalid. Remove only the LF terminator. Spaces, stray punctuation, and malformed padding must not be ignored. An empty candidate decodes to empty bytes. Treat CR as record data; only LF terminates a record.",
+      "brief": "Choose the decoder's validation policy rather than accepting its permissive default. For each LF-terminated Base64 candidate in encoded.txt, print hex: followed by the decoded lowercase byte hex if strict standard Base64 decoding succeeds, otherwise invalid. Remove only the LF terminator. Spaces, stray punctuation, and malformed padding must not be ignored. An empty candidate decodes to empty bytes. Treat CR as record data; only LF terminates a record. Edit solution.py; checking includes internal punctuation and trailing whitespace.\n\nKey reference: base64.b64decode(validate=True) rejects nonalphabet input instead of discarding it before checking padding.",
+      "difficulty": 3, "minutes": 6, "tools": ["python3"], "concepts": ["strict-decoding", "nonalphabet-rejection", "line-boundary-versus-data"], "hints": ["The permissive decoder discards some stray characters, and strip would remove invalid whitespace that must be checked.", "Remove only the LF terminator, enable strict validation, and handle a decoding exception per record."], "explanation": "Strict decoding preserves the distinction between valid encoding and data repaired by character removal. Record-local handling continues after invalid candidates. Opening with newline='\\n' preserves CR as data and uses only LF record boundaries.",
+      "reference_solution": "cat > solution.py <<'GOLF_SOLUTION'\nimport base64\nimport binascii\nwith open('encoded.txt', encoding='utf-8', newline='\\n') as source:\n    for line in source:\n        try:\n            decoded = base64.b64decode(line.removesuffix('\\n'), validate=True)\n        except (binascii.Error, ValueError):\n            print('invalid')\n        else:\n            print('hex:' + decoded.hex())\nGOLF_SOLUTION\n",
+      "license": "MIT", "author": "Original Driving Range curriculum; Python base64 documentation in docs/SOURCES.md. No human editorial review claimed.", "profile": "standard", "entrypoint": "solution.py", "editor": "bash", "validator": {"kind": "stdout", "version": "1"}, "submission_file": "solution.py", "submission_argv": ["python3", "solution.py"],
+      "fixtures": [
+        {"name": "example", "files": {"encoded.txt": "YQ==\nY!Q==\nYQ\n\n", "solution.py": "# Write your reusable solution here.\n"}, "expected_stdout": "hex:61\ninvalid\ninvalid\nhex:\n"},
+        {"name": "variant-1", "files": {"encoded.txt": "AP8=\nYQ== \nw6k=\n", "solution.py": "# Write your reusable solution here.\n"}, "expected_stdout": "hex:00ff\ninvalid\nhex:c3a9\n"},
+        {"name": "cr-is-data", "files": {"encoded.txt": "YQ==\r\nYQ==\rYg==\nYQ==\n\n", "solution.py": "# Write your reusable solution here.\n"}, "expected_stdout": "invalid\ninvalid\nhex:61\nhex:\n"}
       ]
     },
     {

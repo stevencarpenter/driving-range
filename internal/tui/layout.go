@@ -20,8 +20,8 @@ func (m Model) View() tea.View {
 	// Position the terminal cursor over the visible child pane. The offset is
 	// the rows the band occupies.
 	if m.workbench != nil && m.workbench.session != nil && m.confirm == "" && !m.workbench.outputOpen && !m.workbench.palette {
-		x, y := m.workbench.session.Cursor()
-		if m.height > 1 && x >= 0 && x < m.width && y >= 0 && y < m.workbench.paneHeight(m.height) {
+		x, y, visible := m.workbench.session.Cursor()
+		if visible && m.height > 1 && x >= 0 && x < m.width && y >= 0 && y < m.workbench.paneHeight(m.height) {
 			v.Cursor = tea.NewCursor(x, y+m.workbench.bandRows())
 		}
 	}

@@ -600,4 +600,64 @@ func TestWorkbenchCursorStaysInsideTheVisibleChildPane(t *testing.T) {
 	}
 }
 
+func TestWorkbenchPasteKeepsUpdateAndViewResponsive(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	s, err := pane.Start(exec.CommandContext(ctx, "/bin/sh", "-c", "stty raw -echo; printf READY; exec sleep 30"), 80, 18, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { cancel(); s.Wait(); s.Close() })
+	deadline := time.Now().Add(time.Second)
+	for !strings.Contains(s.Render(), "READY") && time.Now().Before(deadline) {
+		time.Sleep(10 * time.Millisecond)
+	}
+	if !strings.Contains(s.Render(), "READY") {
+		t.Fatal("child did not enter raw input mode")
+	}
+	m := preparedModel(t, false)
+	m.workbench = newWorkbench(s, "g", "b")
+	done := make(chan struct{})
+	go func() {
+		updated, _ := m.Update(tea.PasteMsg{Content: strings.Repeat("x", 1<<20)})
+		updated.View()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		cancel()
+		<-done
+		t.Fatal("paste blocked the event loop while the child was not reading input")
+	}
+}
+
+func TestWorkbenchCursorFollowsChildVisibility(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	s, err := pane.Start(exec.CommandContext(ctx, "/bin/sh", "-c", "printf '\\033[?25lHIDDEN'; read line; printf '\\033[?25hVISIBLE'; exec cat"), 80, 18, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { cancel(); s.Wait(); s.Close() })
+	m := preparedModel(t, false)
+	m.workbench = newWorkbench(s, "g", "b")
+	for _, state := range []struct {
+		text    string
+		visible bool
+	}{{"HIDDEN", false}, {"VISIBLE", true}} {
+		deadline := time.Now().Add(time.Second)
+		for !strings.Contains(s.Render(), state.text) && time.Now().Before(deadline) {
+			time.Sleep(10 * time.Millisecond)
+		}
+		if !strings.Contains(s.Render(), state.text) {
+			t.Fatalf("child did not report %s", state.text)
+		}
+		if got := m.View().Cursor != nil; got != state.visible {
+			t.Fatalf("%s: host cursor visible=%t, want %t", state.text, got, state.visible)
+		}
+		m, _ = press(m, "enter")
+	}
+}
+
 var errTest = errors.New("boom")

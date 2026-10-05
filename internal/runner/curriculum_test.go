@@ -105,6 +105,10 @@ func TestIntegrationCurriculumRejectsWrongAnswers(t *testing.T) {
 		{"search.tokens-outside-quotes", "rg -P -o '\\bTODO\\b' notes.txt\n"},
 		{"search.depth-limited-content", "rg -l -F READY data | LC_ALL=C sort\n"},
 		{"search.ascii-word-boundaries", "rg '\\bOK\\b' boundaries.txt\n"},
+		{"git.selective-stage", "git add -- api.txt; printf 'corrupted notes\\n' > notes.txt\n"},
+		{"git.selective-stage", "git commit --amend -qm 'Changed history'; git add -- api.txt\n"},
+		{"git.selective-stage", "git commit --amend --author='Changed Author <changed@example.invalid>' -qm 'Initial files'; git add -- api.txt\n"},
+		{"git.amend-message", "printf 'extra\\n' > extra.txt; git add -- extra.txt; git commit --amend -qm 'Document launch checklist'\n"},
 		{"git.stage-deletion", "git add .\n"},
 		{"git.restore-index-version", "git restore --source=HEAD -- api.txt\n"},
 		{"git.restore-historical-path", "git restore --source=HEAD~1 --staged --worktree -- api.txt\n"},
@@ -365,6 +369,25 @@ func TestIntegrationCurriculumRejectsWrongAnswers(t *testing.T) {
 		{"python.zip-member-manifest", "import json\nfrom zipfile import ZipFile\nwith ZipFile('archive.zip') as archive:\n    for info in sorted(archive.infolist(), key=lambda info: info.filename):\n        if not info.is_dir(): print(json.dumps([info.filename,info.compress_size], separators=(',', ':')))\n"},
 		{"python.strict-base64-lines", "import base64, binascii\nfor line in open('encoded.txt'):\n    try: decoded=base64.b64decode(line.removesuffix('\\n'))\n    except (binascii.Error,ValueError): print('invalid')\n    else: print('hex:'+decoded.hex())\n"},
 		{"python.strict-json-record-recovery", "import json\nfor number,line in enumerate(open('records.jsonl'),1):\n    try: json.loads(line)\n    except ValueError: status='invalid'\n    else: status='valid'\n    print(f'{number}:{status}')\n"},
+	}
+	for _, id := range []string{"awk.run-lengths", "python.nfc-frequency", "python.casefold-first-spelling", "python.ordered-multiset-subtraction", "python.fullmatch-ascii-slug", "python.adjacent-run-lengths", "python.strict-base64-lines"} {
+		original, err := cat.Find(id, 1)
+		if err != nil {
+			t.Fatal(err)
+		}
+		body, ok := strings.CutPrefix(original.ReferenceSolution, "cat > "+original.SubmissionFile+" <<'GOLF_SOLUTION'\n")
+		if !ok {
+			t.Fatalf("unexpected reference header for %s", id)
+		}
+		body, ok = strings.CutSuffix(body, "GOLF_SOLUTION\n")
+		if !ok {
+			t.Fatalf("unexpected reference delimiter for %s", id)
+		}
+		cases = append(cases, struct{ id, script string }{id, body})
+		if original.Track == "python" {
+			// Retaining CR bytes still fails if a lone CR can split an LF record.
+			cases = append(cases, struct{ id, script string }{id, strings.ReplaceAll(body, "encoding='utf-8'", "encoding='utf-8', newline=''")})
+		}
 	}
 	for _, tc := range cases {
 		t.Run(tc.id, func(t *testing.T) {

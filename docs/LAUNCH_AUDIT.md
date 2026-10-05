@@ -2,13 +2,31 @@
 
 This is a dated evidence record, not a live CI or Docker-health report. Results apply only to the recorded source, catalog, image, host, and command. Later passes do not erase earlier failures, and historical passes do not verify changed revisions.
 
+## Complete publication review, 5 October 2026
+
+The working tree based on `371c3f77c8c7856e050d07d3dc4dd068a5c710fb` received a complete reading of all 86 publication files, every field of all 602 original exercise definitions, and all 30 schedule entries. Nine corrective revision 2 definitions were then added and read completely. The catalog now contains 600 unique exercises and 611 revision definitions at SHA-256 `6d9789a79e5e61bc6a39d6986c201edf7f33c09eb19a476c377c755ace006f93`. Parsed and raw-object comparisons preserve all 602 original definitions, their order, and the schedule.
+
+Corrected findings have focused regressions:
+
+- SQLite database and sidecar permissions are restricted before connection opening. Migration backups are created privately.
+- Native snapshots retain the verified directory handle across directory replacement.
+- TUI input uses an ordered bounded queue to prevent PTY backpressure from blocking the event loop. The displayed cursor follows the child's visibility.
+- New exercise revisions enforce two Git content/history contracts, compare awk records as text, and preserve CR data in six Python LF-only readers.
+- Update documentation and CLI wording describe Go's `@latest` selection. A historical checkout example uses a portable path.
+
+On macOS arm64 with Go 1.27.1, `just check`, changed-package race tests, `go mod verify`, `govulncheck` v1.8.0, workflow lint, ShellCheck, Lefthook validation, and whitespace checks passed. `GOLF_IMAGE=driving-range-runtime:oss-prep just integration base` passed, including native ownership, resume, isolation, replay, cancellation, and PTY execution checks. `GOLF_IMAGE=driving-range-runtime:oss-prep just smoke` passed terminal restoration and the configured native editor/shell workbench scenarios. Docker used Linux arm64 image `sha256:d28b2375d71ed9dd8692609ec57c326853622f2e4969e142df34dbb3c55aa72f`. All 24 affected wrong-answer subtests passed in one run (68.00 seconds). Affected starter/reference audits passed all 39 Git, 101 awk, and 41 Python retained/current definitions, including all nine corrections. These checks do not claim a repeated full curriculum integration run.
+
+Dependency notice comparison covers all 31 linked modules on macOS arm64 and all 29 on each Linux target. All 38 upstream notice sections and the Go runtime license match module-cache originals after Markdown indentation and whitespace normalization. Gitleaks reported no credentials in the publication tree or all Git history. A separate history inspection found removed test caches and a synthetic smoke log containing hostname and local-path metadata in old merged pull-request commits. Those branches are deleted, but their commits remain retrievable from GitHub. The owner accepted retaining that historical metadata for publication on 5 October 2026. No GitHub history or visibility change was performed.
+
+[GitHub CI run 37256844430](https://github.com/stevencarpenter/driving-range/actions/runs/37256844430) passed all 14 jobs for committed source `371c3f7`, including all Docker shards on native Linux amd64 and arm64. That result predates these uncommitted corrections. Local verification of the corrections does not establish execution on native Linux amd64 or a new GitHub CI pass.
+
 ## Release versioning configuration, 4 October 2026
 
 The working tree based on `f260cd77a36863bf4a3a3ba189dc680fe7a9e852` configures a pinned Release Please action for the root Go module. Its first proposed release is `v0.1.0`. Conventional Commits select later version bumps and generate the changelog through a release PR. Merging that PR creates the tag and release, then explicitly dispatches archive verification at the selected tag using the built-in GitHub token. The archive workflow requires matching dispatch ref and tag input, checks out that tag, and retains all six Linux amd64 integration/reference shards and base terminal smoke before packaging. Installation and `golf update` now use Go's `@latest` query. Archives include the changelog and existing notices.
 
 `just check`, `actionlint`, shell syntax, ShellCheck for `scripts/release.sh`, and whitespace checks passed on macOS arm64 with Go 1.27.1. Local `v0.1.0` archives built for all three targets and passed checksum verification. Archive inspection confirmed the changelog and license notices; the macOS executable reported `golf v0.1.0` through both `version` and `--version`. Linux binaries were crossbuilt but not executed in this checkpoint.
 
-GitHub's Actions-created PR setting was enabled and read back as true. Default workflow token permissions remain read-only; the versioning job requests only its required write scopes. These files remain uncommitted, so the new GitHub versioning/dispatch flow has not executed. No release tag or GitHub Release was created by this preparation.
+GitHub's Actions-created PR setting was enabled and read back as true. Default workflow token permissions remained read-only; the versioning job requested only its required write scopes. At this checkpoint, these files were uncommitted and the new GitHub versioning/dispatch flow had not executed. No release tag or GitHub Release was created by this preparation.
 
 ## MIT preparation, 4 October 2026
 

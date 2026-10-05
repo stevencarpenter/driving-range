@@ -142,6 +142,46 @@ func TestNativeSnapshotAndOwnershipBoundary(t *testing.T) {
 	}
 }
 
+func TestNativeSnapshotRetainsVerifiedDirectory(t *testing.T) {
+	for _, replace := range []string{"workspace", "files"} {
+		t.Run(replace, func(t *testing.T) {
+			r := NewNative("unused", t.TempDir())
+			a := model.Attempt{ID: "native", Workspace: "golf-native"}
+			dir := nativeTestWorkspace(t, r, a)
+			if err := os.WriteFile(filepath.Join(dir, "files", "answer"), []byte("owned\n"), 0600); err != nil {
+				t.Fatal(err)
+			}
+			outside := t.TempDir()
+			if err := os.WriteFile(filepath.Join(outside, "answer"), []byte("outside\n"), 0600); err != nil {
+				t.Fatal(err)
+			}
+			root, err := r.openNativeDirectory(a)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer root.Close()
+			target := dir
+			if replace == "files" {
+				target = filepath.Join(dir, "files")
+			}
+			if err = os.Rename(target, target+"-moved"); err != nil {
+				t.Fatal(err)
+			}
+			if err = os.Symlink(outside, target); err != nil {
+				t.Fatal(err)
+			}
+			files, err := nativeSnapshot(root)
+			if replace == "files" {
+				if err == nil {
+					t.Fatal("replaced files directory accepted", files)
+				}
+			} else if err != nil || files["answer"] != "owned\n" {
+				t.Fatalf("verified directory lost: %v, %v", files, err)
+			}
+		})
+	}
+}
+
 func TestIntegrationNativeWorkspaceResumeAndValidation(t *testing.T) {
 	isolated, a := integrationRunner(t)
 	r := NewNative(isolated.image, t.TempDir())
