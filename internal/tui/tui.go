@@ -309,8 +309,8 @@ func (m Model) key(key tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	// While an exercise runs, the child owns every key except the one the
 	// workbench intercepts and keys used to read its results.
 	if m.workbench != nil {
-		handled, action := m.workbench.update(key)
-		if !handled || action == "" {
+		action := m.workbench.update(key)
+		if action == "" {
 			return m, nil
 		}
 		return m.workbenchAction(action)

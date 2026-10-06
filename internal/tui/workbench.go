@@ -46,14 +46,8 @@ func newWorkbench(s *pane.Session, goal, brief string) *workbench {
 	return &workbench{session: s, goal: goal, brief: brief, band: true, check: "not run", bandHeight: 1, output: output}
 }
 
-// update routes a message. It reports whether the workbench consumed it, and
-// the action the operator chose. An unconsumed key belongs to the child, which
-// has already received it.
-func (w *workbench) update(msg tea.Msg) (bool, string) {
-	key, ok := msg.(tea.KeyPressMsg)
-	if !ok {
-		return false, ""
-	}
+// update routes focused keys and returns the selected golf action.
+func (w *workbench) update(key tea.KeyPressMsg) string {
 	if w.outputOpen {
 		switch key.String() {
 		case "esc":
@@ -65,36 +59,31 @@ func (w *workbench) update(msg tea.Msg) (bool, string) {
 		default:
 			w.output, _ = w.output.Update(key)
 		}
-		return true, ""
+		return ""
 	}
 	if w.palette {
 		name := key.String()
 		w.palette = false
 		switch name {
-		case "esc":
-			return true, ""
 		case "b":
 			w.band = !w.band
-			return true, ""
+			return ""
 		case "r":
 			w.outputOpen = w.output.GetContent() != ""
-			return true, ""
-		}
-		if action, found := paletteKeys[name]; found {
-			return true, action
+			return ""
 		}
 		// An unknown key closes the palette without acting, so a stray press
 		// never silently swallows the next keystroke.
-		return true, ""
+		return paletteKeys[name]
 	}
 	if key.String() == "f12" {
 		w.palette = true
-		return true, ""
+		return ""
 	}
 	if w.session != nil {
 		w.session.SendKey(key)
 	}
-	return false, ""
+	return ""
 }
 
 // bandRows is the rows the band occupied in the last render.
@@ -136,15 +125,11 @@ func (w *workbench) view(width, height int, st viewStyles, border lipgloss.Borde
 	if height < 3 {
 		w.bandHeight = 0
 	}
-	if w.bandHeight < rows {
-		band = strings.Join(strings.Split(band, "\n")[:w.bandHeight], "\n")
-	}
+	lines := strings.Split(band, "\n")[:w.bandHeight]
 	screen := ""
 	switch {
 	case confirming:
-		vp := viewport.New(viewport.WithWidth(width), viewport.WithHeight(w.paneHeight(height)))
-		vp.SetContent(ansi.Wrap(paint(st.warning, "Reveal the reference solution?\nThis records assistance."), width, ""))
-		screen = vp.View()
+		screen = ansi.Wrap(paint(st.warning, "Reveal the reference solution?\nThis records assistance."), width, "")
 	case w.outputOpen:
 		w.output.SetWidth(width)
 		w.output.SetHeight(w.paneHeight(height))
@@ -158,10 +143,6 @@ func (w *workbench) view(width, height int, st viewStyles, border lipgloss.Borde
 		}
 	}
 	pane := st.text.Width(width).Height(w.paneHeight(height)).Render(screen)
-	var lines []string
-	if w.bandHeight > 0 {
-		lines = append(lines, strings.Split(band, "\n")...)
-	}
 	if height > 1 {
 		lines = append(lines, strings.Split(pane, "\n")[:w.paneHeight(height)]...)
 	}

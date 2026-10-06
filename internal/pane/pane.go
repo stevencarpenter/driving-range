@@ -94,18 +94,7 @@ func Start(cmd *exec.Cmd, width, height int, onTrigger func(string)) (*Session, 
 	s.emu.RegisterOscHandler(clipboardOSC, func([]byte) bool { return true })
 
 	// Child output into the emulator.
-	go func() {
-		buf := make([]byte, 4096)
-		for {
-			n, err := ptmx.Read(buf)
-			if n > 0 {
-				s.emu.Write(buf[:n])
-			}
-			if err != nil {
-				return
-			}
-		}
-	}()
+	go func() { io.Copy(s.emu, ptmx) }()
 	// Drain encoded input promptly before writing it to the child. A live child
 	// may stop reading its PTY, but Paste and Render share the emulator mutex,
 	// so PTY backpressure must not block this drain or the UI event loop.

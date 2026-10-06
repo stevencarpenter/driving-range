@@ -20,15 +20,14 @@ func TestWorkbenchPaletteOpensOnF12Only(t *testing.T) {
 	if w.palette {
 		t.Fatal("palette should start closed")
 	}
-	handled, _ := w.update(tea.KeyPressMsg{Code: 'j', Text: "j"})
-	if handled {
-		t.Error("ordinary keys must not be handled by the workbench")
+	if action := w.update(tea.KeyPressMsg{Code: 'j', Text: "j"}); action != "" {
+		t.Errorf("ordinary key dispatched %q", action)
 	}
 	if w.palette {
 		t.Error("ordinary keys must not open the palette")
 	}
-	handled, _ = w.update(tea.KeyPressMsg{Code: tea.KeyF12})
-	if !handled || !w.palette {
+	w.update(tea.KeyPressMsg{Code: tea.KeyF12})
+	if !w.palette {
 		t.Error("F12 must open the palette")
 	}
 }
@@ -40,9 +39,8 @@ func TestWorkbenchPaletteEmitsActions(t *testing.T) {
 	}{{'c', "check"}, {'h', "hint"}, {'v', "reveal"}, {'q', "quit"}} {
 		w := newWorkbench(nil, "g", "b")
 		w.update(tea.KeyPressMsg{Code: tea.KeyF12})
-		handled, action := w.update(tea.KeyPressMsg{Code: c.key, Text: string(c.key)})
-		if !handled || action != c.action {
-			t.Errorf("palette %q = (%v, %q), want (true, %q)", c.key, handled, action, c.action)
+		if action := w.update(tea.KeyPressMsg{Code: c.key, Text: string(c.key)}); action != c.action {
+			t.Errorf("palette %q = %q, want %q", c.key, action, c.action)
 		}
 		if w.palette {
 			t.Errorf("palette must close after %q", c.key)
@@ -53,9 +51,8 @@ func TestWorkbenchPaletteEmitsActions(t *testing.T) {
 func TestWorkbenchPaletteEscapeReturnsToChild(t *testing.T) {
 	w := newWorkbench(nil, "g", "b")
 	w.update(tea.KeyPressMsg{Code: tea.KeyF12})
-	handled, action := w.update(tea.KeyPressMsg{Code: tea.KeyEscape})
-	if !handled || action != "" {
-		t.Errorf("palette esc = (%v, %q), want (true, \"\")", handled, action)
+	if action := w.update(tea.KeyPressMsg{Code: tea.KeyEscape}); action != "" {
+		t.Errorf("palette esc dispatched %q", action)
 	}
 	if w.palette {
 		t.Error("escape must close the palette")
@@ -65,9 +62,8 @@ func TestWorkbenchPaletteEscapeReturnsToChild(t *testing.T) {
 func TestWorkbenchPaletteUnknownKeyClosesWithoutActing(t *testing.T) {
 	w := newWorkbench(nil, "g", "b")
 	w.update(tea.KeyPressMsg{Code: tea.KeyF12})
-	handled, action := w.update(tea.KeyPressMsg{Code: 'z', Text: "z"})
-	if !handled || action != "" {
-		t.Errorf("palette z = (%v, %q), want (true, \"\")", handled, action)
+	if action := w.update(tea.KeyPressMsg{Code: 'z', Text: "z"}); action != "" {
+		t.Errorf("palette z dispatched %q", action)
 	}
 	if w.palette {
 		t.Error("an unknown key must close the palette rather than swallow the next keystroke")
@@ -88,9 +84,8 @@ func TestWorkbenchBandTogglesFromThePalette(t *testing.T) {
 
 func TestWorkbenchCtrlCReachesTheChild(t *testing.T) {
 	w := newWorkbench(nil, "g", "b")
-	handled, _ := w.update(tea.KeyPressMsg{Code: 'c', Mod: tea.ModCtrl})
-	if handled {
-		t.Error("ctrl+c must reach the child, not quit golf")
+	if action := w.update(tea.KeyPressMsg{Code: 'c', Mod: tea.ModCtrl}); action != "" {
+		t.Errorf("ctrl+c dispatched %q instead of reaching the child", action)
 	}
 }
 
