@@ -1,24 +1,22 @@
 name: Release archives
 
 on:
-  release:
-    types: [published]
   workflow_dispatch:
     inputs:
       tag_name:
-        description: Existing release tag to verify and package again
+        description: Existing draft release tag to verify, package, and publish
         required: true
         type: string
 
 concurrency:
-  group: release-archives-${{ inputs.tag_name || github.event.release.tag_name }}
+  group: release-archives-${{ inputs.tag_name }}
   cancel-in-progress: false
 
 permissions:
   contents: read
 
 env:
-  RELEASE_VERSION: ${{ inputs.tag_name || github.event.release.tag_name }}
+  RELEASE_VERSION: ${{ inputs.tag_name }}
 
 jobs:
   verify:
@@ -30,11 +28,10 @@ jobs:
         shard: [base, vim, search, shell, awk, ancillary]
     steps:
       - name: Require dispatch at the selected tag
-        if: github.event_name == 'workflow_dispatch'
         run: test "$GITHUB_REF" = "refs/tags/$RELEASE_VERSION"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.tag_name || github.event.release.tag_name }}
+          ref: ${{ inputs.tag_name }}
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
         with:
@@ -62,7 +59,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.tag_name || github.event.release.tag_name }}
+          ref: ${{ inputs.tag_name }}
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
         with:
@@ -78,8 +75,10 @@ jobs:
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
         with:
           subject-path: dist/**/*.tar.gz
-      - name: Attach archives to the published release
+      - name: Upload archives and publish release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-        run: gh release upload "$RELEASE_VERSION" "dist/$RELEASE_VERSION/"*.tar.gz "dist/$RELEASE_VERSION/SHA256SUMS"
+        run: |
+          gh release upload "$RELEASE_VERSION" "dist/$RELEASE_VERSION/"*.tar.gz "dist/$RELEASE_VERSION/SHA256SUMS"
+          gh release edit "$RELEASE_VERSION" --draft=false
