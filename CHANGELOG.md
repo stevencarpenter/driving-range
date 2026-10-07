@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/stevencarpenter/driving-range/compare/v0.1.0...v0.1.1) (2026-10-07)
+
+
+### Bug Fixes
+
+* upload release assets before publication ([#13](https://github.com/stevencarpenter/driving-range/issues/13)) ([cd1ef95](https://github.com/stevencarpenter/driving-range/commit/cd1ef95ba843c53914b314dc4f21c66e685c9b26))
+
 ## 0.1.0 (2026-10-07)
 
 
