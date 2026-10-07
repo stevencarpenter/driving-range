@@ -181,6 +181,36 @@ func TestPracticeSearchAndSelection(t *testing.T) {
 	}
 }
 
+func TestPracticeSearchAcceptsPasteWithoutRunningShortcuts(t *testing.T) {
+	m := testModel(t)
+	m.screen = practice
+	m, _ = press(m, "/")
+	updated, cmd := m.Update(tea.PasteMsg{Content: "rg quoting difficulty:1"})
+	m = updated.(Model)
+	if cmd != nil || m.query != "rg quoting difficulty:1" || !m.searching {
+		t.Fatalf("search paste was lost or interpreted as shortcuts: query=%q searching=%v", m.query, m.searching)
+	}
+	m, _ = press(m, "enter")
+	updated, cmd = m.Update(tea.PasteMsg{Content: "q1234"})
+	m = updated.(Model)
+	if cmd != nil || m.screen != practice || m.query != "rg quoting difficulty:1" {
+		t.Fatal("paste outside search acted as navigation or changed the query")
+	}
+}
+
+func TestTrackPickerHelpCanBeReadAndDismissed(t *testing.T) {
+	m := testModel(t)
+	m.chooseTrack = true
+	m, _ = press(m, "?")
+	if !m.help || !strings.Contains(m.render(), "KEYBOARD") {
+		t.Fatal("track picker hides the active help screen")
+	}
+	m, _ = press(m, "esc")
+	if m.help || !m.chooseTrack || !strings.Contains(m.render(), "Choose your track") {
+		t.Fatal("Escape from help did not restore the track picker")
+	}
+}
+
 func TestResizeKeepsSelectionVisibleAndOutputBounded(t *testing.T) {
 	m := testModel(t)
 	m.screen = practice

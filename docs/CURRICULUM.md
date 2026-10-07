@@ -4,7 +4,7 @@ The launch requirement is **at least 365 useful practice challenges across all t
 
 ## Current catalog
 
-The embedded catalog contains 600 unique exercises and 602 revision definitions. Vim/Neovim, search/regex, Bash/core CLI, and awk each have 100 exercises; the other eight tracks contain 200 total. Retained revisions preserve saved attempts and do not increase the exercise count. The 30 fixed preview assignments remain unchanged; a year-long schedule is not implemented or published. [LAUNCH_AUDIT.md](LAUNCH_AUDIT.md) records execution checkpoints and outstanding verification separately from authored counts.
+The embedded catalog contains 600 unique exercises and 611 revision definitions. Vim/Neovim, search/regex, Bash/core CLI, and awk each have 100 exercises; the other eight tracks contain 200 total. Retained revisions preserve saved attempts and do not increase the exercise count. The 30 fixed preview assignments remain unchanged; a year-long schedule is not implemented or published. [LAUNCH_AUDIT.md](LAUNCH_AUDIT.md) records execution checkpoints and outstanding verification separately from authored counts.
 
 Players provide editorial feedback as they practice. Human review of every exercise is not a launch or publication gate, and no completed bank-wide review or measured learning effectiveness is claimed.
 

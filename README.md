@@ -4,24 +4,51 @@ Sharpen your terminal skills with short, practical challenges in your real edito
 
 **Driving Range** is a local-first TUI named `golf`. Practice Vim, search, shell scripting, text processing, Git, jj, and Python. Correctness comes first; hints, explanations, retries, and history export require no account. Your tools and dotfiles stay yours.
 
-**Current status: pre-release, 600 exercises across 12 tracks.** Vim/Neovim, search/regex, Bash/core CLI, and awk each have 100 exercises, including fundamentals and deliberate repetition. The bank exceeds the 365-exercise minimum across all tools, but the year-long mixed-tool schedule is not published. Exercise count is not evidence of completed execution checks or editorial review. See [the curriculum requirements](docs/CURRICULUM.md) and [recorded launch audit evidence](docs/LAUNCH_AUDIT.md).
+**Pre-release: 600 exercises across 12 tracks.** Vim/Neovim, search/regex, Bash/core CLI, and awk each have 100 exercises. Practice is always available; fixed daily assignments cover a ten-day preview. See [the curriculum](docs/CURRICULUM.md) and [recorded validation evidence](docs/LAUNCH_AUDIT.md).
 
-[Get started](#quick-start) · [Install or upgrade](#installation-and-upgrades) · [Practice](#practice) · [Contribute](CONTRIBUTING.md) · [Author exercises](docs/AUTHORING.md) · [Security](SECURITY.md) · [Licenses](#contributing)
-
-This is an independent application; it neither imports nor modifies `vim-golf` or its state.
+[Get started](#quick-start) · [Install or upgrade](#installation-and-upgrades) · [Practice](#practice) · [Contribute](CONTRIBUTING.md) · [Author exercises](docs/AUTHORING.md) · [Security](SECURITY.md) · [License](#license)
 
 ## Quick start
 
-From a source checkout on macOS or Linux, install Go 1.27 or newer, `just`, the Docker CLI, and the native tools for your chosen exercises. Vim exercises launch `nvim`; Bash and zsh exercises need their respective shells. Start a Docker-compatible Linux engine, then run:
+Install the native `golf` executable on macOS or Linux with Go 1.27 or newer:
 
 ```sh
-just build
-./golf setup
-./golf doctor
-./golf
+mkdir -p "$HOME/.local/bin"
+GOBIN="$HOME/.local/bin" go install -trimpath github.com/stevencarpenter/driving-range/cmd/golf@latest
+export PATH="$HOME/.local/bin:$PATH"
 ```
 
-`setup` explicitly downloads the runtime's build inputs. Install and start your Docker engine first; on macOS it needs a Linux VM. `doctor` checks daemon access and image presence, not container startup or native tool availability. The exercise catalog and Docker build context are embedded in the binary, so an installed binary also supports `setup`. Fixture preparation and checking work offline after the image is built. Native tools or plugins may still use the network.
+<details>
+<summary>Installing or updating while the repository is private</summary>
+
+Authenticated Git access is required for a private checkout. Replace the install command above and `golf update` below with these per-process commands:
+
+```sh
+GOPRIVATE="$(go env GOPRIVATE),github.com/stevencarpenter/driving-range" GOBIN="$HOME/.local/bin" go install -trimpath github.com/stevencarpenter/driving-range/cmd/golf@latest
+GOPRIVATE="$(go env GOPRIVATE),github.com/stevencarpenter/driving-range" golf update
+```
+
+These preserve the existing `GOPRIVATE` value without changing global Go configuration. The private-module setting is unnecessary once the repository is public.
+
+</details>
+
+Add `export PATH="$HOME/.local/bin:$PATH"` to your shell configuration to keep `golf` available in new terminals. Go's [@latest query](https://go.dev/ref/mod#version-queries) prefers the highest stable release, falls back to the highest prerelease if no stable release exists, and selects an untagged build from the default branch if neither exists. The executable includes the exercise catalog. No checkout or `just` is needed to run the application.
+
+Install the Docker CLI and start a Docker-compatible Linux engine. Install the native tools for your chosen exercises, such as `nvim`, `rg`, or `fzf`. Vim exercises launch `nvim`; Bash and zsh exercises need their respective shells. Prepare the checker runtime once, then launch:
+
+```sh
+golf setup
+golf doctor
+golf
+```
+
+Pull upstream application and exercise changes into the installed executable:
+
+```sh
+golf update
+```
+
+`setup` explicitly downloads the runtime's build inputs. Install and start your Docker engine first; on macOS it needs a Linux VM. `doctor` and Settings' **Check Docker runtime** check daemon access and image presence. They do not start a container or check native tools. A missing editor or shell reports an install error when practice starts; other missing utilities report errors inside your shell. The exercise catalog and Docker build context are embedded in the binary, so an installed binary also supports `setup`. Fixture preparation and checking work offline after the image is built. Native tools or plugins may still use the network.
 
 Practice launches your installed Neovim or an interactive shell with your normal environment. Exercises that teach the shell itself use that shell; otherwise your `SHELL` is preferred. Your dotfiles, Neovim plugins and keybindings, shell aliases, and tool configuration load normally. `HOME`, `XDG_*`, `NVIM_APPNAME`, and `ZDOTDIR` are inherited. Native practice has your normal host permissions and network access.
 
@@ -38,9 +65,11 @@ Choose a starting track on first launch. `Today`, `Practice`, `Progress`, and `S
 3. Save and exit Neovim with `:wq`, or exit the exercise shell with `exit`. Golf checks the result and saves it.
 4. Resume after a failed check, request a hint with `h`, or create a separate attempt with `r`. After passing, `n` opens the next unsolved exercise in the same track.
 
-While the embedded exercise pane has focus, golf reserves `F12` to open a palette: `c` check, `h` hint, `v` request reveal, `b` collapse or expand the brief band, `q` quit golf, `Esc` return to the exercise. Other key presses are forwarded to the child; while the palette is open, its next key is handled by golf. Your terminal or tmux may intercept keys before golf receives them.
+While the embedded exercise pane has focus, golf reserves `F12` to open a palette: `c` check, `h` hint, `v` request reveal, `r` reopen the latest result, `b` collapse or expand the brief band, `q` quit golf, `Esc` return to the exercise. Other key presses are forwarded to the child; while the palette is open, its next key is handled by golf. Your terminal or tmux may intercept keys before golf receives them.
 
-`golf-check` and `golf-hint` request the same actions from the embedded exercise prompt. An interim check records a result without finishing the attempt; exiting the child runs the final check. Save editor changes before checking. The pane displays only the first line of hint text, and its reveal request cannot currently complete confirmation. Exit the child, then use `h` or `v` on the exercise detail screen for complete hints or the solution.
+Pasted text goes to the focused exercise, preserving bracketed paste when the child enables it. Paste also works in Practice search. Result panels, the palette, and confirmations consume paste without sending it to the child.
+
+`golf-check` and `golf-hint` request the same actions from the embedded exercise prompt. An interim check records a result without finishing the attempt; exiting the child runs the final check. Save editor changes before checking. Complete hints, check details, solutions, and errors open in a scrollable result panel. Use `j/k` or arrows, `PgUp/PgDn`, and `Home/End` to read it; `Esc` returns keyboard focus to the exercise. Reopen the latest response with `F12`, then `r`. Revealing requires `y` to confirm that assistance will be recorded; `n` or `Esc` cancels. While a result panel or confirmation is open, golf consumes its keys and hides the child cursor. The child continues running.
 
 `golf --classic` opens the TUI with full-terminal exercise handoff instead of the embedded pane. `golf play EXERCISE_OR_ATTEMPT` always uses full-terminal handoff. In either case, `golf-check` and `golf-hint` are unavailable; exit the child to check. The TUI also attempts full-terminal handoff if pane startup fails.
 
@@ -52,7 +81,7 @@ New practice and `golf list` offer the latest revision of each exercise. Saved a
 
 ### Included exercises
 
-The embedded catalog contains **600 unique exercises across 12 tracks**, stored as 602 revision definitions. Reference audits include retained revisions; practice counts each exercise once.
+The embedded catalog contains **600 unique exercises across 12 tracks**, stored as 611 revision definitions. Reference audits include retained revisions; practice counts each exercise once.
 
 | Tracks | Exercises | Daily assignments |
 | --- | --- | --- |
@@ -71,7 +100,7 @@ The embedded catalog contains **600 unique exercises across 12 tracks**, stored 
 
 Vim search/editing, regex, Bash/core CLI, and awk are the priorities. The added drills repeat forward/backward and word search, next-match editing, scoped substitution, captures, global deletion, regex boundaries and extraction, head/tail/cut/paste/sort/uniq/tr/comm/join/wc/tee, and awk fields, records, filters, grouped reports, ranges, and numbering. Repetition is intentional; Practice remains open for sessions of two to ten exercises or more. [Source research and rights](docs/SOURCES.md) are recorded separately from executable and editorial review.
 
-The fixed ten-day preview runs **14 September through 23 September 2026, UTC**. An attempt keeps its assignment when a session crosses midnight. Outside those dates, Today offers the first current exercise in your selected track, labeled as practice. It does not rotate exercises or select the next unsolved one. `golf today` reports that no daily is published. The entire catalog remains playable. There is no rolling daily content service or automatic content download.
+The fixed ten-day preview runs **14 September through 23 September 2026, UTC**. An attempt keeps its assignment when a session crosses midnight. Outside those dates, Today offers the first current exercise in your selected track, labeled as practice. It does not rotate exercises or select the next unsolved one. `golf today` reports that no daily is published. The entire catalog remains playable. There is no rolling daily content service. `golf update` explicitly fetches the latest application and embedded catalog; updates do not download automatically.
 
 Exercises are original curriculum drafts. Executable audits check failing starter fixtures and passing reference solutions; they do not establish human editorial review or learning effectiveness. Players review the material as they practice and report unclear or unhelpful exercises. Human review of the whole bank is not a publication gate. zsh and fzf samples validate command behavior. The application does not measure Readline/ZLE key sequences, physical keystrokes, or personal skill retention. tmux is in the runtime, but has no dedicated exercise track.
 
@@ -146,18 +175,35 @@ Themes are `auto`, `dark`, `light`, and `plain`. The `plain` theme or `NO_COLOR`
 
 ## Installation and upgrades
 
-From a source checkout, run the same command for a fresh installation or an upgrade:
+The [Quick start](#quick-start) installs a native executable in `~/.local/bin`. While the repository is private, updates require authenticated Git access and the per-process `GOPRIVATE` command shown there, regardless of installation method. To update that installation from any directory:
+
+```sh
+golf update
+golf version
+```
+
+`golf update` requires Go 1.27 or newer on PATH, network access, and write access to the installed executable's directory. It fetches and builds the version selected by Go's `@latest` query, stages the new executable beside the installed one, and atomically replaces it after a successful build. Build failures leave the installed binary intact. Settings, attempts, and workspaces are preserved. A symlink launch updates its resolved executable. The command updates the executable being run; use `command -v golf` to check which installation your shell selects.
+
+Updates include the embedded catalog and runtime build context. Run `golf setup` after an update when the checker runtime changes. Existing attempts keep their recorded revisions and checker image IDs. Go-installed builds report the upstream module version with `golf version`.
+
+### Install from a checkout
+
+Contributors can use Go 1.27 or newer and `just` to install their local source, including uncommitted changes:
 
 ```sh
 just install
 golf
 ```
 
-`just install` builds the current checkout, creates `~/.local/bin` if needed, and atomically replaces `golf` there. It replaces any installed version without an uninstall step and preserves settings, attempts, and workspaces. Build or copy failures leave the installed binary intact. Set `GOLF_INSTALL_DIR` to select another installation directory. `just VERSION=v0.1.0 install` sets the binary's version label; it does not download or select that source version.
+`just install` builds the current checkout, creates `~/.local/bin` if needed, and atomically replaces `golf` there. It replaces any installed version without an uninstall step and preserves settings, attempts, and workspaces. Build or copy failures leave the installed binary intact. Set `GOLF_INSTALL_DIR` to select another installation directory. `just VERSION=v0.1.0 install` sets the binary's version label; it does not download or select that source version. `golf update` replaces this build with the upstream version selected by Go's `@latest` query without modifying the checkout.
 
 The installer reports when the destination is missing from PATH or another `golf` takes precedence. For the default destination, add `export PATH="$HOME/.local/bin:$PATH"` to your shell configuration if needed. Runtime preparation remains `golf setup` as described in Quick start.
 
-Release packaging targets macOS arm64 and Linux amd64/arm64. `just VERSION=v0.1.0 release` builds archives and `SHA256SUMS` locally; it does not publish. No published release or signed artifact is assumed by these instructions. For a downloaded release, verify the selected archive against its checksum before extracting, then run `mkdir -p "$HOME/.local/bin"` and `install -m 755 golf "$HOME/.local/bin/golf"`. Use `shasum -a 256` on macOS or `sha256sum` on Linux. See [CONTRIBUTING.md](CONTRIBUTING.md#release-packaging) for optional provenance verification.
+### Release archives
+
+[Releases](https://github.com/stevencarpenter/driving-range/releases) use Go-compatible semantic version tags such as `v0.1.0`. Release Please maintains a version/changelog PR from Conventional Commits. Merging that PR creates the tag and release; archives are attached after Docker verification and ordinary checks pass. See [release versioning](CONTRIBUTING.md#release-versioning) for the maintainer flow.
+
+Release packaging targets macOS arm64 and Linux amd64/arm64. `just VERSION=v0.1.0 release` builds archives and `SHA256SUMS` locally; it does not publish. No published release or signed artifact is assumed by these instructions. For a downloaded release, verify the selected archive against its checksum before extracting, then run `mkdir -p "$HOME/.local/bin"` and `install -m 755 golf "$HOME/.local/bin/golf"`. Use `shasum -a 256` on macOS or `sha256sum` on Linux. Go is required for `golf update` even when the initial executable came from an archive. See [CONTRIBUTING.md](CONTRIBUTING.md#release-packaging) for optional provenance verification.
 
 ## Contributing
 
@@ -172,4 +218,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#checks) for each check's scope, prerequisi
 
 Local history, replay, hints, and export are core features. Accounts, billing, hosted execution, and paid infrastructure are not implemented. See [the current launch requirements](docs/CURRICULUM.md) and [source policy](docs/SOURCES.md) before contributing exercises.
 
-Application code, fixtures, and solution code use the [MIT license](LICENSE). Exercise prose uses [CC BY-SA 4.0](CONTENT_LICENSE.md). Bundled dependencies retain their [third-party notices](THIRD_PARTY_NOTICES.md).
+## License
+
+Application code, documentation, and original exercises, including instructional prose, fixtures, and solution code, use the [MIT license](LICENSE). See [the content notice](CONTENT_LICENSE.md) for scope and provenance. Bundled dependencies retain their [third-party notices](THIRD_PARTY_NOTICES.md).

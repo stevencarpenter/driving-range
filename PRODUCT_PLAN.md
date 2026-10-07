@@ -22,25 +22,13 @@ The desired shell ergonomics are concrete: fewer unnecessary mode changes, confi
 
 The product teaches Bash, zsh, Vim, and related tools as distinct environments. It does not declare one configuration, shell, or version-control system universally superior.
 
-## 2. What the existing project contributes
+## 2. Exercise and persistence contracts
 
-The inspected checkout is `stevencarpenter/vim-golf` at commit `c7f161029896e88ddd662ab1681ce930859255ff`. Its working tree was clean at inspection. The Bash runner and README were read directly because graph lookup did not represent the extensionless runner reliably. This is a product assessment, not a full correctness audit.
+Use realistic starter files, explicit success conditions, executable checks, and useful explanations. Separate stable exercise identity from publication date. Introduce distinct attempts and sessions with durable history. Resume preserves saved work; retry creates a new attempt. Deleting history is a separate explicit operation.
 
-| Verified current behavior | Driving Range decision |
-| --- | --- |
-| 31 exercises dated August 2026, progressing from individual mechanics to a multi-file capstone. (vim-golf README) | Preserve the progression and realistic fixtures. Separate exercise identity from publication date. |
-| Start tree, expected tree, brief, and entrypoint; recursive diff determines success. (vim-golf runner) | Reuse this content pattern for editing exercises. Add different validators only when their tracks need them. |
-| Work files and cumulative Neovim input logs survive reopening. The best raw-byte count is stored per day. (vim-golf runner) | Preserve resume. Introduce distinct attempts and sessions with durable history. |
-| Reset removes that day's work, log, and best score. (vim-golf runner) | Retry creates a new attempt. Erasing history becomes a separate explicit operation. |
-| Personal Neovim configuration, LazyVim/Yanky/Harpoon conventions, macOS clipboard, and tmux brief integration appear in the curriculum. (vim-golf README and capstone challenge) | Use the player’s installed Neovim and configuration for practice. Keep fixture setup and validation in Docker. |
+Use the player's installed Neovim and configuration for practice. Keep fixture setup and validation in Docker. Make the active exercise explicit and keep help accessible. Raw input bytes are not a portable keystroke score.
 
-The runner has no general per-attempt timing/history ledger. Its raw-input byte count is explicitly not a portable keystroke score. The existing vim-golf tests cover resumed input accumulation and persistent short briefs.
-
-Hippo recalled the successful use of an explicit active-brief reference and earlier inline key references. Apply both lessons: make the active exercise explicit and keep help accessible. Its synthesis inferred built-in timing metrics from shell execution durations; the source does not support that inference. Cross-project recall found no directly applicable prior implementation of the proposed Go/Bubble Tea/SQLite platform.
-
-**Repository boundary:** create the new implementation and adapted content in a separate repository. Do not rename, move, archive, branch, add a worktree to, or change the remote of `vim-golf`. Do not mutate its existing user state. This planning delivery creates only sibling planning artifacts; repository initialization and publication belong to implementation.
-
-No tracked license file was found in the inspected repository. Confirm ownership and permission before copying material into a publicly licensed new project. Adapt configuration-specific briefs deliberately; preserve provenance. Do not import external game content merely because it is publicly readable.
+Author content for Driving Range and record provenance for permitted adaptations. Do not import external game content merely because it is publicly readable.
 
 ## 3. Audience and market position
 
@@ -54,7 +42,6 @@ Absolute beginners need more setup explanation and teaching than a daily puzzle 
 
 | Product | Verified overlap | Implication |
 | --- | --- | --- |
-| [VimGolf](https://www.vimgolf.com/) | Local Vim challenges, input minimization, submissions, and a substantial published challenge archive. | Vim golf itself is established. Differentiate with daily instruction, practical tasks, and several tools. |
 | [Command Challenge](https://jarv.org/posts/building-cmdchallenge/) | Shell commands solve small problems against an execution/checking system; its creator describes container execution and published challenge definitions. | Small shell puzzles and automated checking are established patterns. |
 | [Exercism](https://exercism.org/) | Free practice and mentoring, community funding, language tracks, and a CLI-first local workflow. | Local practice is not unique. Broad language coverage would compete with a mature free alternative. |
 | [SadServers](https://sadservers.com/pricing) | Real Linux/DevOps exercises, free and paid plans, progress tracking, and paid CLI/TUI access. Listed Pro pricing is $9/month or $72/year; Pro+ is $11/month or $88/year. | TUI access is already commercialized nearby. A daily micropractice habit must provide its own value. |
@@ -164,7 +151,7 @@ Use local SQLite with three small tables: attempts, sessions, and check events. 
 
 Record the active attempt before launching a child. Persist each check when it happens. After an unclean exit, recover the workspace and mark the unfinished session interrupted. Unobserved crash time is unknown, not zero and not an invented duration. A crash must not erase prior completed results. One active runner per state directory is sufficient initially; refuse concurrent ownership clearly while allowing read-only progress views.
 
-Store state under the platform's user state location, with XDG overrides, in a `driving-range` directory separate from `vim-golf`. Cache challenge packs separately. Export versioned JSON and tabular CSV. Raw command logs are opt-in, local, and outside default telemetry/export; never read the player's real shell history.
+Store state under the platform's user state location, with XDG overrides, in a `driving-range` directory. Cache challenge packs separately. Export versioned JSON and tabular CSV. Raw command logs are opt-in, local, and outside default telemetry/export; never read the player's real shell history.
 
 ### Scoring rules
 
@@ -226,7 +213,7 @@ Ship signed/checksummed release binaries and documented manual installation; add
 
 **Recommended launch model: a complete OSS local product with optional sponsorship.** This matches the initial audience and keeps the main loop viable if a hosted business does not develop.
 
-Propose MIT for application code and CC BY-SA 4.0 for public instructional content, with code fixtures/examples licensed explicitly as code. MIT permits commercial reuse with its notice requirements. CC BY-SA permits commercial reuse and requires attribution/share-alike for adaptations. This supports an open curriculum; it does not create exclusive paid content rights. Review inherited and third-party rights before release. [MIT terms](https://opensource.org/license/mit), [CC BY-SA terms](https://creativecommons.org/licenses/by-sa/4.0/)
+Application code, original instructional content, fixtures, and examples use MIT. The owner selected MIT for original exercise prose on 4 October 2026, replacing the earlier split-license proposal. MIT permits commercial reuse subject to its notice requirements. Third-party rights remain separate; source research does not grant permission to relicense external material. See [MIT terms](https://opensource.org/license/mit), [the content notice](CONTENT_LICENSE.md), and [source provenance](docs/SOURCES.md).
 
 | Model | What remains available locally | Paid value | Assessment |
 | --- | --- | --- | --- |
@@ -290,7 +277,7 @@ A private alpha is approximately 5 to 6 engineering weeks from implementation st
 4. **Terminal and portability:** both target hosts handle resize, `Ctrl-C`, child failure, suspend/resume, plain output, and missing runtime without corrupting terminal state or recording false exercise failures.
 5. **Daily operation:** cached play works offline; midnight cannot replace an active assignment; outdated schedules offer labeled practice; revised challenges retain distinct result history; future published assignments remain immutable.
 
-Run focused integration checks around these contracts. Content validation must run for every published exercise. The old `vim-golf` tests are useful behavioral references, but the new runner needs its own checks and must not execute old reset operations against existing user state.
+Run focused integration checks around these contracts. Content validation must run for every published exercise. The runner needs its own lifecycle and persistence checks. Tests must use disposable state directories and preserve existing user history.
 
 ## 13. Limits and decisions that can change the plan
 

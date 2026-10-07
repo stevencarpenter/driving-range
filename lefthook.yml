@@ -1,0 +1,6 @@
+assert_lefthook_installed: true
+
+commit-msg:
+  commands:
+    conventional-commit:
+      run: sh scripts/check-commit-msg.sh "{1}"

@@ -32,13 +32,19 @@ test:
 test-install:
     sh scripts/test-install.sh
 
+hooks:
+    lefthook install
+
+test-commit-msg:
+    sh scripts/test-commit-msg.sh
+
 vet:
     "{{ GO }}" vet ./...
 
 audit:
     "{{ GO }}" run ./cmd/golf audit
 
-check: test vet audit test-install
+check: test vet audit test-install test-commit-msg
 
 setup: build
     ./golf setup

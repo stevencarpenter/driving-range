@@ -4,6 +4,8 @@ Source research recorded 30 September and 1 October 2026. Batch descriptions and
 
 ## Stack Overflow problem research
 
+Original Driving Range prose, fixtures, and reference implementations use [MIT](../LICENSE), as described in [the content notice](../CONTENT_LICENSE.md). License metadata below describes external research sources; those sources retain their own licenses.
+
 Question and selected-answer metadata and answer bodies were retrieved through the [Stack Exchange API](https://api.stackexchange.com/docs). Scores are the values returned at retrieval, not fixed properties. License metadata describes the retrieved version, not every historical revision.
 
 | Problem source | Question score | Reviewed answer and author | Answer score | Answer API license | Exercise |
@@ -153,6 +155,6 @@ Use these to select learning objectives and verify syntax. Link documentation ra
 
 [Stack Overflow's licensing guidance](https://stackoverflow.com/help/licensing) specifies CC BY-SA 2.5 before 8 April 2011, 3.0 from that date until 2 May 2018, and 4.0 from 2 May 2018 onward. The applicable license is revision-specific. Record the exact revision timeline and applicable terms before copying or adapting material, including code.
 
-For an actual adaptation, retain the question/answer URL, author names/profile links, exact revision URL or revision ID and timestamp, license version/link, copied fields, and modification description. Include that attribution in the exercise and this file so it remains available offline in release archives. Check share-alike compatibility before accepting it. Our MIT solution-code default is not permission to relicense third-party CC BY-SA code. If compatible rights cannot be established, do not import the material.
+For an actual adaptation, retain the question/answer URL, author names/profile links, exact revision URL or revision ID and timestamp, license version/link, copied fields, and modification description. Include that attribution in the exercise and this file so it remains available offline in release archives. Check compatibility with the project's MIT license before accepting it. Our MIT content license is not permission to relicense third-party CC BY-SA prose or code. If compatible rights cannot be established, do not import the material.
 
 Researching a general problem or documented operation is different from adapting a particular author's expression. Fundamentals can be informed directly by official manuals and tutorials without a Stack Overflow source. Independently written prose and fixtures may deliberately repeat an operation to build fluency; a new learning objective is not required for every exercise. Do not use renaming to disguise copied material or count retries and schedule entries as newly authored exercises. When the distinction is uncertain, obtain permission or omit the material rather than making an unsupported licensing claim.

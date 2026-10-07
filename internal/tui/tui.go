@@ -61,7 +61,8 @@ type Model struct {
 	// tests set it directly.
 	darkBackground bool
 	// workbench is non-nil while an exercise runs inside an embedded pane.
-	workbench *workbench
+	workbench   *workbench
+	pendingExit *exitedMsg
 }
 
 type loadedMsg struct {
@@ -69,8 +70,10 @@ type loadedMsg struct {
 	err     error
 }
 type operationMsg struct {
-	text, id string
-	err      error
+	text, id  string
+	err       error
+	workbench *workbench
+	finished  bool
 }
 type preparedMsg struct {
 	play *app.Play
@@ -84,7 +87,10 @@ type paneTickMsg struct{}
 
 // paneTriggerMsg carries an action the exercise requested with golf-check or
 // golf-hint, delivered from the emulator's handler goroutine.
-type paneTriggerMsg struct{ action string }
+type paneTriggerMsg struct {
+	action    string
+	workbench *workbench
+}
 
 type exitedMsg struct {
 	play *app.Play
@@ -124,6 +130,15 @@ func (m Model) refresh() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	next, cmd := m.update(msg)
+	updated := next.(Model)
+	if !m.busy && updated.busy {
+		cmd = tea.Batch(cmd, updated.spinner.Tick)
+	}
+	return updated, cmd
+}
+
+func (m Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width, m.height = max(1, msg.Width), max(1, msg.Height)
@@ -142,7 +157,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.workbench.syncPane(m.width, m.height)
 		return m, paneTick()
 	case paneTriggerMsg:
-		if m.workbench == nil {
+		if m.workbench == nil || msg.workbench != m.workbench {
+			return m, nil
+		}
+		if msg.action != "check" && msg.action != "hint" {
 			return m, nil
 		}
 		return m.workbenchAction(msg.action)
@@ -163,9 +181,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.status = ""
 			m.offset = 0
 			m.notice = ""
-			m.errorText = "Start exercise: " + msg.err.Error() + "\nOpen Settings and run dependency checks."
+			m.errorText = "Start exercise: " + msg.err.Error()
 			if msg.id != "" {
-				m.errorText += " Your attempt is retained."
+				m.errorText += "\nYour attempt is retained."
 			}
 			return m, m.refresh()
 		}
@@ -178,38 +196,58 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return classic()
 		}
 		life := m.lifecycle
-		session, err := pane.Start(play.Command(), m.width, max(1, m.height-5), func(action string) { life.send(paneTriggerMsg{action}) })
+		w := newWorkbench(nil, m.challenge.Objective, m.challenge.Brief)
+		session, err := pane.Start(play.Command(), m.width, max(1, m.height-5), func(action string) { life.send(paneTriggerMsg{action: action, workbench: w}) })
 		if err != nil {
 			// No pseudo-terminal available. Say why, then fall back rather than
 			// failing an attempt that is already prepared.
 			m.notice = "Embedded pane unavailable (" + err.Error() + "). Using full-screen practice."
 			return classic()
 		}
-		m.workbench = newWorkbench(session, m.challenge.Objective, m.challenge.Brief)
+		w.session = session
+		m.workbench = w
+		m.busy = false
 		m.status = ""
 		return m, tea.Batch(paneTick(), life.command(func() tea.Msg { return exitedMsg{play, session.Wait()} }))
 	case exitedMsg:
+		waiting := m.workbench != nil && m.busy
 		if m.workbench != nil {
 			m.workbench.session.Close()
 			m.workbench = nil
+			m.confirm = ""
 		}
+		m.busy = true
 		m.status = "Saving exercise session and checking result..."
+		if waiting {
+			// Finish only after the pending action has persisted its result.
+			m.pendingExit = &msg
+			return m, nil
+		}
 		s := m.service
 		return m, m.lifecycle.command(func() tea.Msg {
 			result, err := s.Finish(m.lifecycle.ctx, msg.play, msg.err)
 			m.lifecycle.finished(err)
-			return operationMsg{text: formatCheck(result), err: err}
+			return operationMsg{text: formatCheck(result), err: err, finished: true}
 		})
 	case operationMsg:
-		m.lifecycle.acknowledge()
+		if msg.workbench != nil && msg.workbench != m.workbench {
+			if m.pendingExit != nil {
+				exit := *m.pendingExit
+				m.pendingExit = nil
+				return m.update(exit)
+			}
+			return m, nil
+		}
+		if msg.finished {
+			m.lifecycle.acknowledge()
+		}
 		m.busy = false
 		m.status = ""
 		if msg.id != "" {
 			m.attemptID = msg.id
 		}
 		if m.workbench != nil {
-			// The workbench view owns the screen, so a full-width notice would
-			// never be seen. Results go to the status line instead.
+			// The workbench owns the screen, including its result panel.
 			m.workbench.result(msg.text, msg.err)
 			return m, m.refresh()
 		}
@@ -239,31 +277,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.spinner, cmd = m.spinner.Update(msg)
 		return m, cmd
 	case tea.KeyPressMsg:
-		next, cmd := m.key(msg)
-		updated := next.(Model)
-		if !m.busy && updated.busy {
-			cmd = tea.Batch(cmd, updated.spinner.Tick)
+		return m.key(msg)
+	case tea.PasteMsg:
+		if m.workbench != nil {
+			if m.confirm == "" && !m.workbench.outputOpen && !m.workbench.palette && m.workbench.session != nil {
+				m.workbench.session.Paste(msg.Content)
+			}
+		} else if m.searching && !m.busy && !m.help && m.confirm == "" && !m.chooseTrack {
+			m.query += strings.ReplaceAll(uiText(msg.Content), "\n", " ")
+			m.selected, m.offset = 0, 0
 		}
-		return updated, cmd
+		return m, nil
 	}
 	return m, nil
 }
 
 func (m Model) key(key tea.KeyPressMsg) (tea.Model, tea.Cmd) {
-	// While an exercise runs, the child owns every key except the one the
-	// workbench intercepts. update has already forwarded it.
-	if m.workbench != nil {
-		handled, action := m.workbench.update(key)
-		if !handled || action == "" {
-			return m, nil
-		}
-		return m.workbenchAction(action)
-	}
 	k := key.String()
-	if m.busy {
-		return m, nil
-	}
-	if m.confirm != "" {
+	if m.confirm != "" && !m.busy {
 		if k == "esc" || k == "n" {
 			m.confirm = ""
 			return m, nil
@@ -274,6 +305,18 @@ func (m Model) key(key tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		action := m.confirm
 		m.confirm = ""
 		return m.perform(action)
+	}
+	// While an exercise runs, the child owns every key except the one the
+	// workbench intercepts and keys used to read its results.
+	if m.workbench != nil {
+		action := m.workbench.update(key)
+		if action == "" {
+			return m, nil
+		}
+		return m.workbenchAction(action)
+	}
+	if m.busy {
+		return m, nil
 	}
 	if m.searching {
 		switch k {
@@ -726,7 +769,11 @@ func (m Model) launch(retry bool) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) perform(action string) (tea.Model, tea.Cmd) {
+	if m.busy {
+		return m, nil
+	}
 	s, id := m.service, m.attemptID
+	w := m.workbench
 	if action == "check" || action == "abandon" {
 		if id == "" {
 			m.notice = "Start the exercise before checking or abandoning it."
@@ -797,21 +844,21 @@ func (m Model) perform(action string) (tea.Model, tea.Cmd) {
 		if err != nil {
 			err = fmt.Errorf("%s: %w. Result was not confirmed saved; retry after resolving this error", action, err)
 		}
-		return operationMsg{text: text, id: id, err: err}
+		return operationMsg{text: text, id: id, err: err, workbench: w}
 	})
 }
 
 func (m *Model) doctor() tea.Cmd {
 	m.busy = true
-	m.status = "Checking Docker and the standard tool image..."
+	m.status = "Checking Docker access and the cached runtime image..."
 	s := m.service
 	return m.lifecycle.command(func() tea.Msg {
 		report, err := s.Doctor(m.lifecycle.ctx)
 		text := report.Message
 		if report.Available {
-			text = "Runtime ready. " + text + "\nImage: " + report.ImageID
+			text = "Docker daemon reachable. Runtime image present.\nImage: " + report.ImageID
 		} else {
-			text = "Runtime unavailable. " + text + "\nRun golf setup from your shell."
+			text = "Docker check failed. " + text
 		}
 		return operationMsg{text: text, err: err}
 	})

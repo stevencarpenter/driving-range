@@ -2,7 +2,7 @@
 
 > **Historical snapshot (branch state 14 September 2026; marked historical 27 September 2026).** This file records pre-launch status and is not current. The GitHub repository and implementation have since changed. This snapshot does not establish current CI status or release readiness. See [README.md](README.md), [CONTRIBUTING.md](CONTRIBUTING.md), and [DESIGN.md](DESIGN.md) for current documentation.
 
-Branch: `feat/driving-range`. Source project `vim-golf` is protected and remains independent.
+Branch: `feat/driving-range`.
 
 The local alpha is implemented and verified on 14 September 2026. No GitHub repository, release, or hosted service has been created or changed.
 
@@ -15,5 +15,3 @@ The local alpha is implemented and verified on 14 September 2026. No GitHub repo
 The implementation covers the local product. Interviews, retention studies, human editorial approval, and paid pilots require actual participants and are not represented as completed software features.
 
 Release archives for `v0.1.0-alpha.1` are built locally for macOS arm64 and Linux amd64/arm64 with matching checksums and dependency notices. Native macOS arm64 execution and Linux arm64 catalog execution were verified. Linux amd64 is crosscompiled; native interactive Linux host verification remains an acceptance check for a public release. CI definitions passed workflow validation but have not run on GitHub.
-
-Source preservation was checked against the pre-implementation snapshot: all 135 non-Git files in `vim-golf` have identical SHA-256 hashes, with no additions or deletions. Its clean working tree and HEAD `c7f161029896e88ddd662ab1681ce930859255ff` are unchanged.

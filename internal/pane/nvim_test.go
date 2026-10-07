@@ -61,7 +61,7 @@ func TestNvimEditsInPane(t *testing.T) {
 	// Change 8080 to 9090 with real motions, then write and quit. f8 jumps to
 	// the first 8, cw replaces the whole number.
 	typeText(s, "f8cw")
-	typeText(s, "9090")
+	s.Paste("9090")
 	s.SendKey(tea.KeyPressMsg{Code: tea.KeyEscape})
 	time.Sleep(150 * time.Millisecond)
 	typeText(s, ":wq")

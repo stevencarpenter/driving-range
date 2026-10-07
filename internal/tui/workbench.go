@@ -1,9 +1,11 @@
 package tui
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
+	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
@@ -25,6 +27,8 @@ type workbench struct {
 	// resized only when the layout actually changes.
 	paneW, paneH int
 	check        string
+	output       viewport.Model
+	outputOpen   bool
 }
 
 // paletteKeys maps a palette key to the action it emits. Toggling the band is
@@ -37,46 +41,53 @@ var paletteKeys = map[string]string{
 }
 
 func newWorkbench(s *pane.Session, goal, brief string) *workbench {
-	return &workbench{session: s, goal: goal, brief: brief, band: true, check: "not run", bandHeight: 1}
+	output := viewport.New(viewport.WithWidth(1), viewport.WithHeight(1))
+	output.SoftWrap, output.FillHeight = true, true
+	return &workbench{session: s, goal: goal, brief: brief, band: true, check: "not run", bandHeight: 1, output: output}
 }
 
-// update routes a message. It reports whether the workbench consumed it, and
-// the action the operator chose. An unconsumed key belongs to the child, which
-// has already received it.
-func (w *workbench) update(msg tea.Msg) (bool, string) {
-	key, ok := msg.(tea.KeyPressMsg)
-	if !ok {
-		return false, ""
+// update routes focused keys and returns the selected golf action.
+func (w *workbench) update(key tea.KeyPressMsg) string {
+	if w.outputOpen {
+		switch key.String() {
+		case "esc":
+			w.outputOpen = false
+		case "home":
+			w.output.GotoTop()
+		case "end":
+			w.output.GotoBottom()
+		default:
+			w.output, _ = w.output.Update(key)
+		}
+		return ""
 	}
 	if w.palette {
 		name := key.String()
 		w.palette = false
 		switch name {
-		case "esc":
-			return true, ""
 		case "b":
 			w.band = !w.band
-			return true, ""
-		}
-		if action, found := paletteKeys[name]; found {
-			return true, action
+			return ""
+		case "r":
+			w.outputOpen = w.output.GetContent() != ""
+			return ""
 		}
 		// An unknown key closes the palette without acting, so a stray press
 		// never silently swallows the next keystroke.
-		return true, ""
+		return paletteKeys[name]
 	}
 	if key.String() == "f12" {
 		w.palette = true
-		return true, ""
+		return ""
 	}
 	if w.session != nil {
 		w.session.SendKey(key)
 	}
-	return false, ""
+	return ""
 }
 
 // bandRows is the rows the band occupied in the last render.
-func (w *workbench) bandRows() int { return max(1, w.bandHeight) }
+func (w *workbench) bandRows() int { return max(0, w.bandHeight) }
 
 // paneHeight is the rows left for the child after the band and status line.
 func (w *workbench) paneHeight(height int) int {
@@ -106,16 +117,25 @@ func (w *workbench) briefTail() string {
 	return "\n" + line
 }
 
-func (w *workbench) view(width, height int, st viewStyles, border lipgloss.Border, plain bool) string {
+func (w *workbench) view(width, height int, st viewStyles, border lipgloss.Border, plain, confirming bool) string {
 	band, rows := w.bandView(width, st, border)
 	// Never let the band crowd the child out; it yields rows before the pane
 	// drops below a usable size.
 	w.bandHeight = min(rows, max(1, height-6))
-	if w.bandHeight < rows {
-		band = strings.Join(strings.Split(band, "\n")[:w.bandHeight], "\n")
+	if height < 3 {
+		w.bandHeight = 0
 	}
+	lines := strings.Split(band, "\n")[:w.bandHeight]
 	screen := ""
-	if w.session != nil {
+	switch {
+	case confirming:
+		screen = ansi.Wrap(paint(st.warning, "Reveal the reference solution?\nThis records assistance."), width, "")
+	case w.outputOpen:
+		w.output.SetWidth(width)
+		w.output.SetHeight(w.paneHeight(height))
+		w.output.SetYOffset(w.output.YOffset())
+		screen = w.output.View()
+	case w.session != nil:
 		screen = w.session.Render()
 		if plain {
 			// The child emits whatever it likes; plain mode promises none of it.
@@ -123,12 +143,31 @@ func (w *workbench) view(width, height int, st viewStyles, border lipgloss.Borde
 		}
 	}
 	pane := st.text.Width(width).Height(w.paneHeight(height)).Render(screen)
-	return strings.Join([]string{band, pane, w.status(st)}, "\n")
+	if height > 1 {
+		lines = append(lines, strings.Split(pane, "\n")[:w.paneHeight(height)]...)
+	}
+	lines = append(lines, w.status(st, width, confirming))
+	for i, line := range lines {
+		lines[i] = ansi.Truncate(line, width, "")
+	}
+	return strings.Join(lines, "\n")
 }
 
-func (w *workbench) status(st viewStyles) string {
+func (w *workbench) status(st viewStyles, width int, confirming bool) string {
+	if confirming {
+		if width < 30 {
+			return paint(st.action, "y yes n no")
+		}
+		return paint(st.action, " y reveal   n / Esc cancel ")
+	}
+	if w.outputOpen {
+		if width < 40 {
+			return paint(st.nav, "Esc back  j/k scroll")
+		}
+		return paint(st.nav, fmt.Sprintf(" Esc back   j/k scroll   PgUp/PgDn   %.0f%%", 100*w.output.ScrollPercent()))
+	}
 	if w.palette {
-		return paint(st.action, " c check   h hint   v reveal   b brief   q quit   esc back ")
+		return paint(st.action, " c check   h hint   v reveal   r result   b brief   q quit   esc back ")
 	}
 	return paint(st.nav, " F12 golf   golf-check   CHECK "+w.check)
 }
@@ -147,17 +186,18 @@ func paneTick() tea.Cmd {
 	return tea.Tick(paneRepaint, func(time.Time) tea.Msg { return paneTickMsg{} })
 }
 
-// result records the outcome of an action on the status line. The workbench
-// view covers the screen, so a result has nowhere else to appear.
+// result keeps a one-line summary and opens the full response for reading.
 func (w *workbench) result(text string, err error) {
-	switch {
-	case err != nil:
-		w.check = "error: " + firstLine(err.Error())
-	case text != "":
-		w.check = firstLine(text)
-	default:
-		w.check = "done"
+	if err != nil {
+		text = "error: " + err.Error()
+	} else if text == "" {
+		text = "done"
 	}
+	text = uiText(text)
+	w.check = firstLine(text)
+	w.output.SetContent("RESULT\n\n" + text)
+	w.output.GotoTop()
+	w.outputOpen, w.palette = true, false
 }
 
 // syncPane keeps the child's terminal the same size as the pane it is drawn
@@ -185,6 +225,9 @@ func (m Model) useWorkbench() bool {
 // workbenchAction runs the action the operator chose, from the palette or from
 // a golf-check or golf-hint trigger inside the exercise.
 func (m Model) workbenchAction(action string) (tea.Model, tea.Cmd) {
+	if action != "quit" && (m.busy || m.confirm != "") {
+		return m, nil
+	}
 	switch action {
 	case "check":
 		m.workbench.check = "running"
@@ -195,6 +238,7 @@ func (m Model) workbenchAction(action string) (tea.Model, tea.Cmd) {
 		// Revealing records assistance, so it keeps the confirmation the
 		// exercise screen requires.
 		m.confirm = "reveal"
+		m.workbench.outputOpen = false
 		return m, nil
 	case "quit":
 		return m, tea.Quit

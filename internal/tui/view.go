@@ -29,6 +29,9 @@ func (m Model) contentLines() []string {
 		}
 		body = m.section("CONFIRM ACTION") + "\n\n" + paint(styles.warning, prompt) + "\n\n" + m.primary("[y] Confirm") + "   " + paint(styles.text, "[n / Esc] Cancel")
 	}
+	if m.chooseTrack {
+		body = m.trackPicker()
+	}
 	if m.help {
 		var lines []string
 		for _, line := range strings.Split(helpText, "\n") {
@@ -39,9 +42,6 @@ func (m Model) contentLines() []string {
 			}
 		}
 		body = strings.Join(lines, "\n")
-	}
-	if m.chooseTrack {
-		body = m.trackPicker()
 	}
 	return strings.Split(ansi.Wrap(body, m.contentWidth(), ""), "\n")
 }
@@ -297,7 +297,8 @@ func (m Model) settingsView() string {
 		paint(styles.text, "Track: "+m.service.Config.Track) + paint(styles.key, "   [t] Choose"),
 		paint(styles.text, "Theme: "+m.service.Config.Theme) + paint(styles.key, "   [l] Cycle light / dark / plain"), "",
 		m.section("RUNTIME"), paint(styles.text, "Practice: native tools and your dotfiles"), paint(styles.muted, "Image: "+m.service.Config.Image),
-		paint(styles.key, "[d] Check dependencies"), paint(styles.muted, "First use: run golf setup from your shell to build the tool image."),
+		paint(styles.key, "[d] Check Docker runtime"), paint(styles.muted, "Checks daemon access and image presence; does not start a container."),
+		paint(styles.muted, "Install exercise tools on your host. First use: run golf setup from your shell."),
 		paint(styles.muted, "Docker prepares fixtures and validates your work."), "", m.section("LOCAL DATA"),
 		paint(styles.text, "State directory: "+m.service.StateDir), paint(styles.muted, "Exports are saved under this directory's exports folder."), "",
 		m.section("ACCESSIBILITY & PRIVACY"), paint(styles.text, "NO_COLOR disables styling. All controls use ASCII text."),
@@ -380,7 +381,10 @@ r: create a separate retry. a: abandon (confirmation required).
 n: after a pass, open the next unsolved exercise in this track.
 x: permanently record external assistance for this attempt.
 p: inspect saved result.
-Native editor and shell keys are untouched inside an exercise.
+F12 opens the embedded exercise palette: c check, h hint, v reveal,
+r reopen result, b toggle brief, q quit. Esc closes the palette or result.
+Result panels use j/k, arrows, Page Up/Down, and Home/End to scroll.
+Other editor and shell keys and pasted text go to the focused child.
 Exit the editor or shell to return. Ctrl-C goes to the child.
 Finished attempts remain immutable. Retry preserves the prior result.
 

@@ -172,6 +172,31 @@ def main():
                 # the rendered fixture has. Waiting on "port=3000" matches the
                 # preparing screen and sends the key before the child exists.
                 terminal.wait_text(b"host=localhost")
+                terminal.output = b""
+                terminal.send(b"\x1b[24~h")  # F12, then hint.
+                terminal.wait_text(b"RESULT")
+                terminal.wait_text(b"other text on the line should stay in place.")
+                terminal.output = b""
+                terminal.send(b"\x1b")
+                terminal.wait_text(b"F12 golf")
+                terminal.output = b""
+                terminal.send(b"\x1b[24~r")  # Reopen without requesting another hint.
+                terminal.wait_text(b"RESULT")
+                terminal.output = b""
+                terminal.send(b"\x1b")
+                terminal.wait_text(b"F12 golf")
+                for response in (b"n", b"y"):
+                    terminal.output = b""
+                    terminal.send(b"\x1b[24~v")
+                    terminal.wait_text(b"This records assistance.")
+                    terminal.output = b""
+                    terminal.send(response)
+                    if response == b"y":
+                        terminal.wait_text(b"Reference solution:")
+                        terminal.wait_text(b"nvim --headless")
+                        terminal.output = b""
+                        terminal.send(b"\x1b")
+                    terminal.wait_text(b"F12 golf")
                 terminal.send(b"Q")
                 terminal.wait_text(b"PASS")
                 terminal.send(b"q")
@@ -179,7 +204,8 @@ def main():
             finally:
                 terminal.close()
             results = json.loads(plain(state, "export"))
-            assert any(a["exercise_id"] == "vim.change-value" and a["status"] == "solved" for a in results["attempts"])
+            solved = next(a for a in results["attempts"] if a["exercise_id"] == "vim.change-value" and a["status"] == "solved")
+            assert solved["hint_level"] == 1 and solved["solution_revealed"], solved
             zsh_config = state / "zsh"
             zsh_config.mkdir()
             # Host global zshrc may run compinit and consume scripted input.
@@ -192,7 +218,7 @@ def main():
             for exercise in ("zsh.array-boundaries", "zsh.glob-qualifier"):
                 output = session(state, ["play", exercise], b"golf-zsh-config\nexit\n", 1)
                 assert b"GOLF_ZSH_CONFIG_LOADED" in output, output[-5000:]
-            print("PASS: shell failure/resume/retry, SIGTERM persistence, TUI resize and native Neovim custom keybinding, zsh challenges with .zshrc alias, terminal restoration")
+            print("PASS: shell failure/resume/retry, SIGTERM persistence, TUI resize, workbench hints/result reopening/reveal confirmation and native Neovim custom keybinding, zsh challenges with .zshrc alias, terminal restoration")
         finally:
             # IDs come exclusively from this test's temporary database.
             if (state / "driving-range.db").exists():

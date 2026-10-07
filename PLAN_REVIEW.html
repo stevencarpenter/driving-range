@@ -17,7 +17,7 @@
 <div class="eyebrow">PRODUCT PROPOSAL · 14 SEPTEMBER 2026 · PLANNING COMPLETE</div>
 <h1>Driving Range</h1>
 <p class="lead">Daily terminal practice for fluency that survives the next real task.</p>
-<p class="muted">New repository: <code>driving-range</code>. Proposed executable: <code>golf</code>. The existing <code>vim-golf</code> stays unchanged.</p>
+<p class="muted">Repository: <code>driving-range</code>. Executable: <code>golf</code>.</p>
 <nav aria-label="Plan navigation"><a href="#decision">Recommendation</a><a href="#experience">TUI experience</a><a href="#scope">Track scope</a><a href="#business">Business model</a><a href="#gates">Delivery gates</a><a href="PRODUCT_PLAN.md">Complete Markdown plan</a></nav>
 </header>
 <section id="decision">
@@ -69,7 +69,6 @@ Enter open   j/k or arrows move   ? help   q quit</pre>
 <details open><summary>Performance records are not proof of learning</summary><p>Save all attempts and checks in SQLite. A retry creates a new attempt; resume adds a session. Compare results only across equivalent revisions, fixtures, assistance, profiles, and metric versions. Raw input bytes are not physical keystrokes. An unseen delayed task can investigate transfer; a faster replay can simply mean fixture memorization.</p></details>
 <details><summary>A workspace directory is not a sandbox</summary><p>Standard exercises use a pinned Linux container with no host home, credentials, socket, or network, plus non-root execution and resource limits. Personal configuration practice is a separately labeled later profile. Never silently fall back to host execution. These controls require testing on both supported hosts. <a href="https://docs.docker.com/engine/containers/run/">Docker runtime controls</a>.</p></details>
 <details><summary>Use native terminal handoff before building terminal emulation</summary><p>Propose Go and Bubble Tea with direct child processes, two initial validators, SQLite, and versioned filesystem packs. Prove child lifecycle and terminal restoration first. <a href="https://github.com/charmbracelet/bubbletea/blob/main/exec.go">Bubble Tea supplies a child-process handoff API</a>. No server, plugin ABI, ORM, or custom terminal emulator is needed for the local MVP.</p></details>
-<details><summary>Preserve vim-golf as an independent project</summary><p>The inspected runner provides persistent Neovim workspaces, exact-output checks, and raw-byte scoring, but no general attempt ledger. Adapt the useful exercise format into the new project. Confirm licensing and remove undocumented personal-configuration assumptions before public reuse. No repository initialization, remote changes, or product implementation is part of this planning delivery.</p></details>
 </section>
 <section id="business">
 <h2>Keep the local product complete</h2>

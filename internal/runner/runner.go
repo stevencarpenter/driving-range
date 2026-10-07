@@ -547,10 +547,11 @@ func readSnapshot(input io.Reader) (map[string]string, error) {
 }
 
 func (r *Runner) snapshot(ctx context.Context, a model.Attempt) (map[string]string, error) {
-	if dir, err := r.nativeDirectory(a); err != nil {
+	if root, err := r.openNativeDirectory(a); err != nil {
 		return nil, err
-	} else if dir != "" {
-		return nativeSnapshot(dir)
+	} else if root != nil {
+		defer root.Close()
+		return nativeSnapshot(root)
 	}
 	container, err := r.create(ctx, a, true)
 	if err != nil {

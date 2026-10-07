@@ -47,6 +47,35 @@ func open(stateDir string, readOnly bool) (*Store, error) {
 	if statErr != nil && !os.IsNotExist(statErr) {
 		return nil, statErr
 	}
+	if statErr == nil && !info.Mode().IsRegular() {
+		return nil, fmt.Errorf("database is not a regular file: %s", path)
+	}
+	if !readOnly {
+		// SQLite sidecars inherit the database mode when the first connection opens.
+		if err = preparePrivateFile(path, os.O_RDWR|os.O_CREATE); err != nil {
+			return nil, err
+		}
+		databasePath, err := filepath.EvalSymlinks(path)
+		if err != nil {
+			return nil, err
+		}
+		for _, suffix := range []string{"-wal", "-shm"} {
+			sidecar := databasePath + suffix
+			info, err := os.Lstat(sidecar)
+			if os.IsNotExist(err) {
+				continue
+			}
+			if err != nil {
+				return nil, err
+			}
+			if !info.Mode().IsRegular() {
+				return nil, fmt.Errorf("database sidecar is not a regular file: %s", sidecar)
+			}
+			if err = os.Chmod(sidecar, 0600); err != nil {
+				return nil, err
+			}
+		}
+	}
 	u := url.URL{Scheme: "file", Path: path}
 	q := u.Query()
 	q.Add("_pragma", "foreign_keys(1)")
@@ -67,13 +96,15 @@ func open(stateDir string, readOnly bool) (*Store, error) {
 		db.Close()
 		return nil, err
 	}
-	if !readOnly {
-		if err = os.Chmod(path, 0600); err != nil {
-			db.Close()
-			return nil, err
-		}
-	}
 	return s, nil
+}
+
+func preparePrivateFile(path string, flags int) error {
+	f, err := os.OpenFile(path, flags, 0600)
+	if err != nil {
+		return err
+	}
+	return errors.Join(f.Chmod(0600), f.Close())
 }
 
 func (s *Store) Close() error { return s.db.Close() }
@@ -94,12 +125,12 @@ func (s *Store) migrate(path string, existed, readOnly bool) error {
 	}
 	if existed {
 		backup := path + ".backup-" + time.Now().UTC().Format("20060102T150405.000000000")
+		if err := preparePrivateFile(backup, os.O_RDWR|os.O_CREATE|os.O_EXCL); err != nil {
+			return fmt.Errorf("create private database backup: %w", err)
+		}
 		// VACUUM INTO includes committed WAL pages, unlike copying only the main file.
 		if _, err := s.db.Exec("VACUUM INTO ?", backup); err != nil {
 			return fmt.Errorf("backup database: %w", err)
-		}
-		if err := os.Chmod(backup, 0600); err != nil {
-			return err
 		}
 	}
 	tx, err := s.db.Begin()

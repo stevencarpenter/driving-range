@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"slices"
 	"strings"
 	"syscall"
@@ -23,6 +24,16 @@ import (
 )
 
 var version = "dev"
+
+func buildVersion() string {
+	if version != "dev" {
+		return version
+	}
+	if info, ok := debug.ReadBuildInfo(); ok && info.Main.Version != "" && info.Main.Version != "(devel)" {
+		return info.Main.Version
+	}
+	return version
+}
 
 func main() {
 	if err := run(os.Args[1:], os.Stdout); err != nil {
@@ -46,7 +57,7 @@ func run(args []string, out io.Writer) error {
 		return err
 	}
 	if *ver {
-		fmt.Fprintln(out, "golf", version)
+		fmt.Fprintln(out, "golf", buildVersion())
 		return nil
 	}
 	args = flags.Args()
@@ -54,6 +65,18 @@ func run(args []string, out io.Writer) error {
 	if len(args) > 0 {
 		command = args[0]
 		args = args[1:]
+	}
+	if command == "update" {
+		if len(args) != 0 {
+			return errors.New("usage: golf update")
+		}
+		executable, err := os.Executable()
+		if err != nil {
+			return fmt.Errorf("locate installed golf: %w", err)
+		}
+		ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		defer cancel()
+		return updateExecutable(ctx, executable, out)
 	}
 	cat, err := catalog.Load()
 	if err != nil {
@@ -73,7 +96,7 @@ func run(args []string, out io.Writer) error {
 		usage(out)
 		return nil
 	case "version":
-		fmt.Fprintln(out, "golf", version)
+		fmt.Fprintln(out, "golf", buildVersion())
 		return nil
 	case "list":
 		filter := strings.ToLower(strings.Join(args, " "))
@@ -499,11 +522,12 @@ func usage(w io.Writer) {
   config [track|theme VALUE]         Inspect or change settings
   doctor                            Check Docker and cached image
   setup                             Explicitly build the isolated runtime
+  update                            Build and install upstream @latest
   audit [--solutions] [--track NAME] Check metadata or real reference solutions
   forget ATTEMPT --yes               Permanently delete one finished attempt
   version                           Print the build version
 
 Practice uses your native tools and dotfiles; Docker prepares and checks files. No account or
-telemetry is required. State is independent of vim-golf. An expired daily
+telemetry is required. Update requires Go and network access. An expired daily
 schedule leaves the entire practice catalog available.`)
 }
