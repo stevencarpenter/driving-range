@@ -132,7 +132,7 @@ func TestGoalLeadsActionsAndUsesAvailableWidth(t *testing.T) {
 	m.openChallenge(*c, nil, today)
 	for _, width := range []int{80, 120, 160, 240} {
 		m.width, m.height = width, 40
-		for _, screen := range []screen{today, exercise} {
+		for _, screen := range []screen{exercise} {
 			m.screen = screen
 			view := m.render()
 			if strings.Index(view, c.Objective) < 0 || strings.Index(view, c.Objective) > strings.Index(view, "[Enter]") {
@@ -237,5 +237,161 @@ func TestNestedStyleRestoresContainingSurface(t *testing.T) {
 	view := onSurface(s.surface, paint(s.action, "Action")+" gap")
 	if prefix == "" || !strings.Contains(view, styleReset+prefix+" gap") {
 		t.Fatal("nested style reset exposes terminal background between elements")
+	}
+}
+
+func TestTodayShowsAllTracksAndSelectedNameAt80Columns(t *testing.T) {
+	m := testModel(t)
+	tracks := []string{"awk", "fd", "find", "fzf", "git", "jj", "python", "search", "sed", "shell", "vim", "zsh"}
+	m.service.Catalog.Challenges = m.service.Catalog.Challenges[:12]
+	for i, track := range tracks {
+		c := &m.service.Catalog.Challenges[i]
+		c.Track, c.ID = track, track+".first"
+		c.Title = "Read the supplied configuration and update the requested setting while preserving unrelated values"
+		c.Objective = "Change only the requested value in the configuration file."
+		c.Minutes = 5
+	}
+	view := m.render()
+	for _, track := range tracks {
+		if !strings.Contains(view, " "+track+" ") {
+			t.Fatalf("track %s is hidden at 80x24:\n%s", track, view)
+		}
+	}
+	for _, heading := range []string{"0/12 done", "STATE", "LVL", "HNT", "MIN", "SOLVED"} {
+		if !strings.Contains(view, heading) {
+			t.Fatalf("missing daily progress %q", heading)
+		}
+	}
+	if strings.Contains(view, "GOAL") {
+		t.Fatal("full goal must open separately at 80 columns")
+	}
+	if !strings.Contains(strings.Join(strings.Fields(view), " "), "preserving unrelated values") {
+		t.Fatal("selected name is not available in full")
+	}
+	for range 11 {
+		m, _ = press(m, "j")
+	}
+	if !strings.Contains(m.render(), "> zsh") {
+		t.Fatal("last track cannot be selected without losing its row")
+	}
+	m, _ = press(m, "enter")
+	if !strings.Contains(m.render(), "GOAL") || !strings.Contains(m.exerciseView(), m.challenge.Objective) {
+		t.Fatal("Enter does not expose the selected full goal")
+	}
+}
+
+func TestTodaySidebarContainsSelectedNameAndGoalOnly(t *testing.T) {
+	m := testModel(t)
+	m.width, m.height = 112, 24
+	c := &m.service.Catalog.Challenges[0]
+	c.Objective = "Change only the selected configuration value."
+	side := m.sidebar(m.sidebarWidth()-4, m.contentHeight())
+	for _, text := range []string{"SELECTED EXERCISE", c.Title, "GOAL", "configuration value."} {
+		if !strings.Contains(side, text) {
+			t.Fatalf("selected preview missing %q: %s", text, side)
+		}
+	}
+	for _, text := range []string{"TOOLKIT", "TRACK PROGRESS", "CURRENT ATTEMPT", "Ready", "Resume"} {
+		if strings.Contains(side, text) {
+			t.Fatalf("daily preview duplicates %q", text)
+		}
+	}
+	m.width = 80
+	if m.sidebarWidth() != 0 {
+		t.Fatal("daily preview did not collapse at 80 columns")
+	}
+}
+
+func TestLibraryShowsFiltersAndDoesNotRegressSolvedState(t *testing.T) {
+	m := testModel(t)
+	m.screen, m.filterTrack, m.filterState = practice, "shell", "solved"
+	m.records = []model.Progress{
+		{Attempt: model.Attempt{ExerciseID: "shell.task-00", Revision: 1, Status: "active"}},
+		{Attempt: model.Attempt{ExerciseID: "shell.task-00", Revision: 1, Status: "solved"}},
+	}
+	view := m.practiceView()
+	for _, text := range []string{"LIBRARY", "Track [t]: shell", "State [f]: solved", "Task 00", "solved"} {
+		if !strings.Contains(view, text) {
+			t.Fatalf("Library missing %q", text)
+		}
+	}
+	if strings.Contains(view, "active") {
+		t.Fatal("failed retry replaced the solved exercise overview")
+	}
+}
+
+func TestDailyStateColorsAndBlueGoalRemainDistinct(t *testing.T) {
+	m := testModel(t)
+	t.Setenv("NO_COLOR", "")
+	if err := os.Unsetenv("NO_COLOR"); err != nil {
+		t.Fatal(err)
+	}
+	for _, theme := range []string{"dark", "light"} {
+		m.service.Config.Theme = theme
+		s := m.styles()
+		for _, state := range []string{"Done today", "Complete", "Resume", "Retry", "Check failed", "Check error"} {
+			style := s.key
+			if state == "Resume" || state == "Retry" {
+				style = s.warning
+			} else if state == "Check failed" || state == "Check error" {
+				style = s.danger
+			}
+			if got := m.tableRow([]string{state}, []int{13}, false, false); got != "  "+style.Width(13).Render(state) {
+				t.Fatalf("%s state %q lost its status color", theme, state)
+			}
+			if got := m.tableRow([]string{state}, []int{13}, true, false); got != s.selected.Render("> "+s.selected.Width(13).Render(state)) {
+				t.Fatalf("%s state %q overrides selection", theme, state)
+			}
+		}
+		gr, gg, gb, _ := s.goal.GetForeground().RGBA()
+		sr, sg, sb, _ := s.key.GetForeground().RGBA()
+		if gr == sr && gg == sg && gb == sb {
+			t.Fatal("goal and solved state share a color")
+		}
+		if gb <= gr || gb <= gg {
+			t.Fatal("goal foreground does not use the approved blue palette")
+		}
+	}
+}
+
+func TestLibraryNamesUnfinishedStateFilter(t *testing.T) {
+	m := testModel(t)
+	m.screen, m.filterState = practice, "active"
+	m.records = []model.Progress{{Attempt: model.Attempt{ExerciseID: "shell.task-00", Revision: 1, Status: "interrupted"}}}
+	view := m.practiceView()
+	if !strings.Contains(view, "State [f]: unfinished") || !strings.Contains(view, "Task 00") {
+		t.Fatal("unfinished filter does not describe interrupted attempts")
+	}
+	if strings.Contains(view, "State [f]: active") {
+		t.Fatal("filter label incorrectly limits unfinished attempts to active")
+	}
+}
+
+func TestLibraryPreservesAbandonedStateAfterFailedCheck(t *testing.T) {
+	m := testModel(t)
+	m.screen = practice
+	a := dailyRecord("failed-abandoned", "shell.task-00", "", "active", m.now(), nil).Attempt
+	a.ValidatorVersion = "1"
+	if err := m.service.Store.CreateAttempt(a); err != nil {
+		t.Fatal(err)
+	}
+	if err := m.service.Store.RecordCheck(a.ID, model.CheckResult{Outcome: "fail"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := m.service.Store.AbandonAttempt(a.ID); err != nil {
+		t.Fatal(err)
+	}
+	var err error
+	m.records, err = m.service.Store.Progress()
+	if err != nil {
+		t.Fatal(err)
+	}
+	view := m.practiceView()
+	if !strings.Contains(view, "abandoned") || strings.Contains(view, "Check failed") {
+		t.Fatalf("abandoned attempt lost its state:\n%s", view)
+	}
+	m, _ = press(m, "enter")
+	if !strings.Contains(m.exerciseView(), "[r] New attempt") {
+		t.Fatal("abandoned attempt did not offer a new retry")
 	}
 }

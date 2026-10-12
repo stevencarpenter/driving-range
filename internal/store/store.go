@@ -93,8 +93,7 @@ func open(stateDir string, readOnly bool) (*Store, error) {
 	db.SetMaxOpenConns(1)
 	s := &Store{db: db}
 	if err = s.migrate(path, existed, readOnly); err != nil {
-		db.Close()
-		return nil, err
+		return nil, errors.Join(err, db.Close())
 	}
 	return s, nil
 }
@@ -502,7 +501,8 @@ func (s *Store) Progress() ([]model.Progress, error) {
 COALESCE((SELECT SUM(duration_ms) FROM sessions s WHERE s.attempt_id=a.id),0),
 NOT EXISTS(SELECT 1 FROM sessions s WHERE s.attempt_id=a.id) OR EXISTS(SELECT 1 FROM sessions s WHERE s.attempt_id=a.id AND duration_ms IS NULL),
 (SELECT COUNT(*) FROM check_events c WHERE c.attempt_id=a.id),
-(SELECT COUNT(*) FROM check_events c WHERE c.attempt_id=a.id AND json_extract(c.result,'$.outcome')='fail')
+(SELECT COUNT(*) FROM check_events c WHERE c.attempt_id=a.id AND json_extract(c.result,'$.outcome')='fail'),
+COALESCE((SELECT json_extract(c.result,'$.outcome') FROM check_events c WHERE c.attempt_id=a.id ORDER BY c.id DESC LIMIT 1),'')
 FROM attempts a ORDER BY json_extract(a.data,'$.created_at') DESC, a.id DESC`)
 	if err != nil {
 		return nil, err
@@ -512,7 +512,7 @@ FROM attempts a ORDER BY json_extract(a.data,'$.created_at') DESC, a.id DESC`)
 	for rows.Next() {
 		var p model.Progress
 		var raw string
-		if err = rows.Scan(&raw, &p.DurationMS, &p.UnknownDuration, &p.Checks, &p.FailedChecks); err != nil {
+		if err = rows.Scan(&raw, &p.DurationMS, &p.UnknownDuration, &p.Checks, &p.FailedChecks, &p.LastCheckOutcome); err != nil {
 			return nil, err
 		}
 		if err = json.Unmarshal([]byte(raw), &p.Attempt); err != nil {

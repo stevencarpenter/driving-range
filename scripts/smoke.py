@@ -142,17 +142,17 @@ def main():
             plain(state, "config", "track", "vim")
             terminal = Terminal([], state)
             try:
-                terminal.wait_text(b"Today")
+                terminal.wait_text(b"TODAY")
                 terminal.output = b""
                 terminal.send(b"2")
-                terminal.wait_text(b"PRACTICE")
+                terminal.wait_text(b"LIBRARY")
                 terminal.resize(20, 60)
                 terminal.output = b""
                 terminal.send(b"?")
                 terminal.wait_text(b"KEYBOARD")
                 terminal.output = b""
                 terminal.send(b"?")
-                terminal.wait_text(b"PRACTICE")
+                terminal.wait_text(b"LIBRARY")
                 terminal.resize(24, 80)
                 terminal.output = b""
                 terminal.send(b"/")
@@ -162,10 +162,10 @@ def main():
                 terminal.send(b"vim.change-value\r")
                 # Query text may arrive as several cursor-positioned updates.
                 # Wait for Enter to leave search mode, then verify the detail.
-                terminal.wait_text(b"j/k move   / search   Enter open")
+                terminal.wait_text(b"j/k move   / search   t track")
                 terminal.output = b""
                 terminal.send(b"\r")
-                terminal.wait_text(b"Change one configuration value")
+                terminal.wait_text(b"In config.txt change port=3000")
                 terminal.output = b""
                 terminal.send(b"\r")
                 # The objective names port=3000, so wait for pane content that only

@@ -20,7 +20,7 @@ Go, Bubble Tea, SQLite, and an embedded versioned catalog. Installed host tools 
 
 ## Interaction
 
-Today shows a published assignment for the selected track when one exists, otherwise its first current exercise labeled as practice. Practice catalog, exercise brief, progress, settings. Keyboard navigation and native child-tool keybindings. Stable resume and new attempts on retry. Clear errors, no streak punishment, no required telemetry or account.
+Today shows one exercise per track with state, difficulty, hints used, estimated duration, and solved counts. Each track retains its unfinished exercise across UTC dates. A completed daily exercise stays visible until the next UTC day; extra practice is separate. New daily choices use the first unsolved current revision in catalog order. Saved assignments retain their exact date, revision, and seed. Library, exercise brief, progress, and settings remain keyboard accessible. Stable resume and new attempts on retry. Clear errors, no streak punishment, no required telemetry or account.
 
 ## Accessibility
 

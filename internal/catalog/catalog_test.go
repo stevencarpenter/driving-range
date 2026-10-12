@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 )
 
 func TestRuntimeShardsPartitionEveryExercise(t *testing.T) {
@@ -57,6 +58,11 @@ func TestBundledCatalogAndFrozenSchedule(t *testing.T) {
 	}
 	if len(c.Current()) != 600 || len(c.All()) != 611 {
 		t.Fatalf("got %d exercises, %d revisions", len(c.Current()), len(c.All()))
+	}
+	for _, ch := range c.All() {
+		if length := utf8.RuneCountInString(ch.Title); length < 80 || length > 100 {
+			t.Errorf("%s revision %d title has %d characters, want 80 through 100", ch.ID, ch.Revision, length)
+		}
 	}
 	counts := map[string]int{}
 	for _, ch := range c.Current() {

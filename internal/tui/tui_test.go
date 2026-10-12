@@ -26,11 +26,13 @@ func testModel(t *testing.T) Model {
 	}
 	t.Cleanup(func() { db.Close() })
 	cat := &catalog.Catalog{}
-	for i := 0; i < 30; i++ {
+	for i := range 30 {
 		cat.Challenges = append(cat.Challenges, model.Challenge{ID: fmt.Sprintf("shell.task-%02d", i), Revision: 1, Title: fmt.Sprintf("Task %02d", i), Track: "shell", Difficulty: 1, Tools: []string{"bash", "rg"}, Concepts: []string{"quoting"}, Profile: "standard", Brief: strings.Repeat("Read the files carefully. ", 30), Validator: model.Validator{Kind: "tree", Version: "1"}})
 	}
 	s := &app.Service{Catalog: cat, Store: db, StateDir: state, Config: app.Config{Track: "shell", Theme: "plain", Image: runner.DefaultImage}}
 	m := New(s)
+	updated, _ := m.Update(loadedMsg{})
+	m = updated.(Model)
 	t.Cleanup(func() {
 		if err := m.lifecycle.shutdown(); err != nil {
 			t.Error(err)
@@ -156,7 +158,7 @@ func TestSpinnerRunsOnlyDuringOperations(t *testing.T) {
 func TestPracticeSearchAndSelection(t *testing.T) {
 	m := testModel(t)
 	m.screen = practice
-	m.records = []model.Progress{{Attempt: model.Attempt{ExerciseID: "shell.task-04", Revision: 1, Status: "active"}, Checks: 2, FailedChecks: 1}}
+	m.records = []model.Progress{{Attempt: model.Attempt{ExerciseID: "shell.task-04", Revision: 1, Status: "active"}, Checks: 2, FailedChecks: 1, LastCheckOutcome: "fail"}}
 	m, _ = press(m, "/")
 	m, _ = press(m, "rg quoting difficulty:1 missed")
 	m, _ = press(m, "enter")
@@ -255,10 +257,10 @@ func TestHelpScrollAndPageNavigation(t *testing.T) {
 	}
 }
 
-func TestDailyAssignmentFreezesAndExpiredScheduleIsPractice(t *testing.T) {
+func TestDailyAssignmentFreezesAndExpiredScheduleUsesLocalQueue(t *testing.T) {
 	m := testModel(t)
-	if !strings.Contains(m.render(), "PRACTICE") || !strings.Contains(m.render(), "No shared assignment") {
-		t.Fatal(m.render())
+	if row := m.selectedDaily(); row.status() != "Ready" || row.assignment.Date != "2026-09-14" || row.challenge.ID != "shell.task-00" {
+		t.Fatalf("local queue: %+v", row)
 	}
 	a := model.Assignment{Date: "2026-09-14", Track: "shell", ExerciseID: "shell.task-00", Revision: 1, Seed: "daily"}
 	m.service.Catalog.Assignments = []model.Assignment{a}
@@ -294,8 +296,8 @@ func TestDailyResumeAndLatestRequireCompleteAssignment(t *testing.T) {
 				wrong.Profile = "personal"
 			}
 			m.records = []model.Progress{{Attempt: wrong}, {Attempt: matching}}
-			if view := m.todayView(); !strings.Contains(view, "Latest: active") || strings.Contains(view, "Latest: solved") {
-				t.Fatal(view)
+			if row := m.selectedDaily(); row.status() != "Resume" || row.attempt.Attempt.ID != matching.ID {
+				t.Fatalf("daily row selected another identity: %+v", row)
 			}
 			m.openChallenge(m.service.Catalog.Challenges[0], &a, today)
 			if m.attemptID != matching.ID {
@@ -304,7 +306,7 @@ func TestDailyResumeAndLatestRequireCompleteAssignment(t *testing.T) {
 		})
 	}
 	practiceAttempt := matching
-	practiceAttempt.ID, practiceAttempt.Seed = "practice", "default"
+	practiceAttempt.ID, practiceAttempt.Seed, practiceAttempt.AssignmentDate = "practice", "default", ""
 	m.records = []model.Progress{{Attempt: practiceAttempt}, {Attempt: matching}}
 	m.openChallenge(m.service.Catalog.Challenges[0], nil, practice)
 	if m.attemptID != practiceAttempt.ID {
@@ -419,8 +421,10 @@ func TestFirstLaunchAndEmptyHistory(t *testing.T) {
 	m := testModel(t)
 	m.service.Config.Track = ""
 	m = New(m.service)
-	if !m.chooseTrack || !strings.Contains(m.render(), "Choose your starting track") {
-		t.Fatal("no initial track selection")
+	updated, _ := m.Update(loadedMsg{})
+	m = updated.(Model)
+	if m.chooseTrack || m.screen != today || len(m.dailyTracks()) != 1 {
+		t.Fatal("first launch did not show all daily tracks")
 	}
 	m.chooseTrack = false
 	m.screen = progress
@@ -438,8 +442,8 @@ func TestMissedFilterExcludesInfrastructureChecks(t *testing.T) {
 	m.query = "missed"
 	m.records = []model.Progress{
 		{Attempt: model.Attempt{ExerciseID: "shell.task-00", Revision: 1, Status: "infrastructure_error"}, Checks: 3},
-		{Attempt: model.Attempt{ExerciseID: "shell.task-01", Revision: 1, Status: "active"}, Checks: 2, FailedChecks: 1},
-		{Attempt: model.Attempt{ExerciseID: "shell.task-02", Revision: 1, Status: "solved"}, Checks: 2, FailedChecks: 1},
+		{Attempt: model.Attempt{ExerciseID: "shell.task-01", Revision: 1, Status: "active"}, Checks: 2, FailedChecks: 1, LastCheckOutcome: "fail"},
+		{Attempt: model.Attempt{ExerciseID: "shell.task-02", Revision: 1, Status: "solved"}, Checks: 2, FailedChecks: 1, LastCheckOutcome: "fail"},
 	}
 	got := m.filtered()
 	if len(got) != 1 || got[0].ID != "shell.task-01" {
@@ -510,6 +514,8 @@ func TestPendingRecoveryRemainsVisibleWhileBrowsing(t *testing.T) {
 	t.Cleanup(func() { s.Close() })
 	m := New(s)
 	t.Cleanup(func() { m.lifecycle.shutdown() })
+	updated, _ := m.Update(m.refresh()())
+	m = updated.(Model)
 	m.chooseTrack = false
 	for _, screen := range []screen{today, settings} {
 		m.screen = screen
@@ -518,7 +524,7 @@ func TestPendingRecoveryRemainsVisibleWhileBrowsing(t *testing.T) {
 		}
 	}
 	m.screen = practice
-	if !strings.Contains(m.render(), "PRACTICE / archive") {
+	if !strings.Contains(m.render(), "LIBRARY") {
 		t.Fatal("pending recovery prevented catalog browsing")
 	}
 }

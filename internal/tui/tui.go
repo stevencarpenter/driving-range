@@ -40,12 +40,16 @@ type Model struct {
 	width, height    int
 	selected, offset int
 	query            string
+	filterTrack      string
+	filterState      string
+	todaySelected    int
 	searching        bool
 	chooseTrack      bool
 	trackIndex       int
 	help             bool
 	confirm          string
 	busy             bool
+	historyLoaded    bool
 	status, notice   string
 	errorText        string
 	challenge        *model.Challenge
@@ -104,7 +108,14 @@ type detailMsg struct {
 }
 
 func New(s *app.Service) Model {
-	return Model{service: s, spinner: spinner.New(spinner.WithSpinner(spinner.MiniDot)), lifecycle: newLifecycle(), width: 80, height: 24, chooseTrack: s.Config.Track == "", now: time.Now, darkBackground: true}
+	m := Model{service: s, spinner: spinner.New(spinner.WithSpinner(spinner.MiniDot)), lifecycle: newLifecycle(), width: 80, height: 24, now: time.Now, darkBackground: true}
+	for i, track := range s.Catalog.Tracks() {
+		if track == s.Config.Track {
+			m.selected, m.todaySelected = i, i
+			break
+		}
+	}
+	return m
 }
 
 func Run(s *app.Service) (err error) {
@@ -169,6 +180,10 @@ func (m Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.errorText = "Read history: " + msg.err.Error()
 		} else {
 			m.records = msg.records
+			if !m.historyLoaded {
+				m.errorText = ""
+			}
+			m.historyLoaded = true
 		}
 		m.clampSelection()
 		return m, nil
@@ -318,6 +333,18 @@ func (m Model) key(key tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	if m.busy {
 		return m, nil
 	}
+	if !m.historyLoaded && !m.help {
+		switch k {
+		case "q", "ctrl+c":
+			return m, tea.Quit
+		case "r":
+			m.errorText = ""
+			return m, m.refresh()
+		case "?":
+		default:
+			return m, nil
+		}
+	}
 	if m.searching {
 		switch k {
 		case "enter", "esc":
@@ -372,9 +399,7 @@ func (m Model) key(key tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		case "k", "up":
 			m.trackIndex = max(0, m.trackIndex-1)
 		case "esc":
-			if m.service.Config.Track != "" {
-				m.chooseTrack = false
-			}
+			m.chooseTrack = false
 		case "enter":
 			if len(tracks) == 0 {
 				return m, nil
@@ -387,7 +412,7 @@ func (m Model) key(key tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			}
 			m.chooseTrack = false
 			m.screen = today
-			m.selected = 0
+			m.selected, m.todaySelected = m.trackIndex, m.trackIndex
 			m.offset = 0
 			cmd := m.doctor()
 			return m, cmd
@@ -398,6 +423,9 @@ func (m Model) key(key tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 	}
 	switch k {
+	case "l":
+		m.navigate(practice)
+		return m, nil
 	case "tab":
 		m.navigate(screen((int(m.topLevel()) + 1) % 4))
 		return m, nil
@@ -462,16 +490,25 @@ func (m Model) key(key tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	}
 	switch m.screen {
 	case today:
-		if k == "t" {
-			m.selectTrack()
-		}
 		if k == "enter" || k == "s" {
-			c, a := m.todayChallenge()
-			if c != nil {
-				m.openChallenge(*c, a, today)
+			row := m.selectedDaily()
+			if row.challenge != nil {
+				m.openChallenge(*row.challenge, row.assignment, today)
+				if row.attempt != nil {
+					m.attemptID = row.attempt.Attempt.ID
+				}
 			}
 		}
 	case practice:
+		if k == "t" {
+			tracks := append([]string{""}, m.service.Catalog.Tracks()...)
+			m.filterTrack = nextFilter(tracks, m.filterTrack)
+			m.selected, m.offset = 0, 0
+		}
+		if k == "f" {
+			m.filterState = nextFilter([]string{"", "untried", "active", "solved"}, m.filterState)
+			m.selected, m.offset = 0, 0
+		}
 		if k == "/" {
 			m.searching = true
 		}
@@ -504,7 +541,7 @@ func (m Model) key(key tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			cmd := m.doctor()
 			return m, cmd
 		}
-		if k == "l" {
+		if k == "L" {
 			config := m.service.Config
 			switch config.Theme {
 			case "light":
@@ -587,8 +624,15 @@ func (m Model) key(key tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) navigate(s screen) {
+	if m.screen == today {
+		m.todaySelected = m.selected
+	}
 	m.screen = s
 	m.selected = 0
+	if s == today {
+		m.selected = m.todaySelected
+	}
+	m.clampSelection()
 	m.offset = 0
 	m.notice = ""
 	m.errorText = ""
@@ -619,6 +663,9 @@ func (m Model) topLevel() screen {
 }
 
 func (m *Model) openChallenge(c model.Challenge, a *model.Assignment, from screen) {
+	if m.screen == today {
+		m.todaySelected = m.selected
+	}
 	m.challenge = &c
 	m.assignment = a
 	m.screen = exercise
@@ -628,25 +675,20 @@ func (m *Model) openChallenge(c model.Challenge, a *model.Assignment, from scree
 	m.errorText = ""
 	m.attemptID = ""
 	for _, r := range m.records {
-		if r.Attempt.ExerciseID == c.ID && r.Attempt.Revision == c.Revision && (a == nil || r.Attempt.MatchesAssignment(*a)) {
-			m.attemptID = r.Attempt.ID
-			break
+		if r.Attempt.ExerciseID == c.ID && r.Attempt.Revision == c.Revision && (a == nil && r.Attempt.AssignmentDate == "" || a != nil && r.Attempt.MatchesAssignment(*a)) {
+			if m.attemptID == "" || a != nil && r.Attempt.Status == "solved" {
+				m.attemptID = r.Attempt.ID
+			}
+			if a == nil || r.Attempt.Status == "solved" {
+				break
+			}
 		}
 	}
 }
 
 func (m Model) todayChallenge() (*model.Challenge, *model.Assignment) {
-	if a, ok := m.service.Catalog.Today(m.now(), m.service.Config.Track); ok {
-		if c, err := m.service.Catalog.Find(a.ExerciseID, a.Revision); err == nil {
-			return &c, &a
-		}
-	}
-	for _, c := range m.service.Catalog.Current() {
-		if c.Track == m.service.Config.Track {
-			return &c, nil
-		}
-	}
-	return nil, nil
+	row := m.selectedDaily()
+	return row.challenge, row.assignment
 }
 
 func (m Model) currentAttempt() *model.Attempt {
@@ -698,15 +740,18 @@ func (m Model) nextChallenge() *model.Challenge {
 func (m Model) filtered() []model.Challenge {
 	var result []model.Challenge
 	for _, c := range m.service.Catalog.Current() {
+		if m.filterTrack != "" && c.Track != m.filterTrack {
+			continue
+		}
 		status := "untried"
-		for _, r := range m.records {
-			if r.Attempt.ExerciseID == c.ID && r.Attempt.Revision == c.Revision {
-				status = r.Attempt.Status
-				if r.FailedChecks > 0 && status != "solved" {
-					status += " missed"
-				}
-				break
+		if r := m.exerciseProgress(c); r != nil {
+			status = r.Attempt.Status
+			if r.LastCheckOutcome == "fail" && status != "solved" {
+				status += " missed"
 			}
+		}
+		if m.filterState == "untried" && status != "untried" || m.filterState == "solved" && status != "solved" || m.filterState == "active" && (status == "untried" || status == "solved") {
+			continue
 		}
 		haystack := strings.ToLower(fmt.Sprintf("%s %s %s %s %s difficulty:%d %s", c.ID, c.Title, c.Track, strings.Join(c.Tools, " "), strings.Join(c.Concepts, " "), c.Difficulty, status))
 		match := true
@@ -727,12 +772,14 @@ func (m *Model) clampSelection() {
 	n := len(m.records)
 	if m.screen == practice {
 		n = len(m.filtered())
+	} else if m.screen == today {
+		n = len(m.service.Catalog.Tracks())
 	}
 	m.selected = max(0, min(m.selected, n-1))
 }
 
 func (m Model) listNavigating() bool {
-	return (m.screen == practice || m.screen == progress) && m.notice == "" && m.errorText == ""
+	return m.historyLoaded && (m.screen == today || m.screen == practice || m.screen == progress) && m.notice == "" && m.errorText == ""
 }
 
 func (m Model) launch(retry bool) (tea.Model, tea.Cmd) {
