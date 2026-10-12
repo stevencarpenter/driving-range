@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/stevencarpenter/driving-range/compare/v0.1.1...v0.2.0) (2026-10-12)
+
+
+### Features
+
+* **tui:** add per-track daily roster and Library filters ([#15](https://github.com/stevencarpenter/driving-range/issues/15)) ([f80c563](https://github.com/stevencarpenter/driving-range/commit/f80c5638d06a1ec7128864cbc7b36c6aacc36018))
+
 ## [0.1.1](https://github.com/stevencarpenter/driving-range/compare/v0.1.0...v0.1.1) (2026-10-07)
 
 
