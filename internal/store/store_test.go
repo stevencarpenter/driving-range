@@ -214,6 +214,28 @@ func TestFailedChecksExcludeInfrastructureEvents(t *testing.T) {
 	}
 }
 
+func TestProgressTracksLatestCheckWithoutFinishingInterimPass(t *testing.T) {
+	s, _ := newStore(t)
+	a := testAttempt("latest-check")
+	must(t, s.CreateAttempt(a))
+	for _, outcome := range []string{"", "fail", "infrastructure_error", "pass"} {
+		if outcome != "" {
+			must(t, s.RecordInterimCheck(a.ID, model.CheckResult{Outcome: outcome}))
+		}
+		rows, err := s.Progress()
+		must(t, err)
+		if len(rows) != 1 || rows[0].LastCheckOutcome != outcome || rows[0].Attempt.Status == "solved" {
+			t.Fatalf("latest interim outcome %q: %+v", outcome, rows)
+		}
+	}
+	must(t, s.RecordCheck(a.ID, model.CheckResult{Outcome: "pass"}))
+	rows, err := s.Progress()
+	must(t, err)
+	if rows[0].Attempt.Status != "solved" || rows[0].LastCheckOutcome != "pass" || rows[0].FailedChecks != 1 {
+		t.Fatalf("final pass lost check history: %+v", rows[0])
+	}
+}
+
 func TestChecksAssistanceAndAbandon(t *testing.T) {
 	s, _ := newStore(t)
 	a := testAttempt("active")

@@ -72,11 +72,11 @@ func (m Model) render() string {
 	brand := paint(s.brand, " DRIVING RANGE ")
 	if m.width >= 60 {
 		subtitle := paint(s.nav, "  Daily terminal practice")
-		date := paint(s.badge, m.now().Format("Mon 02 Jan"))
+		date := paint(s.badge, m.now().UTC().Format("Mon 02 Jan"))
 		brand += subtitle + strings.Repeat(" ", max(1, m.width-lipgloss.Width(brand)-lipgloss.Width(subtitle)-lipgloss.Width(date))) + date
 	}
 	var tabs []string
-	for i, label := range []string{"Today", "Practice", "Progress", "Settings"} {
+	for i, label := range []string{"Today", "Library", "Progress", "Settings"} {
 		text := fmt.Sprintf(" %d %s ", i+1, label)
 		if m.width < 46 {
 			text = fmt.Sprintf(" %d ", i+1)
@@ -98,6 +98,8 @@ func (m Model) render() string {
 			count := len(m.records)
 			if m.screen == practice {
 				count = len(m.filtered())
+			} else if m.screen == today {
+				count = len(m.dailyTracks())
 			}
 			status = fmt.Sprintf("%d of %d selected   j/k move", min(m.selected+1, count), count)
 		}
@@ -177,24 +179,28 @@ func (m Model) sidebar(width, height int) string {
 	var lines []string
 	c := m.selectedChallenge()
 	if c != nil {
-		if m.screen == practice || m.screen == progress || m.screen == detail {
+		if m.screen == today {
+			lines = append(lines, label("SELECTED EXERCISE"), paint(s.title, c.Title), "", paint(s.goal.Width(width), "GOAL\n"+ansi.Wrap(uiText(c.Objective), width, "")))
+		} else if m.screen == practice || m.screen == progress || m.screen == detail {
 			action := "[Enter] Open full brief"
 			if m.screen == progress {
 				action = "[Enter] Attempt detail"
 			}
-			lines = append(lines, label("SELECTED EXERCISE"), "", paint(s.title, c.Title), "", label("GOAL"), paint(s.key, c.Objective), "", paint(s.muted, action), "")
+			lines = append(lines, label("SELECTED EXERCISE"), "", paint(s.title, c.Title), "", paint(s.goal.Width(width), "GOAL\n"+ansi.Wrap(uiText(c.Objective), width, "")), "", paint(s.muted, action), "")
 		} else {
 			lines = append(lines, label("YOUR SESSION"), "", paint(s.title, strings.ToUpper(c.Track)), "",
 				paint(s.badge, fmt.Sprintf("%d MIN", c.Minutes))+" "+paint(s.badge, fmt.Sprintf("LEVEL %d/5", c.Difficulty)), "", label("WORKFLOW"), "",
 				paint(s.text, "1  Read the goal"), paint(s.text, "2  Practice with your tools"), paint(s.text, "3  Exit to check your work"), "")
 		}
-		lines = append(lines, label("TOOLKIT"), paint(s.text, strings.Join(c.Tools, "  /  ")), "", label("TRACK PROGRESS"), m.trackProgress(c.Track, width), "")
+		if m.screen != today {
+			lines = append(lines, label("TOOLKIT"), paint(s.text, strings.Join(c.Tools, "  /  ")), "", label("TRACK PROGRESS"), m.trackProgress(c.Track, width), "")
+		}
 		if a := m.currentAttempt(); a != nil && (m.screen == exercise || m.screen == detail) {
 			lines = append(lines, label("CURRENT ATTEMPT"), paint(s.text, a.Status), paint(s.muted, fmt.Sprintf("%d hints used", a.HintLevel)))
 		}
 	} else if m.screen == settings {
 		lines = append(lines, label("DISPLAY"), "", paint(s.brand, "  Aa  ")+" "+paint(s.action, "  Aa  "), "", paint(s.title, "Theme: "+m.service.Config.Theme),
-			paint(s.muted, "[l] Change theme"), "", label("ON THIS MACHINE"), "", paint(s.text, "Native tools. Your dotfiles."), paint(s.muted, "Fixtures and checks use Docker."), "",
+			paint(s.muted, "[L] Change theme"), "", label("ON THIS MACHINE"), "", paint(s.text, "Native tools. Your dotfiles."), paint(s.muted, "Fixtures and checks use Docker."), "",
 			label("YOUR DATA"), "", paint(s.text, "Saved locally"), paint(s.muted, "No account or telemetry."))
 	} else {
 		lines = append(lines, label("BUILD YOUR PRACTICE"), "", paint(s.text, "Pick a small task. Work in your own tools. Check the result."), "", paint(s.action, " [1] Open Today "))

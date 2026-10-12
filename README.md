@@ -4,7 +4,7 @@ Sharpen your terminal skills with short, practical challenges in your real edito
 
 **Driving Range** is a local-first TUI named `golf`. Practice Vim, search, shell scripting, text processing, Git, jj, and Python. Correctness comes first; hints, explanations, retries, and history export require no account. Your tools and dotfiles stay yours.
 
-**Pre-release: 600 exercises across 12 tracks.** Vim/Neovim, search/regex, Bash/core CLI, and awk each have 100 exercises. Practice is always available; fixed daily assignments cover a ten-day preview. See [the curriculum](docs/CURRICULUM.md) and [recorded validation evidence](docs/LAUNCH_AUDIT.md).
+**Pre-release: 600 exercises across 12 tracks.** Vim/Neovim, search/regex, Bash/core CLI, and awk each have 100 exercises. Today offers the next unfinished exercise for every track; fixed shared assignments cover a ten-day preview. See [the curriculum](docs/CURRICULUM.md) and [recorded validation evidence](docs/LAUNCH_AUDIT.md).
 
 [Get started](#quick-start) · [Install or upgrade](#installation-and-upgrades) · [Practice](#practice) · [Contribute](CONTRIBUTING.md) · [Author exercises](docs/AUTHORING.md) · [Security](SECURITY.md) · [License](#license)
 
@@ -56,9 +56,11 @@ Docker prepares fixtures and checks results with Debian Linux tools. The base im
 
 ## Practice
 
-One exercise is a useful daily session. Stop after it, or continue in Practice for as long as you want; there are no daily locks or streak penalties. Completing catalog content early means a later recommendation may be review rather than an unseen challenge.
+Today shows an exercise for each track, its state, and your progress. An unfinished exercise stays available across days. A daily completion remains visible until the next UTC day. After passing, use `n` for separate extra practice. Tracks advance after completion; there are no daily locks or streak penalties.
 
-Choose a starting track on first launch. `Today`, `Practice`, `Progress`, and `Settings` are the main destinations. Use `Tab` or `1` through `4` to navigate, `j/k` or arrows to select, `Enter` to open, and `?` for help. Search the practice catalog with `/`, including tools, concepts, `difficulty:1`, `solved`, `missed`, or `untried`.
+`Today`, `Library`, `Progress`, and `Settings` are the main destinations. Today opens with all tracks. Use `Tab` or `1` through `4` to navigate, `j/k` or arrows to select, `Enter` to open, and `?` for help. Press `l` to open Library, `t` to filter by track, and `f` to filter by state. Search with `/`, including tools, concepts, `difficulty:1`, `solved`, `missed`, or `untried`. Library practice uses separate attempts from daily exercises.
+
+Golf loads saved history before exercises can open. If the initial read fails, press `r` to retry or `q` to quit.
 
 1. Open an exercise and read its success conditions. The pane shows the objective and at most the brief's opening line, not the full instructions.
 2. Press `Enter` to launch its real editor or shell. It runs in a pane with the objective on a band above it, and keeps its normal keybindings.
@@ -67,7 +69,7 @@ Choose a starting track on first launch. `Today`, `Practice`, `Progress`, and `S
 
 While the embedded exercise pane has focus, golf reserves `F12` to open a palette: `c` check, `h` hint, `v` request reveal, `r` reopen the latest result, `b` collapse or expand the brief band, `q` quit golf, `Esc` return to the exercise. Other key presses are forwarded to the child; while the palette is open, its next key is handled by golf. Your terminal or tmux may intercept keys before golf receives them.
 
-Pasted text goes to the focused exercise, preserving bracketed paste when the child enables it. Paste also works in Practice search. Result panels, the palette, and confirmations consume paste without sending it to the child.
+Pasted text goes to the focused exercise, preserving bracketed paste when the child enables it. Paste also works in Library search. Result panels, the palette, and confirmations consume paste without sending it to the child.
 
 `golf-check` and `golf-hint` request the same actions from the embedded exercise prompt. An interim check records a result without finishing the attempt; exiting the child runs the final check. Save editor changes before checking. Complete hints, check details, solutions, and errors open in a scrollable result panel. Use `j/k` or arrows, `PgUp/PgDn`, and `Home/End` to read it; `Esc` returns keyboard focus to the exercise. Reopen the latest response with `F12`, then `r`. Revealing requires `y` to confirm that assistance will be recorded; `n` or `Esc` cancels. While a result panel or confirmation is open, golf consumes its keys and hides the child cursor. The child continues running.
 
@@ -98,9 +100,9 @@ The embedded catalog contains **600 unique exercises across 12 tracks**, stored 
 | Git | 35 | Practice |
 | jj | 30 | Practice |
 
-Vim search/editing, regex, Bash/core CLI, and awk are the priorities. The added drills repeat forward/backward and word search, next-match editing, scoped substitution, captures, global deletion, regex boundaries and extraction, head/tail/cut/paste/sort/uniq/tr/comm/join/wc/tee, and awk fields, records, filters, grouped reports, ranges, and numbering. Repetition is intentional; Practice remains open for sessions of two to ten exercises or more. [Source research and rights](docs/SOURCES.md) are recorded separately from executable and editorial review.
+Vim search/editing, regex, Bash/core CLI, and awk are the priorities. The added drills repeat forward/backward and word search, next-match editing, scoped substitution, captures, global deletion, regex boundaries and extraction, head/tail/cut/paste/sort/uniq/tr/comm/join/wc/tee, and awk fields, records, filters, grouped reports, ranges, and numbering. Repetition is intentional; Library remains open for sessions of two to ten exercises or more. [Source research and rights](docs/SOURCES.md) are recorded separately from executable and editorial review.
 
-The fixed ten-day preview runs **14 September through 23 September 2026, UTC**. An attempt keeps its assignment when a session crosses midnight. Outside those dates, Today offers the first current exercise in your selected track, labeled as practice. It does not rotate exercises or select the next unsolved one. `golf today` reports that no daily is published. The entire catalog remains playable. There is no rolling daily content service. `golf update` explicitly fetches the latest application and embedded catalog; updates do not download automatically.
+The fixed ten-day preview runs **14 September through 23 September 2026, UTC**. An attempt keeps its assignment when a session crosses midnight. The TUI also maintains a local daily queue for all tracks, using saved completion history. Unfinished daily assignments retain their original date, seed, and revision. Outside the preview, `golf today` reports that no shared daily is published. The entire catalog remains playable. The local queue does not add shared schedule entries or require a content service. `golf update` explicitly fetches the latest application and embedded catalog; updates do not download automatically.
 
 Exercises are original curriculum drafts. Executable audits check failing starter fixtures and passing reference solutions; they do not establish human editorial review or learning effectiveness. Players review the material as they practice and report unclear or unhelpful exercises. Human review of the whole bank is not a publication gate. zsh and fzf samples validate command behavior. The application does not measure Readline/ZLE key sequences, physical keystrokes, or personal skill retention. tmux is in the runtime, but has no dedicated exercise track.
 

@@ -1,6 +1,6 @@
 # Contributing
 
-Build and test with Go 1.27 or newer and `just`. CI and release builds pin Go 1.27.1. Docker is required for fixture setup and execution checks. Interactive practice uses installed host tools and their normal configuration.
+Build and test with Go 1.27 or newer and `just`. CI and release builds pin Go 1.27.2. Docker is required for fixture setup and execution checks. Interactive practice uses installed host tools and their normal configuration.
 
 ## Implementation defaults
 

@@ -109,11 +109,12 @@ type CheckEvent struct {
 }
 
 type Progress struct {
-	Attempt         Attempt `json:"attempt"`
-	DurationMS      int64   `json:"duration_ms"`
-	UnknownDuration bool    `json:"unknown_duration"`
-	Checks          int     `json:"checks"`
-	FailedChecks    int     `json:"failed_checks"`
+	Attempt          Attempt `json:"attempt"`
+	DurationMS       int64   `json:"duration_ms"`
+	UnknownDuration  bool    `json:"unknown_duration"`
+	Checks           int     `json:"checks"`
+	FailedChecks     int     `json:"failed_checks"`
+	LastCheckOutcome string  `json:"last_check_outcome,omitempty"`
 }
 
 type Export struct {

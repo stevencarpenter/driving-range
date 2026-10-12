@@ -29,11 +29,11 @@ func (m Model) styles() viewStyles {
 	}
 	ink, muted, canvas, surface := "#EEE9FA", "#B6ABC9", "#15111F", "#221B30"
 	purple, teal, selection, edge := "#C5A2FF", "#75E4CD", "#7045AF", "#65517F"
-	goalBG, goalFG := "#123F3C", "#C3FFED"
+	goalBG, goalFG := "#162D4E", "#D5E8FF"
 	if m.service.Config.Theme == "light" || (m.service.Config.Theme == "auto" && !m.darkBackground) {
 		ink, muted, canvas, surface = "#302442", "#655478", "#EEE8F8", "#FAF7FF"
 		purple, teal, selection, edge = "#6B349A", "#176953", "#7045AF", "#AC95C4"
-		goalBG, goalFG = "#D7F4E9", "#164F3F"
+		goalBG, goalFG = "#DFEAFB", "#214674"
 	}
 	s.canvas = base.Foreground(lipgloss.Color(ink)).Background(lipgloss.Color(canvas))
 	s.surface = base.Foreground(lipgloss.Color(ink)).Background(lipgloss.Color(surface))
@@ -51,7 +51,7 @@ func (m Model) styles() viewStyles {
 	s.border = s.canvas.Foreground(lipgloss.Color(edge))
 	s.danger = s.surface.Foreground(lipgloss.Color("#FF7899")).Bold(true)
 	s.warning = s.surface.Foreground(lipgloss.Color("#E9AE4D")).Bold(true)
-	if goalBG == "#D7F4E9" {
+	if goalBG == "#DFEAFB" {
 		s.danger = s.surface.Foreground(lipgloss.Color("#A62547")).Bold(true)
 		s.warning = s.surface.Foreground(lipgloss.Color("#825000")).Bold(true)
 	}
@@ -85,7 +85,7 @@ func (m Model) margin() int {
 func (m Model) framed() bool { return m.width >= 60 && m.height >= 16 }
 
 func (m Model) sidebarWidth() int {
-	if m.width < 110 || m.height < 24 || m.help || m.chooseTrack || m.confirm != "" || m.notice != "" || m.errorText != "" {
+	if !m.historyLoaded || m.width < 110 || m.height < 24 || m.help || m.chooseTrack || m.confirm != "" || m.notice != "" || m.errorText != "" {
 		return 0
 	}
 	return min(42, m.width/3)
@@ -107,7 +107,7 @@ func (m Model) goal(objective string) string {
 	}
 	// Lip Gloss v2 counts border and padding inside Width; v1 excluded them.
 	box := styles.goal.Border(m.border()).
-		BorderForeground(styles.key.GetForeground()).Padding(0, 1).
+		BorderForeground(styles.goal.GetForeground()).Padding(0, 1).
 		Width(m.contentWidth())
 	return paint(box, "GOAL\n"+objective)
 }
@@ -137,11 +137,11 @@ func (m Model) tableRow(cells []string, widths []int, selected, header bool) str
 			style = s.muted
 		}
 		switch cell {
-		case "solved", "pass":
+		case "solved", "pass", "Done today", "Complete":
 			style = s.key
-		case "active", "interrupted":
+		case "active", "interrupted", "Resume", "Retry":
 			style = s.warning
-		case "infrastructure_error", "fail":
+		case "infrastructure_error", "fail", "Check failed", "Check error":
 			style = s.danger
 		}
 		if header {
@@ -158,6 +158,18 @@ func (m Model) tableRow(cells []string, widths []int, selected, header bool) str
 		return s.selected.Render(prefix + strings.Join(parts, s.selected.Render("  ")))
 	}
 	return prefix + strings.Join(parts, "  ")
+}
+
+// Keep every track on one row; the selected name and goal are shown in full separately.
+func (m Model) dailyRow(track, title, state, difficulty, hints, minutes, solved string, selected, header bool) string {
+	width := m.contentWidth()
+	if width < 30 {
+		return m.tableRow([]string{track, state}, []int{max(1, width-17), 13}, selected, header)
+	}
+	if width < 60 {
+		return m.tableRow([]string{track, title, state}, []int{6, max(1, width-25), 13}, selected, header)
+	}
+	return m.tableRow([]string{track, title, state, difficulty, hints, minutes, solved}, []int{6, width - 49, 13, 3, 3, 3, 7}, selected, header)
 }
 
 func (m Model) listRow(title, track, difficulty, status string, selected, header bool) string {

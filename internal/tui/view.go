@@ -51,6 +51,12 @@ func (m *Model) scroll(delta int) {
 }
 
 func (m Model) body() string {
+	if !m.historyLoaded {
+		if m.errorText != "" {
+			return "Saved history is unavailable. Press r to retry or q to quit."
+		}
+		return "Loading saved history..."
+	}
 	switch m.screen {
 	case today:
 		return m.todayView()
@@ -74,7 +80,7 @@ func (m Model) trackPicker() string {
 	if m.service.Config.Track != "" {
 		title = "Choose your track"
 	}
-	lines := []string{paint(styles.title, title), paint(styles.muted, "One daily exercise. Change your track anytime in Settings."), "", m.section("TRACKS")}
+	lines := []string{paint(styles.title, title), paint(styles.muted, "Choose the preferred track for CLI commands and launch selection."), "", m.section("TRACKS")}
 	for i, track := range m.service.Catalog.Tracks() {
 		count := 0
 		for _, c := range m.service.Catalog.Current() {
@@ -96,31 +102,36 @@ func (m Model) trackPicker() string {
 
 func (m Model) todayView() string {
 	styles := m.styles()
-	c, a := m.todayChallenge()
-	if c == nil {
-		return "No exercise is available for this track. Press t to choose a track."
+	rows := m.dailyTracks()
+	if len(rows) == 0 {
+		return "No tracks are available in this catalog. Press l to browse the Library."
 	}
-	label := "PRACTICE / " + strings.ToUpper(c.Track)
-	calendar := "No shared assignment for today's UTC date. This is archive practice."
-	if a != nil {
-		label = "TODAY / " + strings.ToUpper(c.Track) + " / " + a.Date + " UTC"
-		now := m.now()
-		next := time.Date(now.UTC().Year(), now.UTC().Month(), now.UTC().Day()+1, 0, 0, 0, 0, time.UTC).In(now.Location())
-		calendar = "Next daily reset: " + next.Format("Mon 15:04 MST") + " (your local time)."
-	}
-	lines := []string{paint(styles.title, c.Title), m.goal(c.Objective),
-		m.primary("> Open exercise [Enter]") + "   " + paint(styles.text, "[t] Choose track"), "",
-		paint(styles.muted, label),
-		paint(styles.muted, fmt.Sprintf("About %d minutes   |   difficulty %d/5", c.Minutes, c.Difficulty)),
-		paint(styles.muted, "Tools: "+strings.Join(c.Tools, ", ")+" | profile: "+c.Profile), "", m.section("YOUR PRACTICE")}
-	latest := "No attempt yet. Start when you're ready."
-	for _, r := range m.records {
-		if r.Attempt.ExerciseID == c.ID && r.Attempt.Revision == c.Revision && (a == nil || r.Attempt.MatchesAssignment(*a)) {
-			latest = "Latest: " + r.Attempt.Status + " | elapsed exercise time " + duration(r) + fmt.Sprintf(" | %d hints", r.Attempt.HintLevel)
-			break
+	done := 0
+	for _, row := range rows {
+		if row.status() == "Done today" {
+			done++
 		}
 	}
-	lines = append(lines, paint(styles.text, latest), "", paint(styles.muted, calendar), paint(styles.muted, "Completed history remains available in Progress."))
+	lines := []string{paint(styles.title, fmt.Sprintf("TODAY  %d/%d done", done, len(rows))) + paint(styles.muted, "  "+m.now().UTC().Format("2006-01-02")+" UTC"),
+		m.dailyRow("TRACK", "EXERCISE", "STATE", "LVL", "HNT", "MIN", "SOLVED", false, true)}
+	for i, row := range rows {
+		title, difficulty, hints, minutes := "Track complete", "-", "-", "-"
+		if row.challenge != nil {
+			title = row.challenge.Title
+			difficulty = fmt.Sprintf("%d/5", row.challenge.Difficulty)
+			hints = "0"
+			minutes = fmt.Sprintf("%d", row.challenge.Minutes)
+		}
+		if row.attempt != nil {
+			hints = fmt.Sprintf("%d", row.attempt.Attempt.HintLevel)
+		}
+		lines = append(lines, m.dailyRow(row.track, title, row.status(), difficulty, hints, minutes, fmt.Sprintf("%d/%d", row.solved, row.total), i == m.selected, false))
+	}
+	if m.sidebarWidth() == 0 {
+		if row := m.selectedDaily(); row.challenge != nil {
+			lines = append(lines, paint(styles.title, row.challenge.Title))
+		}
+	}
 	return strings.Join(lines, "\n")
 }
 
@@ -131,18 +142,29 @@ func (m Model) practiceView() string {
 		query += "_"
 	}
 	items := m.filtered()
-	lines := []string{paint(styles.title, "PRACTICE / archive") + paint(styles.muted, fmt.Sprintf("   %d exercises", len(items))),
-		paint(styles.key, "Search [/]: "+query), paint(styles.muted, "Tool, concept, difficulty:1, solved, missed, or untried."), "",
-		m.listRow("EXERCISE", "TRACK", "LEVEL", "STATUS", false, true)}
+	track, state := m.filterTrack, m.filterState
+	if track == "" {
+		track = "all"
+	}
+	if state == "" {
+		state = "all"
+	} else if state == "active" {
+		state = "unfinished"
+	}
+	lines := []string{paint(styles.title, "LIBRARY") + paint(styles.muted, fmt.Sprintf("   %d exercises", len(items))),
+		paint(styles.key, "Search [/]: "+query), paint(styles.muted, "Track [t]: "+track+"   State [f]: "+state), "",
+		m.listRow("EXERCISE", "TRACK", "LEVEL", "STATE", false, true)}
 	if len(items) == 0 {
-		return strings.Join(append(lines, "No exercises match. Press / then Ctrl-U to clear the search."), "\n")
+		return strings.Join(append(lines, "No exercises match. Clear the search or change the track and state filters."), "\n")
 	}
 	for i, c := range items {
 		status := "untried"
-		for _, r := range m.records {
-			if r.Attempt.ExerciseID == c.ID && r.Attempt.Revision == c.Revision {
-				status = r.Attempt.Status
-				break
+		if r := m.exerciseProgress(c); r != nil {
+			status = r.Attempt.Status
+			if status != "solved" && status != "abandoned" && r.LastCheckOutcome == "fail" {
+				status = "Check failed"
+			} else if status == "infrastructure_error" {
+				status = "Check error"
 			}
 		}
 		lines = append(lines, m.listRow(c.Title, c.Track, fmt.Sprintf("%d/5", c.Difficulty), status, i == m.selected, false))
@@ -152,7 +174,7 @@ func (m Model) practiceView() string {
 
 func (m Model) exerciseView() string {
 	if m.challenge == nil {
-		return "Choose an exercise in Today or Practice."
+		return "Choose an exercise in Today or Library."
 	}
 	styles := m.styles()
 	c := m.challenge
@@ -295,7 +317,7 @@ func (m Model) settingsView() string {
 	styles := m.styles()
 	return strings.Join([]string{paint(styles.title, "SETTINGS"), "", m.section("PREFERENCES"),
 		paint(styles.text, "Track: "+m.service.Config.Track) + paint(styles.key, "   [t] Choose"),
-		paint(styles.text, "Theme: "+m.service.Config.Theme) + paint(styles.key, "   [l] Cycle light / dark / plain"), "",
+		paint(styles.text, "Theme: "+m.service.Config.Theme) + paint(styles.key, "   [L] Cycle light / dark / plain"), "",
 		m.section("RUNTIME"), paint(styles.text, "Practice: native tools and your dotfiles"), paint(styles.muted, "Image: "+m.service.Config.Image),
 		paint(styles.key, "[d] Check Docker runtime"), paint(styles.muted, "Checks daemon access and image presence; does not start a container."),
 		paint(styles.muted, "Install exercise tools on your host. First use: run golf setup from your shell."),
@@ -306,6 +328,9 @@ func (m Model) settingsView() string {
 }
 
 func (m Model) keyHelp() string {
+	if !m.historyLoaded && !m.help {
+		return "r retry history  ? help  q quit"
+	}
 	if m.busy {
 		return "Operation in progress. Navigation returns when state is saved."
 	}
@@ -330,9 +355,9 @@ func (m Model) keyHelp() string {
 	if m.contentWidth() < 72 {
 		switch m.screen {
 		case today:
-			return "Enter open  t track  ? help  q quit"
+			return "j/k move  Enter open  l library  ? help"
 		case practice:
-			return "j/k move  / find  Enter open  q quit"
+			return "j/k move  / find  t track  f state  1 Today"
 		case progress:
 			return "j/k move  Enter detail  ? help  q quit"
 		case exercise:
@@ -340,14 +365,14 @@ func (m Model) keyHelp() string {
 		case detail:
 			return "j/k scroll  Esc back  ? help  q quit"
 		default:
-			return "t track  l theme  ? help  q quit"
+			return "t track  L theme  ? help  q quit"
 		}
 	}
 	switch m.screen {
 	case today:
-		return "Enter open   t track   Tab navigate   ? help   q quit"
+		return "j/k move   Enter open   l Library   ? help   q quit"
 	case practice:
-		return "j/k move   / search   Enter open   Tab navigate   ? help   q quit"
+		return "j/k move   / search   t track   f state   Enter open   1 Today   q quit"
 	case progress:
 		return "j/k move   Enter detail   e JSON   c CSV   Tab navigate   q quit"
 	case exercise:
@@ -355,21 +380,28 @@ func (m Model) keyHelp() string {
 	case detail:
 		return "j/k scroll   s share   Enter exercise   Esc back   ? help   q quit"
 	default:
-		return "t track   l theme   d doctor   j/k scroll   Tab navigate   q quit"
+		return "t track   L theme   d doctor   j/k scroll   Tab navigate   q quit"
 	}
 }
 
 const helpText = `KEYBOARD
 
 Tab / Shift-Tab: next / previous destination.
-1 Today   2 Practice   3 Progress   4 Settings
+1 Today   2 Library   3 Progress   4 Settings
+l opens the Library from any outer screen.
 j/k or arrows: move through lists or scroll text.
 Page Up / Page Down: scroll one page. Home: return to top.
 Enter: open the selected exercise, resume work, or inspect a result.
 Esc: go back, close a prompt, or clear a search.
 q / Ctrl-C: quit the outer application. Active work remains resumable.
 
-PRACTICE
+TODAY
+One exercise per track. Unfinished work stays until you complete it.
+Done today remains visible until the next UTC date. Extra practice is separate.
+Enter opens the selected exercise and its full goal.
+
+LIBRARY
+t cycles track filters. f cycles all, untried, unfinished, and solved.
 / starts search. All space-separated terms must match.
 Search tool, concept, track, difficulty:1, solved, missed, or untried.
 Ctrl-U clears the search. Enter or Esc finishes editing.
@@ -394,6 +426,6 @@ e exports all history as JSON. c exports all history as CSV.
 s in attempt detail produces spoiler-free text for manual sharing.
 
 SETTINGS
-t changes track. l cycles display theme. d checks dependencies.
+t changes the preferred track. L cycles display theme. d checks dependencies.
 NO_COLOR and the plain theme disable color. No fonts or mouse required.
 Use golf --help for linear commands and redirected output.`
