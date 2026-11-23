@@ -3,12 +3,12 @@
 # GIT_CONFIG_KEY_* names public Git settings, not secrets. Keep their runtime overrides.
 FROM debian:trixie-slim@sha256:d7e12182ce18b85b93007c1dedf31f2d29e01ccf3182cc4017c709b6259bc132
 ARG TARGETARCH
-# Security fixes for packages inherited from the pinned base (September 2026 audit).
+# Security fixes for packages inherited from the pinned base.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     bash ca-certificates curl neovim ripgrep fd-find findutils grep sed mawk git python3 zsh fzf tmux \
-    gzip=1.13-1+deb13u1 libc6=2.41-12+deb13u4 libc-bin=2.41-12+deb13u4 \
+    gzip=1.13-1+deb13u1 libc6=2.41-12+deb13u5 libc-bin=2.41-12+deb13u5 \
     libpcre2-8-0=10.46-1~deb13u3 libsqlite3-0=3.46.1-7+deb13u2 \
-    libssl3t64=3.5.7-1~deb13u3 openssl=3.5.7-1~deb13u3 openssl-provider-legacy=3.5.7-1~deb13u3 \
+    libssl3t64=3.5.9-1~deb13u1 openssl=3.5.9-1~deb13u1 openssl-provider-legacy=3.5.9-1~deb13u1 \
     && rm -rf /var/lib/apt/lists/* \
     && ln -s /usr/bin/fdfind /usr/local/bin/fd
 RUN case "$TARGETARCH" in \
